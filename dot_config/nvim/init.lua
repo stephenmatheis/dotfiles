@@ -1,85 +1,148 @@
-require("config.lazy")
+vim.g.mapleader = ' '
+vim.g.maplocalleader = ' '
+vim.o.number = true
+vim.o.relativenumber = true
+vim.o.clipboard = "unnamedplus"
+vim.o.foldlevelstart = 99
+vim.o.signcolumn = "yes"
+vim.o.undofile = true
+vim.o.ignorecase = true
+vim.o.smartcase = true
+vim.o.expandtab = true
+vim.o.shiftwidth = 4
+vim.o.tabstop = 4
+vim.o.wrap = false
+vim.opt.fillchars = { eob = " ", }
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_node_provider = 0
+vim.g.loaded_python3_provider = 0
+vim.filetype.add({ extension = { mdx = 'markdown.mdx' } })
 
--- -- Enable faster startup by caching compiled Lua modules
--- vim.loader.enable()
---
--- -- Set <space> as the leader key
--- -- See `:help mapleader`
--- --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
--- vim.g.mapleader = ' '
--- vim.g.maplocalleader = ' '
---
--- -- Set to true if you have a Nerd Font installed and selected in the terminal
--- vim.g.have_nerd_font = false
---
--- -- [[ Setting options ]]
--- --  See `:help vim.o`
--- -- NOTE: You can change these options as you wish!
--- --  For more options, you can see `:help option-list`
---
--- -- Make line numbers default
--- vim.o.number = true
--- -- You can also add relative line numbers, to help with jumping.
--- --  Experiment for yourself to see if you like it!
--- vim.o.relativenumber = true
---
--- -- Enable mouse mode, can be useful for resizing splits for example!
--- vim.o.mouse = 'a'
---
--- -- Don't show the mode, since it's already in the status line
--- vim.o.showmode = false
---
--- -- Sync clipboard between OS and Neovim.
--- --  Schedule the setting after `UiEnter` because it can increase startup-time.
--- --  Remove this option if you want your OS clipboard to remain independent.
--- --  See `:help 'clipboard'`
--- vim.schedule(function() vim.o.clipboard = 'unnamedplus' end)
---
--- -- Enable break indent
--- vim.o.breakindent = true
---
--- -- Enable undo/redo changes even after closing and reopening a file
--- vim.o.undofile = true
---
--- -- Case-insensitive searching UNLESS \C or one or more capital letters in the search term
--- vim.o.ignorecase = true
--- vim.o.smartcase = true
---
--- -- Keep signcolumn on by default
--- vim.o.signcolumn = 'yes'
---
--- -- Decrease update time
--- vim.o.updatetime = 250
---
--- -- Decrease mapped sequence wait time
--- vim.o.timeoutlen = 300
---
--- -- Configure how new splits should be opened
--- vim.o.splitright = true
--- vim.o.splitbelow = true
---
--- -- Sets how neovim will display certain whitespace characters in the editor.
--- --  See `:help 'list'`
--- --  and `:help 'listchars'`
--- --
--- --  Notice listchars is set using `vim.opt` instead of `vim.o`.
--- --  It is very similar to `vim.o` but offers an interface for conveniently interacting with tables.
--- --   See `:help lua-options`
--- --   and `:help lua-guide-options`
--- vim.o.list = true
--- vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
---
--- -- Preview substitutions live, as you type!
--- vim.o.inccommand = 'split'
---
--- -- Show which line your cursor is on
--- vim.o.cursorline = true
---
--- -- Minimal number of screen lines to keep above and below the cursor.
--- vim.o.scrolloff = 10
---
--- -- if performing an operation that would fail due to unsaved changes in the buffer (like `:q`),
--- -- instead raise a dialog asking if you wish to save the current file(s)
--- -- See `:help 'confirm'`
--- vim.o.confirm = true
---
+vim.keymap.set('n', '<leader>w', ':set wrap!<CR>', { silent = true, desc = "Toggle Wrap" })
+
+vim.pack.add({
+    'https://github.com/neovim/nvim-lspconfig',
+    'https://github.com/nvim-treesitter/nvim-treesitter',
+    'https://github.com/mason-org/mason.nvim',
+    'https://github.com/mason-org/mason-lspconfig.nvim',
+    'https://github.com/folke/lazydev.nvim',
+    { src = 'https://github.com/saghen/blink.cmp', version = vim.version.range('1') },
+    'https://github.com/catppuccin/nvim',
+    'https://github.com/echasnovski/mini.icons',
+    'https://github.com/ibhagwan/fzf-lua',
+    'https://github.com/stevearc/oil.nvim',
+})
+
+local ts_langs = {
+    'lua', 'vim', 'vimdoc', 'query',
+    'typescript', 'tsx', 'javascript', 'jsdoc',
+    'html', 'css', 'python', 'bash',
+    'markdown', 'markdown_inline',
+    'rust', 'toml', 'json', 'yaml',
+}
+
+require('nvim-treesitter').install(ts_langs)
+
+vim.api.nvim_create_autocmd('FileType', {
+    callback = function()
+        local ok = pcall(vim.treesitter.start)
+
+        if ok then
+            vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+            vim.wo[0][0].foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+            vim.wo[0][0].foldmethod = 'expr'
+        end
+    end,
+})
+
+require('catppuccin').setup({
+    flavour = "frappe",
+    transparent_background = true,
+    float = {
+        transparent = true,
+        solid = false,
+    }
+})
+
+vim.cmd.colorscheme("catppuccin")
+
+-- <C-space> open menu
+-- <C-y> accept
+-- <C-n>/<C-p> cycle
+-- <C-e> dismiss
+require('blink.cmp').setup({
+    keymap = {
+       preset = 'default',
+      ['<Tab>'] = { 'select_and_accept', 'fallback' },
+    },
+    fuzzy = { implementation = 'prefer_rust_with_warning' },
+})
+
+require('mini.icons').setup()
+MiniIcons.mock_nvim_web_devicons()
+
+require('fzf-lua').setup({ 'default' })
+
+vim.keymap.set('n', '<leader>ff', function() require('fzf-lua').files() end, { desc = 'Find: files' })
+vim.keymap.set('n', '<leader>fg', function() require('fzf-lua').live_grep() end, { desc = 'Find: live grep' })
+vim.keymap.set('n', '<leader>fb', function() require('fzf-lua').buffers() end, { desc = 'Find: buffers' })
+vim.keymap.set('n', '<leader>fh', function() require('fzf-lua').helptags() end, { desc = 'Find: help tags' })
+vim.keymap.set('n', '<leader>fr', function() require('fzf-lua').resume() end, { desc = 'Find: resume' })
+vim.keymap.set('n', '<leader>fd', function() require('fzf-lua').diagnostics_document() end,
+    { desc = 'Find: diagnostics' })
+vim.keymap.set('n', '<leader>/', function() require('fzf-lua').lgrep_curbuf() end, { desc = 'Find: grep current buffer' })
+
+require('oil').setup({
+    view_options = { show_hidden = true },
+})
+
+vim.keymap.set('n', '-', '<cmd>Oil<cr>', { desc = 'Open parent directory' })
+vim.keymap.set('n', '<leader>e', '<cmd>Oil<cr>', { desc = 'File explorer' })
+
+require('mason').setup()
+
+require('lazydev').setup()
+
+vim.lsp.config('*', {
+    capabilities = require('blink.cmp').get_lsp_capabilities(nil, true),
+})
+
+vim.lsp.config('lua_ls', {
+    settings = {
+        Lua = {
+            runtime = { version = 'LuaJIT' },
+            diagnostics = { globals = { 'vim' } },
+        },
+    },
+})
+
+require('mason-lspconfig').setup({
+    ensure_installed = {
+        'lua_ls',
+        'vtsls',
+        'eslint',
+        'html',
+        'cssls',
+        'pyright',
+        'ruff',
+        'bashls',
+        'marksman',
+        'rust_analyzer',
+    },
+})
+
+vim.api.nvim_create_autocmd('LspAttach', {
+    callback = function(ev)
+        local buf = ev.buf
+
+        vim.keymap.set('n', 'gd', function() require('fzf-lua').lsp_definitions() end,
+            { buffer = buf, desc = 'LSP: go to definition' })
+        vim.keymap.set('n', 'grr', function() require('fzf-lua').lsp_references() end,
+            { buffer = buf, desc = 'LSP: references' })
+        vim.keymap.set('n', 'gO', function() require('fzf-lua').lsp_document_symbols() end,
+            { buffer = buf, desc = 'LSP: document symbols' })
+        vim.keymap.set('n', '<leader>cf', function() vim.lsp.buf.format({ async = true }) end,
+            { buffer = buf, desc = 'LSP: format buffer' })
+    end,
+})
