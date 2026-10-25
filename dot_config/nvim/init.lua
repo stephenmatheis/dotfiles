@@ -11,6 +11,7 @@ vim.o.undofile = true
 vim.o.ignorecase = true
 vim.o.smartcase = true
 vim.o.cursorline = true
+vim.o.cursorlineopt = "number" -- highlight only the line number, no line background
 vim.o.scrolloff = 10
 -- turn off spaces showing as dashes
 vim.o.list = false
@@ -177,6 +178,10 @@ require('mason').setup {}
 vim.lsp.config('*', {
     capabilities = require('blink.cmp').get_lsp_capabilities(nil, true),
 })
+
+-- Show LSP color swatches as a square in front of the hex code instead of painting
+-- its background, which diff highlights cover up.
+vim.lsp.document_color.enable(true, nil, { style = 'virtual' })
 
 -- Make lua_ls aware of Neovim's runtime (the `vim` global, plugin APIs, etc.)
 -- so it stops flagging `vim.*` calls as "undefined global" warnings.
