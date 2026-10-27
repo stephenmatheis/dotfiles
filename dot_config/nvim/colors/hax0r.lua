@@ -38,6 +38,13 @@ local c = {
   -- Added: VS Code's panel outline, fg @ 15%, for borders
   border = '#052703',         -- fg @ 15% over bg
   float_border = '#03350b',   -- fg @ 15% over dark_green
+  -- Added: Claude Code's faint text, a brighter cursor guide
+  faint = '#496767',          -- cursor guide #b3ecff @ 40% over bg
+  -- Added: the diff colors VS Code and Claude Code use (ghostty palette slots 22/28/52/88)
+  diff_green = '#003300',      -- added line, as bright as diff_red
+  diff_green_word = '#004c00', -- added word, as bright as diff_red_word
+  diff_red = '#5f0000',        -- removed line, xterm's 52
+  diff_red_word = '#870000',   -- removed word, xterm's 88
 }
 
 local function hl(group, opts)
@@ -115,10 +122,12 @@ hl('DiagnosticUnderlineOk', { undercurl = true, sp = c.green })
 hl('DiagnosticDeprecated', { strikethrough = true })
 
 -- Diff
-hl('DiffAdd', { bg = c.dark_green })
-hl('DiffChange', { bg = c.dark_green })
-hl('DiffText', { bg = c.cursor_line })
-hl('DiffDelete', { fg = c.red })
+-- not dark_green, cursor_line and red text: the bands VS Code and Claude Code draw. nvim's diff doesn't
+-- know which side is older, so lines on one side only are DiffAdd, and the gap across from them is DiffDelete
+hl('DiffAdd', { bg = c.diff_green })
+hl('DiffChange', { bg = c.diff_green })
+hl('DiffText', { bg = c.diff_green_word })
+hl('DiffDelete', { fg = c.diff_red_word, bg = c.diff_red })
 
 -- Spell
 hl('SpellBad', { undercurl = true, sp = c.red })
@@ -150,7 +159,7 @@ hl('Added', { fg = c.bright_green })
 hl('Changed', { fg = c.white })
 hl('Removed', { fg = c.red })
 hl('GitSignsStagedAdd', { fg = c.dim_green })
-hl('GitSignsStagedChange', { fg = c.ghostty_black })
+hl('GitSignsStagedChange', { fg = c.faint }) -- not ghostty_black: it read at 2.01:1, so use Claude Code's faint text
 hl('GitSignsStagedDelete', { fg = c.dim_red })
 hl('GitSignsStagedUntracked', { link = 'GitSignsStagedAdd' })
 hl('GitSignsStagedChangedelete', { link = 'GitSignsStagedChange' })
@@ -167,6 +176,13 @@ hl('GitSignsStagedDeleteCul', { link = 'GitSignsStagedDelete' })
 hl('GitSignsStagedUntrackedCul', { link = 'GitSignsStagedAdd' })
 hl('GitSignsStagedChangedeleteCul', { link = 'GitSignsStagedChange' })
 hl('GitSignsStagedTopdeleteCul', { link = 'GitSignsStagedDelete' })
+-- Hunk previews, like VS Code: removed lines keep their text color on the red band (DiffDelete's
+-- dark red fg is for the gap's dashes), and changed words get the word colors instead of reverse video
+hl('GitSignsDeletePreview', { bg = c.diff_red })
+hl('GitSignsDeleteVirtLn', { bg = c.diff_red })
+hl('GitSignsAddInline', { bg = c.diff_green_word })
+hl('GitSignsChangeInline', { bg = c.diff_green_word })
+hl('GitSignsDeleteInline', { bg = c.diff_red_word })
 
 -- 3. Indent
 hl('IblIndent', { fg = c.dim_green })
@@ -201,6 +217,24 @@ hl('MiniIconsGrey', { fg = c.fg })
 -- fzf-lua draws its borders like Normal (fg) by default, so give them the faint border too
 hl('FzfLuaBorder', { fg = c.border, bg = c.bg })
 hl('FzfLuaPreviewBorder', { link = 'FzfLuaBorder' })
+-- fzf-lua picks named colors for these (Brown1, CadetBlue1, PaleVioletRed1...), so map them in:
+-- numbers like LineNr, keys and the current buffer bright, the rest plain
+hl('FzfLuaHeaderBind', { fg = c.bright_green })
+hl('FzfLuaHeaderText', { fg = c.fg })
+hl('FzfLuaPathLineNr', { link = 'LineNr' })
+hl('FzfLuaPathColNr', { link = 'LineNr' })
+hl('FzfLuaBufNr', { link = 'LineNr' })
+hl('FzfLuaBufFlagCur', { fg = c.bright_green })
+hl('FzfLuaBufFlagAlt', { fg = c.fg })
+hl('FzfLuaLivePrompt', { fg = c.bright_green })
+hl('FzfLuaLiveSym', { fg = c.bright_green })
+hl('FzfLuaTabTitle', { fg = c.bright_green, bold = true })
+hl('FzfLuaTabMarker', { fg = c.bright_green, bold = true })
+-- the fzf window's statusline in split layouts, borrowed from fzf.vim; drawn like StatusLine
+hl('fzf1', { fg = c.bright_green, bg = c.dark_green })
+hl('fzf2', { fg = c.fg, bg = c.dark_green })
+hl('fzf3', { fg = c.fg, bg = c.dark_green })
+-- FzfLuaBackdrop keeps fzf-lua's black: it only dims the editor behind the picker
 
 -- Terminal
 vim.g.terminal_color_0 = c.dark_green
