@@ -45,6 +45,13 @@ vim.keymap.set({ 'n' }, '<A-h>', '<C-w>h')
 vim.keymap.set({ 'n' }, '<A-j>', '<C-w>j')
 vim.keymap.set({ 'n' }, '<A-k>', '<C-w>k')
 vim.keymap.set({ 'n' }, '<A-l>', '<C-w>l')
+-- fzf-lua pickers are terminal buffers too, so pass <A-h> through to fzf (toggle hidden files)
+vim.api.nvim_create_autocmd('FileType', {
+    pattern = 'fzf',
+    callback = function(ev)
+        vim.keymap.set('t', '<A-h>', '<A-h>', { buffer = ev.buf })
+    end,
+})
 
 vim.api.nvim_create_autocmd('TextYankPost', {
     desc = 'Highlight when yanking (copying) text',
