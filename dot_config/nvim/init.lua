@@ -70,7 +70,7 @@ vim.pack.add({
     'https://github.com/mason-org/mason.nvim',
     'https://github.com/mason-org/mason-lspconfig.nvim',
     { src = 'https://github.com/saghen/blink.cmp', version = vim.version.range('1') },
-    'https://github.com/echasnovski/mini.icons',
+    'https://github.com/nvim-mini/mini.icons',
     'https://github.com/ibhagwan/fzf-lua',
     'https://github.com/stevearc/oil.nvim',
     'https://github.com/lukas-reineke/indent-blankline.nvim',

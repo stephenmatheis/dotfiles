@@ -31,6 +31,8 @@ local c = {
   -- HaX0R R3D
   red = '#ff1111',            -- ansi 9
   dim_red = '#b00d0d',        -- ansi 1
+  -- Added: no hax0r theme has a warning color
+  amber = '#ffb000',          -- amber phosphor, green screen's monochrome sibling
 }
 
 local function hl(group, opts)
@@ -87,7 +89,7 @@ hl('QuickFixLine', { fg = c.bold, bold = true })
 
 -- Messages
 hl('ErrorMsg', { fg = c.red })
-hl('WarningMsg', { fg = c.dim_red })
+hl('WarningMsg', { fg = c.amber })
 hl('OkMsg', { fg = c.green })
 hl('ModeMsg', { fg = c.bright_green })
 hl('MoreMsg', { fg = c.bright_green })
@@ -96,12 +98,12 @@ hl('NvimInternalError', { fg = c.bg, bg = c.red })
 
 -- Diagnostics
 hl('DiagnosticError', { fg = c.red })
-hl('DiagnosticWarn', { fg = c.dim_red })
+hl('DiagnosticWarn', { fg = c.amber })
 hl('DiagnosticInfo', { fg = c.bright_green })
 hl('DiagnosticHint', { fg = c.dim_green })
 hl('DiagnosticOk', { fg = c.green })
 hl('DiagnosticUnderlineError', { undercurl = true, sp = c.red })
-hl('DiagnosticUnderlineWarn', { undercurl = true, sp = c.dim_red })
+hl('DiagnosticUnderlineWarn', { undercurl = true, sp = c.amber })
 hl('DiagnosticUnderlineInfo', { undercurl = true, sp = c.bright_green })
 hl('DiagnosticUnderlineHint', { undercurl = true, sp = c.dim_green })
 hl('DiagnosticUnderlineOk', { undercurl = true, sp = c.green })
@@ -115,7 +117,7 @@ hl('DiffDelete', { fg = c.red })
 
 -- Spell
 hl('SpellBad', { undercurl = true, sp = c.red })
-hl('SpellCap', { undercurl = true, sp = c.dim_red })
+hl('SpellCap', { undercurl = true, sp = c.amber })
 hl('SpellRare', { undercurl = true, sp = c.bright_green })
 hl('SpellLocal', { undercurl = true, sp = c.dim_green })
 
@@ -177,6 +179,18 @@ hl('MasonHighlightBlockBoldSecondary', { link = 'Search' })
 hl('MasonMuted', { link = 'Comment' })
 hl('MasonMutedBlock', { fg = c.fg, bg = c.dim_green })
 hl('MasonMutedBlockBold', { fg = c.fg, bg = c.dim_green, bold = true })
+
+-- 5. Mini Icons
+-- Gr33N sets every ansi hue (1-6) to green, so every icon hue is green too
+hl('MiniIconsRed', { fg = c.green })
+hl('MiniIconsOrange', { fg = c.green })
+hl('MiniIconsYellow', { fg = c.green })
+hl('MiniIconsGreen', { fg = c.green })
+hl('MiniIconsCyan', { fg = c.green })
+hl('MiniIconsAzure', { fg = c.green })
+hl('MiniIconsBlue', { fg = c.green })
+hl('MiniIconsPurple', { fg = c.green })
+hl('MiniIconsGrey', { fg = c.fg })
 
 -- Terminal
 vim.g.terminal_color_0 = c.dark_green
