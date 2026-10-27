@@ -1,0 +1,29 @@
+{
+	"name": "hax0r-theme",
+	"displayName": "hax0r",
+	"description": "HaX0R Gr33N for VS Code, matching the hax0r Neovim, Ghostty and Claude Code themes",
+	"version": "1.0.0",
+	"publisher": "stephenmatheis",
+	"engines": {
+		"vscode": "^1.80.0"
+	},
+	"categories": [
+		"Themes"
+	],
+	"contributes": {
+		"themes": [
+			{
+				"label": "hax0r",
+				"uiTheme": "vs-dark",
+				"path": "./themes/hax0r-color-theme.json"
+			}
+		],
+		"iconThemes": [
+			{
+				"id": "hax0r",
+				"label": "hax0r",
+				"path": "./icons/hax0r-icon-theme.json"
+			}
+		]
+	}
+}
