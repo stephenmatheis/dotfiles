@@ -17,7 +17,8 @@ style = "blue"
 
 [character]
 success_symbol = "[❯](purple)"
-error_symbol = "[❯](red)"
+# not red: Gr33N makes ansi red green, so use HaX0R R3D's red to make failures visible
+error_symbol = "[❯](#ff1111)"
 vimcmd_symbol = "[❮](green)"
 
 [git_branch]
