@@ -33,6 +33,11 @@ local c = {
   dim_red = '#b00d0d',        -- ansi 1
   -- Added: no hax0r theme has a warning color
   amber = '#ffb000',          -- amber phosphor, green screen's monochrome sibling
+  -- Added: Gr33N's solid selection, tinted down
+  selection_tint = '#1b2c18', -- selection @ 12% over bg
+  -- Added: VS Code's panel outline, fg @ 15%, for borders
+  border = '#052703',         -- fg @ 15% over bg
+  float_border = '#03350b',   -- fg @ 15% over dark_green
 }
 
 local function hl(group, opts)
@@ -54,7 +59,7 @@ hl('StatusLine', { fg = c.bright_green, bg = c.dark_green })
 hl('StatusLineNC', { fg = c.dim_green, bg = c.dark_green })
 hl('WinBar', { link = 'StatusLine' })
 hl('WinBarNC', { link = 'StatusLineNC' })
-hl('WinSeparator', { fg = c.dim_green })
+hl('WinSeparator', { fg = c.border }) -- not dim_green: the faint outline VS Code draws around its panels, so splits don't shout
 hl('Directory', { fg = c.bright_green })
 
 -- Code
@@ -77,7 +82,7 @@ hl('Underlined', { fg = c.link, underline = true })
 hl('Conceal', { fg = c.dim_green })
 
 -- Interaction
-hl('Visual', { fg = c.bg, bg = c.selection }) -- not selection_text: 1.09:1 on selection
+hl('Visual', { bg = c.selection_tint }) -- not solid selection: a big selection glared, so tint it and keep each character's own color
 hl('Search', { fg = c.bg, bg = c.fg })
 hl('CurSearch', { fg = c.bg, bg = c.bright_green })
 hl('IncSearch', { fg = c.bg, bg = c.bright_green })
@@ -123,7 +128,7 @@ hl('SpellLocal', { undercurl = true, sp = c.dim_green })
 
 -- Floats and Folds
 hl('NormalFloat', { fg = c.fg, bg = c.dark_green })
-hl('FloatBorder', { fg = c.dim_green, bg = c.dark_green })
+hl('FloatBorder', { fg = c.float_border, bg = c.dark_green }) -- not dim_green: VS Code's faint panel outline, as it looks over a float
 hl('FloatTitle', { fg = c.bold, bg = c.dark_green, bold = true })
 hl('FloatShadow', { bg = c.black, blend = 80 })
 hl('FloatShadowThrough', { bg = c.black, blend = 100 })
@@ -192,6 +197,11 @@ hl('MiniIconsBlue', { fg = c.green })
 hl('MiniIconsPurple', { fg = c.green })
 hl('MiniIconsGrey', { fg = c.fg })
 
+-- 6. Fzf Lua
+-- fzf-lua draws its borders like Normal (fg) by default, so give them the faint border too
+hl('FzfLuaBorder', { fg = c.border, bg = c.bg })
+hl('FzfLuaPreviewBorder', { link = 'FzfLuaBorder' })
+
 -- Terminal
 vim.g.terminal_color_0 = c.dark_green
 vim.g.terminal_color_1 = c.green
@@ -200,7 +210,7 @@ vim.g.terminal_color_3 = c.green
 vim.g.terminal_color_4 = c.green
 vim.g.terminal_color_5 = c.green
 vim.g.terminal_color_6 = c.green
-vim.g.terminal_color_7 = c.white
+vim.g.terminal_color_7 = c.fg -- not white: match ghostty's palette, which uses fg so Claude Code's plain code text matches nvim's variables
 vim.g.terminal_color_8 = c.dim_green -- not black: match ghostty's palette, which uses dim_green so comments stay readable
 vim.g.terminal_color_9 = c.bright_green
 vim.g.terminal_color_10 = c.bright_green

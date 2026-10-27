@@ -1,5 +1,8 @@
 bell-features = no-attention,no-title
 theme = HaX0R Gr33N
+# Not Gr33N's white: Claude Code draws plain code text (variables, punctuation) in slot 7,
+# so use fg to match nvim's variables; bright white (15) stays white for emphasis
+palette = 7=#16b10e
 # Not ghostty's #334843: Claude Code colors code comments with slot 8, which vanished
 # on diff backgrounds, so use dim_green, the same color as nvim's comments
 palette = 8=#0b8700
@@ -13,6 +16,10 @@ palette = 22=#003300
 palette = 28=#004c00
 palette = 52=#5f0000
 palette = 88=#870000
+# Not Gr33N's solid mint with gray text: a big selection glared and its text read at 1.9:1,
+# so tint with mint at 12% (nvim's selection_tint) and let each character keep its own color
+selection-background = #1b2c18
+selection-foreground = cell-foreground
 window-padding-x = 16
 window-padding-y = 0,16
 window-padding-balance = true
