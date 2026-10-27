@@ -4,7 +4,8 @@
 //   cursor #15d00d, cursor_text #ffffff, selection #d4ffc1, link #00e8ca,
 //   selection_tint #1b2c18 (selection @ 12% over bg, added),
 //   dim_green #0b8700 (badge #14ff00 @ 50% over bg), cursor_line #2e4640 (cursor guide @ 25%),
-//   ghostty_black #334843, red #ff1111 (HaX0R R3D), dim_red #b00d0d (R3D), amber #ffb000 (added).
+//   ghostty_black #334843, red #ff1111 (HaX0R R3D), dim_red #b00d0d (R3D), amber #ffb000 (added),
+//   diff_green #003300, diff_green_word #004c00, diff_red #5f0000, diff_red_word #870000 (added).
 // A color with a 2-digit alpha suffix is a palette color made see-through, for overlays
 // that must not hide the text under them.
 // Chrome borders are #16b10e26, fg at 15%: the faint outline VS Code itself draws around its
@@ -189,8 +190,9 @@
         "editorMarkerNavigationWarning.background": "#ffb000",
         "editorMarkerNavigationInfo.background": "#19e20e",
 
-        // Diff: not hax0r colors, the same as Claude Code's diffs (ghostty slots 22/28/52/88),
-        // with greens as bright as the reds and dark enough to keep dim_green comments readable
+        // Diff: diff_green, diff_green_word, diff_red and diff_red_word, the same as nvim's and Claude
+        // Code's diffs (ghostty slots 22/28/52/88): greens as bright as the reds, and dark enough to
+        // keep dim_green comments readable
         "diffEditor.insertedLineBackground": "#003300",
         "diffEditor.insertedTextBackground": "#004c00",
         "diffEditor.removedLineBackground": "#5f0000",

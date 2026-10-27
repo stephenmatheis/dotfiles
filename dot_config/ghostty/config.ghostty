@@ -10,6 +10,7 @@ palette = 8=#0b8700
 # so use Gr33N's selection mint to set it apart from prose
 palette = 12=#d4ffc1
 # Claude Code diff backgrounds: ~/.claude/themes/hax0r.json points at these slots.
+# nvim and VS Code use the same four colors by hex, so change all three together.
 # 22/28 (added line/word) are darkened to match 52/88 (removed line/word) in brightness;
 # 52/88 are xterm's own values, listed so they're kept on purpose
 palette = 22=#003300

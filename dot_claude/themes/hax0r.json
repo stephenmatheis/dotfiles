@@ -19,7 +19,7 @@
     "diff_green_word": "ansi256(28), #004c00 in ghostty's palette, as bright as diff_red_word",
     "diff_red": "ansi256(52), #5f0000, xterm's own value",
     "diff_red_word": "ansi256(88), #870000, xterm's own value",
-    "_diffs": "not hax0r colors: an -ansi base draws diffs in 256 colors, so diffs point at palette slots that ghostty's config sets exactly; dimmed matches dark-ansi, which reuses the same colors",
+    "_diffs": "added diff colors, shared with nvim (diff_*) and VS Code: an -ansi base draws diffs in 256 colors, so diffs point at palette slots that ghostty's config sets exactly; dimmed matches dark-ansi, which reuses the same colors",
     "_comments": "code comments use ghostty's slot 8, set to dim_green #0b8700 in ghostty's config",
     "_code_text": "plain code text (variables, punctuation) uses ghostty's slot 7, set to fg #16b10e in ghostty's config so it matches nvim's variables",
     "amber": "#ffb000 added: no hax0r theme has a warning color",
