@@ -1,5 +1,18 @@
 bell-features = no-attention,no-title
 theme = HaX0R Gr33N
+# Not ghostty's #334843: Claude Code colors code comments with slot 8, which vanished
+# on diff backgrounds, so use dim_green, the same color as nvim's comments
+palette = 8=#0b8700
+# Not Gr33N's bright_green: Claude Code draws inline code in slot 12 (bright blue),
+# so use Gr33N's selection mint to set it apart from prose
+palette = 12=#d4ffc1
+# Claude Code diff backgrounds: ~/.claude/themes/hax0r.json points at these slots.
+# 22/28 (added line/word) are darkened to match 52/88 (removed line/word) in brightness;
+# 52/88 are xterm's own values, listed so they're kept on purpose
+palette = 22=#003300
+palette = 28=#004c00
+palette = 52=#5f0000
+palette = 88=#870000
 window-padding-x = 16
 window-padding-y = 0,16
 window-padding-balance = true
@@ -10,4 +23,4 @@ progress-style = false
 # IC Orange PPL
 # Kanagawa Dragon
 # Miasma
-# 
+
