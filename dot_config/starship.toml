@@ -26,7 +26,9 @@ format = "[$branch]($style)"
 style = "bright-black"
 
 [git_status]
-format = "[[(*$conflicted$untracked$modified$staged$renamed$deleted)](218) ($ahead_behind$stashed)]($style)"
+# not 218 (pure's pink): bright white, the color of changed lines in nvim's gitsigns and VS Code's git
+# colors; not plain white, which ghostty's palette makes green
+format = "[[(*$conflicted$untracked$modified$staged$renamed$deleted)](bright-white) ($ahead_behind$stashed)]($style)"
 style = "cyan"
 conflicted = "​"
 untracked = "​"
