@@ -50,9 +50,11 @@ switch() {
     mkdir -p $state
     print -r -- $name > $state/theme
 
-    # Ghostty: config.ghostty includes this file, and SIGUSR2 makes Ghostty reload its config
+    # Ghostty: config.ghostty includes this file, and SIGUSR2 makes Ghostty reload its config.
+    # -a: macOS's pkill skips its own ancestors otherwise, and run in Ghostty, that's Ghostty.
+    # The signal has to come first, or pkill reads -USR2 as -U SR2
     print -r -- "theme = hax0r-$name" > $state/ghostty
-    pkill -USR2 -x ghostty
+    pkill -USR2 -a -x ghostty
 
     # tmux: tmux.conf sources this file at startup; a running server gets the colors now
     local tmux_theme=$config/tmux/themes/hax0r-$name.conf
@@ -60,13 +62,16 @@ switch() {
     tmux source-file $tmux_theme 2>/dev/null
 
     # nvim: init.lua reloads the colorscheme on SIGUSR1, and colors/hax0r.lua reads $state/theme
-    pkill -USR1 -x nvim
+    # (-a, like Ghostty's, for when this runs in nvim's terminal)
+    pkill -USR1 -a -x nvim
 
-    # Claude Code: running sessions watch settings.json and switch on their own
+    # Claude Code: running sessions watch settings.json and switch on their own. Written in place,
+    # not replaced with mv, so a watcher on the file itself still sees the change
     if [[ -f $claude_settings ]]; then
         local tmp=$claude_settings.hax0r-$$
         if jq --arg theme custom:hax0r-$name '.theme = $theme' $claude_settings > $tmp; then
-            mv $tmp $claude_settings
+            cat $tmp > $claude_settings
+            rm -f $tmp
         else
             rm -f $tmp
             print -u2 "hax0r: couldn't update $claude_settings"

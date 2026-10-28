@@ -121,11 +121,13 @@ require('statuscol').setup {
 }
 
 vim.cmd.colorscheme('hax0r')
--- `hax0r <theme>` sends every running nvim SIGUSR1, so reload the colorscheme to pick up the new theme
+-- `hax0r <theme>` sends every running nvim SIGUSR1, so reload the colorscheme to pick up the new theme,
+-- and repaint: a signal isn't a keypress, so nvim wouldn't redraw until the next one
 vim.api.nvim_create_autocmd('Signal', {
     pattern = 'SIGUSR1',
     callback = function()
         vim.cmd.colorscheme('hax0r')
+        vim.cmd.redraw({ bang = true })
     end,
 })
 
