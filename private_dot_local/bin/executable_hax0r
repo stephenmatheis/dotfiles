@@ -13,7 +13,8 @@ emulate -L zsh
 config=${XDG_CONFIG_HOME:-$HOME/.config}
 state=${XDG_STATE_HOME:-$HOME/.local/state}/hax0r
 themes=$config/hax0r/themes
-claude_settings=${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json
+claude_dir=${CLAUDE_CONFIG_DIR:-$HOME/.claude}
+claude_settings=$claude_dir/settings.json
 vscode_settings="$HOME/Library/Application Support/Code/User/settings.json"
 
 current() {
@@ -65,11 +66,14 @@ switch() {
     # (-a, like Ghostty's, for when this runs in nvim's terminal)
     pkill -USR1 -a -x nvim
 
-    # Claude Code: running sessions watch settings.json and switch on their own. Written in place,
-    # not replaced with mv, so a watcher on the file itself still sees the change
-    if [[ -f $claude_settings ]]; then
+    # Claude Code: a running session reads its theme setting only at startup, but reloads
+    # ~/.claude/themes when a file there changes. So the setting stays custom:hax0r and the
+    # chosen theme is copied over hax0r.json. settings.json is only written when it's not set yet
+    mkdir -p $claude_dir/themes
+    cp $config/hax0r/claude-code/$name.json $claude_dir/themes/hax0r.json
+    if [[ -f $claude_settings && $(jq -r .theme $claude_settings) != custom:hax0r ]]; then
         local tmp=$claude_settings.hax0r-$$
-        if jq --arg theme custom:hax0r-$name '.theme = $theme' $claude_settings > $tmp; then
+        if jq '.theme = "custom:hax0r"' $claude_settings > $tmp; then
             cat $tmp > $claude_settings
             rm -f $tmp
         else

@@ -5,7 +5,6 @@
 
 local home = vim.env.HOME
 local config = vim.env.XDG_CONFIG_HOME or (home .. '/.config')
-local claude = vim.env.CLAUDE_CONFIG_DIR or (home .. '/.claude')
 local vscode = config .. '/vscode/hax0r-theme'
 local P = dofile(config .. '/hax0r/palettes.lua')
 
@@ -132,6 +131,9 @@ end
 -- Diffs render in 256 colors under an -ansi base, so hex values would be rounded; they point at
 -- slots 22/28/52/88 instead, which Ghostty and VS Code's terminal set exactly. Dimmed diffs match,
 -- like dark-ansi's own.
+-- These files stay out of ~/.claude/themes: a running session reads its theme setting only at
+-- startup, but it does reload ~/.claude/themes when a file there changes. So the setting stays
+-- custom:hax0r, and `hax0r <theme>` copies the chosen file over ~/.claude/themes/hax0r.json.
 local claude_keys = {
   {
     { 'text', 'fg' },
@@ -244,7 +246,7 @@ local function claude_theme(name, c)
     '  }',
     '}',
   }, '\n')
-  write(('%s/themes/hax0r-%s.json'):format(claude, name), text .. '\n')
+  write(('%s/hax0r/claude-code/%s.json'):format(config, name), text .. '\n')
 end
 
 -- VS Code: a color theme and a file icon theme per theme, filled in from templates

@@ -1,4 +1,4 @@
-# Replaced by the per-theme files `hax0r build` writes (hax0r-<theme>.json and so on)
-.claude/themes/hax0r.json
+# Replaced by the per-theme files `hax0r build` writes (hax0r-<theme>-color-theme.json and so on).
+# ~/.claude/themes/hax0r.json stays: `hax0r <theme>` overwrites it on each machine
 .config/vscode/hax0r-theme/themes/hax0r-color-theme.json
 .config/vscode/hax0r-theme/icons/hax0r-icon-theme.json
