@@ -1,26 +1,9 @@
 bell-features = no-attention,no-title
-theme = HaX0R Gr33N
-# Not Gr33N's white: Claude Code draws plain code text (variables, punctuation) in slot 7,
-# so use fg to match nvim's variables; bright white (15) stays white for emphasis
-palette = 7=#16b10e
-# Not ghostty's #334843: Claude Code colors code comments with slot 8, which vanished
-# on diff backgrounds, so use dim_green, the same color as nvim's comments
-palette = 8=#0b8700
-# Not Gr33N's bright_green: Claude Code draws inline code in slot 12 (bright blue),
-# so use Gr33N's selection mint to set it apart from prose
-palette = 12=#d4ffc1
-# Claude Code diff backgrounds: ~/.claude/themes/hax0r.json points at these slots.
-# nvim and VS Code use the same four colors by hex, so change all three together.
-# 22/28 (added line/word) are darkened to match 52/88 (removed line/word) in brightness;
-# 52/88 are xterm's own values, listed so they're kept on purpose
-palette = 22=#003300
-palette = 28=#004c00
-palette = 52=#5f0000
-palette = 88=#870000
-# Not Gr33N's solid mint with gray text: a big selection glared and its text read at 1.9:1,
-# so tint with mint at 12% (nvim's selection_tint) and let each character keep its own color
-selection-background = #1b2c18
-selection-foreground = cell-foreground
+# The hax0r themes live in themes/hax0r-*, built from ~/.config/hax0r/palettes.lua with the
+# palette changes Claude Code needs. `hax0r <theme>` writes the file included below and reloads
+# Ghostty; until it's run, Gr33N
+theme = hax0r-green
+config-file = ?~/.local/state/hax0r/ghostty
 window-padding-x = 16
 window-padding-y = 0,16
 window-padding-balance = true

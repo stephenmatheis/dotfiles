@@ -121,6 +121,13 @@ require('statuscol').setup {
 }
 
 vim.cmd.colorscheme('hax0r')
+-- `hax0r <theme>` sends every running nvim SIGUSR1, so reload the colorscheme to pick up the new theme
+vim.api.nvim_create_autocmd('Signal', {
+    pattern = 'SIGUSR1',
+    callback = function()
+        vim.cmd.colorscheme('hax0r')
+    end,
+})
 
 -- <C-space> open menu
 -- <C-y> accept

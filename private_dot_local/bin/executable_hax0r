@@ -1,0 +1,100 @@
+#!/bin/zsh
+# hax0r: switch Ghostty, tmux, nvim, Claude Code and VS Code between the hax0r themes.
+#
+#   hax0r            list the themes, marking the current one
+#   hax0r <theme>    switch every app to <theme>
+#   hax0r preview    show every theme side by side
+#   hax0r build      rebuild each app's theme files after editing ~/.config/hax0r/palettes.lua
+#
+# The choice is per machine, kept in ~/.local/state/hax0r: dotfiles share the themes, not which one is on.
+
+emulate -L zsh
+
+config=${XDG_CONFIG_HOME:-$HOME/.config}
+state=${XDG_STATE_HOME:-$HOME/.local/state}/hax0r
+themes=$config/hax0r/themes
+claude_settings=${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json
+vscode_settings="$HOME/Library/Application Support/Code/User/settings.json"
+
+current() {
+    local theme=green
+    [[ -r $state/theme ]] && read -r theme < $state/theme
+    print -r -- $theme
+}
+
+# Prints text in a theme's own foreground on its own background
+swatch() {
+    local text=$1 bg=$2 fg=$3
+    printf '\e[48;2;%d;%d;%dm\e[38;2;%d;%d;%dm%s\e[0m' \
+        $((16#${bg:1:2})) $((16#${bg:3:2})) $((16#${bg:5:2})) \
+        $((16#${fg:1:2})) $((16#${fg:3:2})) $((16#${fg:5:2})) "$text"
+}
+
+list() {
+    local cur=$(current) name title bg fg mark
+    while IFS=$'\t' read -r name title bg fg; do
+        [[ $name == $cur ]] && mark='>' || mark=' '
+        printf '%s %s  %s\n' $mark "$(swatch " $(printf '%-6s' $name) " $bg $fg)" $title
+    done < $themes
+    print "\nSwitch with: hax0r <theme>"
+}
+
+switch() {
+    local name=$1 title
+    title=$(awk -F'\t' -v name=$name '$1 == name { print $2 }' $themes)
+    if [[ -z $title ]]; then
+        print -u2 "hax0r: there's no theme called '$name'. These are:"
+        cut -f1 $themes | sed 's/^/  /' >&2
+        return 1
+    fi
+    mkdir -p $state
+    print -r -- $name > $state/theme
+
+    # Ghostty: config.ghostty includes this file, and SIGUSR2 makes Ghostty reload its config
+    print -r -- "theme = hax0r-$name" > $state/ghostty
+    pkill -USR2 -x ghostty
+
+    # tmux: tmux.conf sources this file at startup; a running server gets the colors now
+    local tmux_theme=$config/tmux/themes/hax0r-$name.conf
+    print -r -- "source-file $tmux_theme" > $state/tmux.conf
+    tmux source-file $tmux_theme 2>/dev/null
+
+    # nvim: init.lua reloads the colorscheme on SIGUSR1, and colors/hax0r.lua reads $state/theme
+    pkill -USR1 -x nvim
+
+    # Claude Code: running sessions watch settings.json and switch on their own
+    if [[ -f $claude_settings ]]; then
+        local tmp=$claude_settings.hax0r-$$
+        if jq --arg theme custom:hax0r-$name '.theme = $theme' $claude_settings > $tmp; then
+            mv $tmp $claude_settings
+        else
+            rm -f $tmp
+            print -u2 "hax0r: couldn't update $claude_settings"
+        fi
+    fi
+
+    # VS Code: it applies a changed theme setting right away. Its terminals pick up the
+    # theme's extra colors at their next prompt (see vscode/hax0r-theme/terminal-palette.zsh)
+    if [[ -f $vscode_settings ]]; then
+        if grep -q '"workbench\.colorTheme"' $vscode_settings; then
+            sed -i '' -E \
+                -e "s/(\"workbench\.colorTheme\"[[:space:]]*:[[:space:]]*)\"[^\"]*\"/\1\"hax0r $name\"/" \
+                -e "s/(\"workbench\.iconTheme\"[[:space:]]*:[[:space:]]*)\"[^\"]*\"/\1\"hax0r-$name\"/" \
+                $vscode_settings
+        else
+            sed -i '' -e "1s/{/{\\
+    \"workbench.colorTheme\": \"hax0r $name\",\\
+    \"workbench.iconTheme\": \"hax0r-$name\",/" $vscode_settings
+        fi
+    fi
+
+    print "hax0r: switched to $(swatch " $title " $(awk -F'\t' -v name=$name '$1 == name { print $3, $4 }' $themes))"
+}
+
+case $1 in
+    '') list ;;
+    -h | --help | help) sed -n '2,9s/^# \{0,1\}//p' $0 ;;
+    build) nvim -l $config/hax0r/generate.lua && switch $(current) ;;
+    preview) HAX0R_COLUMNS=$COLUMNS nvim -l $config/hax0r/preview.lua ;;
+    *) switch $1 ;;
+esac
