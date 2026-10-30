@@ -50,6 +50,7 @@ end
 -- hue can only do with brightness: removed is accent_dim and error accent_bright, links are accent,
 -- and the removed bands are accent_dim @ 25% and 42%, nearly as strong as the added ones since
 -- their hue sets them apart (accent_dim, because the paler shades are too gray to tint a band).
+-- Claude Code's shimmer goes from selection, normal and bright_white to accent_bright and accent.
 local function theme(t)
   t.faint = mix(t.white, t.bg, 0.40)
   t.added = t.bright
@@ -66,6 +67,9 @@ local function theme(t)
   t.diff_del_word = mix(removed_tint, t.bg, 0.20)
   t.link = mix(t.selection, t.fg, 0.5)
   t.cursor_line = mix(t.bright, t.bg, 0.30)
+  t.claude_shimmer = t.selection
+  t.border_shimmer = t.normal
+  t.permission_shimmer = t.bright_white
   if t.accent then
     t.removed = t.accent_dim
     t.removed_dim = mix(t.accent_dim, t.bg, 0.60)
@@ -73,6 +77,9 @@ local function theme(t)
     t.diff_del = mix(t.accent_dim, t.bg, 0.25)
     t.diff_del_word = mix(t.accent_dim, t.bg, 0.42)
     t.link = t.accent
+    t.claude_shimmer = t.accent_bright
+    t.border_shimmer = t.accent
+    t.permission_shimmer = t.accent_bright
   end
   return t
 end

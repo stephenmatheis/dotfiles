@@ -142,7 +142,7 @@ local claude_keys = {
     { 'inactiveShimmer', 'normal' },
     { 'subtle', 'dim' }, -- the pinned prompt draws it on prompt_band, where a neutral gray read as off-theme
     { 'promptBorder', 'dim' },
-    { 'promptBorderShimmer', 'normal' },
+    { 'promptBorderShimmer', 'border_shimmer' },
     { 'userMessageBackground', 'prompt_band' }, -- dark was too faint to find prompts by
     { 'userMessageBackgroundHover', 'dark' }, -- also colors expanded blocks, where cursor_line looked bright
     { 'composerSidebarBackground', 'dark' },
@@ -152,7 +152,7 @@ local claude_keys = {
   },
   {
     { 'claude', 'bright' },
-    { 'claudeShimmer', 'selection' },
+    { 'claudeShimmer', 'claude_shimmer' },
     { 'claudeBlue_FOR_SYSTEM_SPINNER', 'normal' },
     { 'claudeBlueShimmer_FOR_SYSTEM_SPINNER', 'bright' },
     { 'clawd_body', 'bright' },
@@ -162,7 +162,7 @@ local claude_keys = {
   },
   {
     { 'permission', 'selection' },
-    { 'permissionShimmer', 'bright_white' },
+    { 'permissionShimmer', 'permission_shimmer' },
     { 'suggestion', 'selection' },
     { 'remember', 'selection' },
   },

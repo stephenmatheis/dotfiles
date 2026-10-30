@@ -9,7 +9,7 @@
     "inactiveShimmer": "#10c8c8",
     "subtle": "#008281",
     "promptBorder": "#008281",
-    "promptBorderShimmer": "#10c8c8",
+    "promptBorderShimmer": "#fe91bd",
     "userMessageBackground": "#053535",
     "userMessageBackgroundHover": "#001d20",
     "composerSidebarBackground": "#001d20",
@@ -18,7 +18,7 @@
     "selectionBg": "#182b2a",
 
     "claude": "#11d9d9",
-    "claudeShimmer": "#befff9",
+    "claudeShimmer": "#feaaca",
     "claudeBlue_FOR_SYSTEM_SPINNER": "#10c8c8",
     "claudeBlueShimmer_FOR_SYSTEM_SPINNER": "#11d9d9",
     "clawd_body": "#11d9d9",
@@ -27,7 +27,7 @@
     "briefLabelYou": "#befff9",
 
     "permission": "#befff9",
-    "permissionShimmer": "#fefefe",
+    "permissionShimmer": "#feaaca",
     "suggestion": "#befff9",
     "remember": "#befff9",
 

@@ -660,18 +660,18 @@ end
 local DUAL = {
   {
     title = 'Claude Code shimmer',
-    note = 'Claude Code sweeps a band of each Shimmer color across text drawn in its base color. It’s drawn here at three positions, left, middle and right. The band is three characters in the plain shimmer color with no blending, read from Claude Code 2.1.314’s spinner, so the sweep can’t go muddy. During tool use the whole spinner message pulses between the two colors instead, and that code blends them if it can read them as rgb(), which would pass through a grayish lavender. Only the dual themes would change, through the Shimmer keys in generate.lua; the single-color themes keep Now.',
+    note = 'Claude Code sweeps a band of claudeShimmer across its spinner message, drawn in its base color. It’s drawn here at three positions, left, middle and right. The band is three characters in the plain shimmer color with no blending, read from Claude Code 2.1.314’s spinner. During tool use the whole message pulses between the two colors instead, and that code blends them if it can read them as rgb(), which would pass through a grayish lavender. In that version nothing was found using promptBorderShimmer or permissionShimmer, so those two rows may never animate. Only the dual themes changed; the single-color themes keep Before.',
     show = DUAL_SHOW,
     options = {
-      { 'Now', 'claudeShimmer = selection, promptBorderShimmer = normal, permissionShimmer = bright_white',
+      { 'Before', 'claudeShimmer = selection, promptBorderShimmer = normal, permissionShimmer = bright_white',
         function(c) return shimmer_mock(c, { 'selection', 'normal', 'bright_white' }) end },
-      { 'Second hue', 'claudeShimmer and permissionShimmer = accent_bright, promptBorderShimmer = accent',
-        function(c) return shimmer_mock(c, { 'accent_bright', 'accent', 'accent_bright' }) end },
+      { 'Now: second hue', 'claudeShimmer and permissionShimmer = accent_bright, promptBorderShimmer = accent',
+        function(c) return shimmer_mock(c, { 'claude_shimmer', 'border_shimmer', 'permission_shimmer' }) end },
     },
   },
   {
     title = 'Starship prompt',
-    note = 'Starship names ANSI colors, and in every theme those are all the theme’s one color, so the prompt is one color apart from the dim branch and the bright-white *. Two ways to give it the second hue: a new palette slot like 196 (each Ghostty theme and VS Code’s terminal would set it, to the second hue in a dual theme and to the normal color in the others, so nothing else changes), or remapping ANSI colors, which would change every terminal tool. The slot is the safer one; the mock-ups are the same either way.',
+    note = 'Starship names ANSI colors, and in every theme those are all the theme’s one color, so the prompt is one color apart from the dim branch and the bright-white *. Two ways to give it the second hue: a new palette slot like 196 (each Ghostty theme and VS Code’s terminal would set it, to the second hue in a dual theme and to the normal color in the others, so nothing else changes), or remapping ANSI colors, which would change every terminal tool. The slot is the safer one; the mock-ups are the same either way. Picked: Now, no change.',
     show = DUAL_SHOW,
     options = {
       { 'Now', 'every named color is the theme’s one color; the branch is dim',
@@ -686,7 +686,7 @@ local DUAL = {
   },
   {
     title = 'git diff and status',
-    note = 'git colors removed lines, unstaged changes and untracked files with ANSI red, and added lines and staged changes with green. Every theme makes both the one color, so only the + and − tell them apart. Giving red the second hue fixes that, but it’s the ANSI remap: red would change in every terminal tool that uses it (ripgrep matches, ls and others), and possibly in Claude Code’s code blocks. Not decided; this is here to see what it would look like.',
+    note = 'git colors removed lines, unstaged changes and untracked files with ANSI red, and added lines and staged changes with green. Every theme makes both the one color, so only the + and − tell them apart. Giving red the second hue fixes that, but it’s the ANSI remap: red would change in every terminal tool that uses it (ripgrep matches, ls and others), and possibly in Claude Code’s code blocks. git’s config could name a palette slot instead, for git alone. Picked: Now, no change.',
     show = DUAL_SHOW,
     options = {
       { 'Now', 'ANSI red and green are both the theme’s color', function(c) return git_mock(c, c.ansi[1]) end },
@@ -695,7 +695,7 @@ local DUAL = {
   },
 }
 local dual = grids('dual', 'The second hue in more places', 'Claude Code’s shimmer, Starship and git',
-  'Mock-ups for the two dual themes only. None of this is set yet: the apps use the second hue only for removed lines, errors and links so far. Drawn from palettes.lua by each app’s rules, not screenshots.',
+  'Mock-ups for the two dual themes only. Of these, only Claude Code’s shimmer uses the second hue; beyond that the apps use it for removed lines, errors and links. Drawn from palettes.lua by each app’s rules, not screenshots.',
   DUAL)
 
 local choices = grids('choices', 'Hover and ignored', 'now, and the other options considered',
