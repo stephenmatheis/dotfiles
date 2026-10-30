@@ -1,0 +1,7 @@
+# Shared by both machines (chezmoi). Per-machine settings, like user and editor, stay in ~/.gitconfig.
+
+# Diffs: hax0r makes red and green the theme's one color, so removed lines are dim (as Claude Code
+# draws them) and added lines bold
+[color "diff"]
+	old = red dim
+	new = green bold

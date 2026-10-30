@@ -37,8 +37,9 @@ end
 --   warning (and conflict) bright halfway to white
 --   error                  bright_white
 --   diff bands             added line and word are bright @ 20% and 33%, removed are white and dim
---                          mixed half and half @ 20% and 33%, so removes are a muted version of
---                          the theme's color, not gray (Ghostty palette slots 22/28/52/88)
+--                          mixed half and half @ 8% and 20%, so removes are a muted version of
+--                          the theme's color, not gray, and fainter than adds: removed lines are
+--                          already marked by their − and dim text (Ghostty palette slots 22/28/52/88)
 --   link                   fg halfway to selection, so it stands apart from both the prose and
 --                          the inline code it sits next to (also Claude Code's plan mode and skills)
 local function theme(t)
@@ -52,8 +53,8 @@ local function theme(t)
   t.diff_add = mix(t.bright, t.bg, 0.20)
   t.diff_add_word = mix(t.bright, t.bg, 0.33)
   local removed_tint = mix(t.white, t.dim, 0.5)
-  t.diff_del = mix(removed_tint, t.bg, 0.20)
-  t.diff_del_word = mix(removed_tint, t.bg, 0.33)
+  t.diff_del = mix(removed_tint, t.bg, 0.08)
+  t.diff_del_word = mix(removed_tint, t.bg, 0.20)
   t.link = mix(t.selection, t.fg, 0.5)
   return t
 end

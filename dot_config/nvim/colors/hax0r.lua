@@ -151,13 +151,13 @@ hl('GitSignsStagedDeleteCul', { link = 'GitSignsStagedDelete' })
 hl('GitSignsStagedUntrackedCul', { link = 'GitSignsStagedAdd' })
 hl('GitSignsStagedChangedeleteCul', { link = 'GitSignsStagedChange' })
 hl('GitSignsStagedTopdeleteCul', { link = 'GitSignsStagedDelete' })
--- Hunk previews, like VS Code: removed lines keep their text color on the removed band (DiffDelete's
--- dim fg is for the gap's dashes), and changed words get the word colors instead of reverse video
-hl('GitSignsDeletePreview', { bg = c.diff_del })
-hl('GitSignsDeleteVirtLn', { bg = c.diff_del })
+-- Hunk previews: removed lines are dim on the removed band, like Claude Code's and git diff's, and
+-- changed words get the word colors instead of reverse video
+hl('GitSignsDeletePreview', { fg = c.dim, bg = c.diff_del })
+hl('GitSignsDeleteVirtLn', { fg = c.dim, bg = c.diff_del })
 hl('GitSignsAddInline', { bg = c.diff_add_word })
 hl('GitSignsChangeInline', { bg = c.diff_add_word })
-hl('GitSignsDeleteInline', { bg = c.diff_del_word })
+hl('GitSignsDeleteInline', { fg = c.dim, bg = c.diff_del_word })
 
 -- 3. Indent
 hl('IblIndent', { fg = c.dim })

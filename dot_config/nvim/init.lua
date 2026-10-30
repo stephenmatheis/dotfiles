@@ -20,7 +20,7 @@ vim.o.expandtab = true
 vim.o.shiftwidth = 4
 vim.o.tabstop = 4
 vim.o.wrap = false
-vim.opt.fillchars = { eob = " ", foldopen = "\u{f078}", foldclose = "\u{f054}", foldsep = " " }
+vim.opt.fillchars = { eob = " ", foldopen = "\u{f078}", foldclose = "\u{f054}", foldsep = " ", diff = "╱" }
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
 vim.g.loaded_node_provider = 0

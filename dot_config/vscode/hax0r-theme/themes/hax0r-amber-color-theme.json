@@ -177,9 +177,9 @@
 
         "diffEditor.insertedLineBackground": "#432b00",
         "diffEditor.insertedTextBackground": "#624100",
-        "diffEditor.removedLineBackground": "#392c19",
-        "diffEditor.removedTextBackground": "#504129",
-        "diffEditor.diagonalFill": "#392c19",
+        "diffEditor.removedLineBackground": "#23170a",
+        "diffEditor.removedTextBackground": "#392c19",
+        "diffEditor.diagonalFill": "#23170a",
         "diffEditor.border": "#cc8c0026",
         "diffEditor.unchangedRegionBackground": "#261700",
         "diffEditor.unchangedRegionForeground": "#9c6a00",
@@ -350,8 +350,8 @@
 
         "mergeEditor.change.background": "#432b00",
         "mergeEditor.change.word.background": "#624100",
-        "mergeEditor.changeBase.background": "#392c19",
-        "mergeEditor.changeBase.word.background": "#504129",
+        "mergeEditor.changeBase.background": "#23170a",
+        "mergeEditor.changeBase.word.background": "#392c19",
         "mergeEditor.conflict.unhandledFocused.border": "#fdd57d",
         "mergeEditor.conflict.unhandledUnfocused.border": "#fdd57d7a",
         "mergeEditor.conflict.unhandled.minimapOverViewRuler": "#fdd57d",
