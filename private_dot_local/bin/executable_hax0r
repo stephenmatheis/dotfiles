@@ -5,6 +5,7 @@
 #   hax0r <theme>    switch every app to <theme>
 #   hax0r preview    show every theme side by side
 #   hax0r build      rebuild each app's theme files after editing ~/.config/hax0r/palettes.lua
+#   hax0r clear      clear the terminal with neoclear in the current theme's color
 #
 # The choice is per machine, kept in ~/.local/state/hax0r: dotfiles share the themes, not which one is on.
 
@@ -100,10 +101,21 @@ switch() {
     print "hax0r: switched to $(swatch " $title " $(awk -F'\t' -v name=$name '$1 == name { print $3, $4 }' $themes))"
 }
 
+# neoclear isn't in the dotfiles (see the README), so a machine without it gets a plain clear
+clear_screen() {
+    if (( ! $+commands[neoclear] )); then
+        command clear
+        return
+    fi
+    local color=$(awk -F'\t' -v name=$(current) '$1 == name { print $4 }' $themes)
+    neoclear ${color:+--color=$color} "$@"
+}
+
 case $1 in
     '') list ;;
-    -h | --help | help) sed -n '2,9s/^# \{0,1\}//p' $0 ;;
+    -h | --help | help) sed -n '2,10s/^# \{0,1\}//p' $0 ;;
     build) nvim -l $config/hax0r/generate.lua && switch $(current) ;;
+    clear) shift; clear_screen "$@" ;;
     preview) HAX0R_COLUMNS=$COLUMNS nvim -l $config/hax0r/preview.lua ;;
     *) switch $1 ;;
 esac

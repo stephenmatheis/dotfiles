@@ -24,6 +24,29 @@ Managed with [chezmoi](https://www.chezmoi.io). Shell config (`~/.zshenv`, `~/.z
   "statusLine": { "type": "command", "command": "~/.local/bin/claude-statusline", "refreshInterval": 60 }
   ```
 
+- For the animated `clear`, build [neoclear](https://codeberg.org/ftranschel/neoclear/). It's Linux only upstream and GPL, so its source isn't kept here, and it needs these edits to work on a Mac:
+
+  ```zsh
+  git clone https://codeberg.org/ftranschel/neoclear.git ~/.local/src/neoclear
+  ```
+
+  - `src/main.rs`: change the `compile_error!`'s condition to `not(any(target_os = "linux", target_os = "macos"))`.
+  - `src/term.rs`: add `target_os = "macos"` to both `target_arch` lists around `TIOCGWINSZ`, so macOS gets `0x4008_7468`.
+  - `src/term.rs`: make `LFLAG_OFFSET` 24 on macOS. It stays 12 elsewhere.
+  - `src/term.rs`: in `disable_echo`, clear `ICANON` along with `ECHO` (`0x100` on macOS, `0x2` on Linux). Otherwise Ghostty takes it for a password prompt and shows its lock cursor during the animation.
+  - `src/config.rs` and `src/main.rs`: add a `--hold-sync` flag (a `hold_sync` bool, default false) that leaves `\x1b[?2026l` off the end of the final clear in `run`. The prompt closes it instead, so the clear and the prompt appear in one frame rather than the prompt blipping in.
+
+  ```zsh
+  cd ~/.local/src/neoclear && cargo build --release && cp target/release/neoclear ~/.local/bin/
+  ```
+
+  Then add these to `~/.zshrc`, the second one after `eval "$(starship init zsh)"`. Without neoclear, `hax0r clear` does a plain `clear`, but a neoclear without the edits above rejects `--hold-sync`:
+
+  ```zsh
+  alias clear="hax0r clear --hold-sync"
+  PROMPT+=$'%{\e[?2026l%}'
+  ```
+
 ## How the hax0r theme works
 
 - **One source:** `~/.config/hax0r/palettes.lua`. Each theme lists its base colors, and `theme()` at the top derives the git, diff, warning, error, faint and link colors from them, the same way for every theme. The rules are written there, so change them there.

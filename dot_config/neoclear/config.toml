@@ -1,0 +1,2 @@
+# The streams go straight to the prompt: fading first made the prompt's arrival more jarring
+fade_ms = 0
