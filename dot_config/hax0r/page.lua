@@ -600,7 +600,7 @@ local check = helper_check()
 local DUAL_SHOW = { 'cyan-pink', 'pink-cyan' }
 
 -- text in its base color with a band of shimmer swept across it, drawn at three positions.
--- Claude Code draws the real sweep itself; this only shows the two colors against each other
+-- Like Claude Code's sweep (2.1.314), the band is 3 characters in the plain shimmer color, not blended
 local function frames(c, text, base, shimmer)
   local chars = {}
   for ch in text:gmatch('[%z\1-\127\194-\244][\128-\191]*') do
@@ -610,8 +610,8 @@ local function frames(c, text, base, shimmer)
   for _, at in ipairs({ 0.1, 0.5, 0.9 }) do
     local parts = { { ' ', 'fg' } }
     for i, ch in ipairs(chars) do
-      local k = math.max(0, 1 - math.abs(i - 1 - at * #chars) / 4)
-      table.insert(parts, { ch, mix(c[shimmer], c[base], k) })
+      local in_band = math.abs(i - 1 - math.floor(at * #chars)) <= 1
+      table.insert(parts, { ch, in_band and c[shimmer] or c[base] })
     end
     table.insert(out, line(c, parts))
   end
@@ -660,7 +660,7 @@ end
 local DUAL = {
   {
     title = 'Claude Code shimmer',
-    note = 'Claude Code sweeps a band of each Shimmer color across text drawn in its base color. It’s drawn here at three positions, left, middle and right, blending the two colors across the band: the sweep itself is Claude Code’s, so this only shows the colors. I don’t know whether Claude Code blends them or switches between them. If it blends, cyan into pink passes through a grayish lavender at the band’s edges, which could look muddy; if it switches, it won’t. Only the dual themes would change, through the Shimmer keys in generate.lua; the single-color themes keep Now.',
+    note = 'Claude Code sweeps a band of each Shimmer color across text drawn in its base color. It’s drawn here at three positions, left, middle and right. The band is three characters in the plain shimmer color with no blending, read from Claude Code 2.1.314’s spinner, so the sweep can’t go muddy. During tool use the whole spinner message pulses between the two colors instead, and that code blends them if it can read them as rgb(), which would pass through a grayish lavender. Only the dual themes would change, through the Shimmer keys in generate.lua; the single-color themes keep Now.',
     show = DUAL_SHOW,
     options = {
       { 'Now', 'claudeShimmer = selection, promptBorderShimmer = normal, permissionShimmer = bright_white',
@@ -737,6 +737,7 @@ for _, name in ipairs(SHOW) do
 end
 
 local page = ([[
+<meta charset="utf-8">
 <title>hax0r Candidates</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">

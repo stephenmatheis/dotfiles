@@ -14,10 +14,10 @@ Written on one machine for the other: memory is per machine, so a fresh session 
   ```
 
 - **Decisions to make from that section:**
-  1. Claude Code's shimmer: keep Now, or run it into the second hue (`Second hue`). It would change only the dual themes' Shimmer keys in `generate.lua`. Unknown: whether Claude Code blends the two colors or switches between them; blending cyan into pink passes through gray.
+  1. ~~Claude Code's shimmer in the second hue.~~ Dropped for now (2026-10-30), see Animations.
   2. Starship: Now, Prompt only, Prompt and time, or Git in the second hue. My recommendation is a new palette slot (see Dual themes) over remapping ANSI colors.
   3. git's red as the second hue: yes or no. It's an ANSI remap, so it reaches every terminal tool.
-- **Then build whatever is chosen:** the Shimmer keys and any new palette slot in `generate.lua` (the Ghostty themes and `terminal-palette.zsh` both set slots), `starship.toml` to use the slot, then `hax0r build`, `chezmoi re-add`, and commit with the `palettes.lua` or template change that caused it (README, "Working on this repo").
+- **Then build whatever is chosen:** any new palette slot in `generate.lua` (the Ghostty themes and `terminal-palette.zsh` both set slots), `starship.toml` to use the slot, then `hax0r build`, `chezmoi re-add`, and commit with the `palettes.lua` or template change that caused it (README, "Working on this repo").
 
 
 ## Decided
@@ -27,7 +27,7 @@ Written on one machine for the other: memory is per machine, so a fresh session 
   - Per-machine state needs a one-time migration on each machine: `~/.local/state/hax0r`, `~/.claude/themes/hax0r.json` and `custom:hax0r` in `~/.claude/settings.json`, and VS Code's `workbench.colorTheme` / `workbench.iconTheme`. Retire old paths with `.chezmoiremove`, as before.
   - Two things outside the repo also point at the old name: the `~/.zshrc` line that sources `vscode/hax0r-theme/terminal-palette.zsh`, and VS Code's extension registry (`~/.vscode/extensions/extensions.json`, id `stephenmatheis.hax0r-theme`, location `~/.config/vscode/hax0r-theme`). Option: keep that one folder and id, which is never typed, so neither needs a manual edit.
   - Not `glow` (it's a popular Charm CLI). Other options considered: `crt` (short), `neon` (doesn't fit amber, white or black).
-- **Dual themes may break "a theme stays one color".** The second hue takes the jobs brightness handles worst: removed lines, errors, links and Claude Code's `*Shimmer` keys.
+- **Dual themes may break "a theme stays one color".** The second hue takes the jobs brightness handles worst: removed lines, errors and links.
 - **Preview first:** add options to `page.lua` and look before editing `palettes.lua`.
 - **Picked (2026-10-30), all matched to Gr33N's contrast** (the other way, matching only its lightness, was more vivid but dimmer to read and had more colors that clash, so it was dropped): `pink` (OKLCH hue 355), `purple` (300), `electric` (electric blue, 258; `blue` is taken), and the dual themes `cyan-pink` (cyan 195 with pink as the second color) and `pink-cyan` (the reverse). Purple + amber, green + amber and blue + orange weren't picked yet.
 - **Frozen as plain hex** in `palettes.lua`, like the hand-set themes. The derive helpers stay in the same file as a tool for making more.
@@ -44,7 +44,7 @@ Neon pink, electric blue and purple.
 
 ## Dual themes
 
-Two hues that go together, with equal OKLCH lightness so neither dominates. The accent takes removed, error, link and the shimmer; the primary keeps everything else.
+Two hues that go together, with equal OKLCH lightness so neither dominates. The accent takes removed, error and link; the primary keeps everything else.
 
 - cyan + pink (the cyberpunk one; the accent is the warm color so errors read as errors)
 - purple + amber
@@ -58,7 +58,7 @@ Later: let syntax colors (strings, types) use the accent. Mock-ups of three more
 
 ## Animations
 
-- **Claude Code shimmer:** already themed through the `*Shimmer` keys in `generate.lua`. In a dual theme the shimmer can run from one hue to the other. Claude Code has no other animation to theme.
+- **Claude Code shimmer:** dropped for now (2026-10-30); `claudeShimmer` stays as it is. A theme only sets the color, and Claude Code decides when it animates. Read from 2.1.314's minified code: the spinner sweeps a 3-character band of plain shimmer color while requesting and responding, and the whole message pulses on a 2-second cycle during tool use, blending only colors it can parse as `rgb(r,g,b)` (our theme files use hex). Hooks use `claudeBlueShimmer_FOR_SYSTEM_SPINNER`, and typing `ultrathink` uses the `rainbow_*_shimmer` keys. No use found for `promptBorderShimmer`, `permissionShimmer`, `inactiveShimmer`, `warningShimmer` or `fastModeShimmer`, so the border and permission rows on the page probably show animations that never happen. If this comes back, the hook spinner is the best place for the second hue: it's rare and means hooks, not Claude. The second hue on the main spinner would be loud and would blur the stall signal.
 - **neoclear** (https://codeberg.org/ftranschel/neoclear/): a `clear` replacement that pours braille glyph streams down the screen, cmatrix-style. Rust, standard library only (a little libc), GPL-3.0 or later. Options for direction (`-d`), duration (`-t`) and color (`-c`), speed, trail length and glitch rate; defaults go in `~/.config/neoclear/config.toml` via `--write-config`. Prints a plain clear when output isn't a terminal.
   - Plan: clone into a fresh empty directory, read the source, `cargo install --path .` (`cargo` is installed), then wrap it so `-c` takes the current theme's color. Don't copy its source into this repo (the license).
   - The alias (`alias clear=neoclear`) goes in `~/.zshrc`, which isn't tracked: add it to the README's new-machine checklist.
@@ -94,6 +94,6 @@ Checked on one machine on 2026-10-30: macOS 27.0.1, light mode, default accent (
 
 1. ~~Prototype the monochrome themes and dual pairings in `page.lua`.~~ Done.
 2. ~~Pick the finalists and add them to `palettes.lua`.~~ Done for pink, purple, electric, cyan-pink and pink-cyan. The rename to `phosphor` is on hold (see Decided).
-3. Dual-theme roles in the apps: the shimmer, syntax colors and Starship (so far only removed, errors and links use the second hue).
+3. Dual-theme roles in the apps: syntax colors and Starship (so far only removed, errors and links use the second hue).
 4. macOS appearance, then neoclear and the switch fade, then a shader.
 5. More apps: `fzf`, then Xcode.
