@@ -5,7 +5,7 @@ foreground = #d81010
 cursor-color = #b00d0d
 cursor-text = #ffffff
 # Selections tint the background and let each character keep its own color
-selection-background = #38181f
+selection-background = #3b1818
 selection-foreground = cell-foreground
 # The 16 colors, with ansi 7, 8 and 12 changed for Claude Code (see palettes.lua)
 palette = 0=#1f0000
@@ -20,7 +20,7 @@ palette = 8=#b00d0d
 palette = 9=#ff1111
 palette = 10=#ff1010
 palette = 11=#ff1010
-palette = 12=#ebc1ff
+palette = 12=#ffc1c1
 palette = 13=#ff1010
 palette = 14=#ff1010
 palette = 15=#fefefe
