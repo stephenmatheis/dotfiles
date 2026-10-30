@@ -4,12 +4,15 @@ Plans and ideas for these dotfiles, mostly the hax0r themes. Started 2026-10-30.
 
 ## Decided
 
-- **Name:** `phosphor` replaces `hax0r` (typed as plain letters, and `palettes.lua` already calls amber "phosphor"). Rename before generating more themes, as its own commit. The "HaX0R Gr33N / R3D / BLUE" titles stay: they're credited to the original iTerm themes.
-  - The rename touches: every generated file name, VS Code theme and icon ids, `colors/hax0r.lua`, Ghostty and tmux theme files, `~/.config/hax0r`, and the `hax0r` script.
-  - Per-machine state needs a one-time migration on each machine: `~/.local/state/hax0r`, `~/.claude/themes/hax0r.json` and `custom:hax0r` in `~/.claude/settings.json`, and VS Code's `workbench.colorTheme` / `workbench.iconTheme`.
+- **Name:** `phosphor` was the pick to replace `hax0r` (typed as plain letters, and `palettes.lua` already calls amber "phosphor"), but **on hold: still thinking (2026-10-30), so everything is still `hax0r`.** The notes below are for when it happens. Rename before generating more themes, as its own commit. The "HaX0R Gr33N / R3D / BLUE" titles stay: they're credited to the original iTerm themes.
+  - The rename touches about 190 mentions in 20 tracked files, plus the generated files: every generated file name, VS Code theme and icon ids, `colors/hax0r.lua`, Ghostty and tmux theme files, `~/.config/hax0r`, and the `hax0r` script.
+  - Per-machine state needs a one-time migration on each machine: `~/.local/state/hax0r`, `~/.claude/themes/hax0r.json` and `custom:hax0r` in `~/.claude/settings.json`, and VS Code's `workbench.colorTheme` / `workbench.iconTheme`. Retire old paths with `.chezmoiremove`, as before.
+  - Two things outside the repo also point at the old name: the `~/.zshrc` line that sources `vscode/hax0r-theme/terminal-palette.zsh`, and VS Code's extension registry (`~/.vscode/extensions/extensions.json`, id `stephenmatheis.hax0r-theme`, location `~/.config/vscode/hax0r-theme`). Option: keep that one folder and id, which is never typed, so neither needs a manual edit.
   - Not `glow` (it's a popular Charm CLI). Other options considered: `crt` (short), `neon` (doesn't fit amber, white or black).
 - **Dual themes may break "a theme stays one color".** The second hue takes the jobs brightness handles worst: removed lines, errors, links and Claude Code's `*Shimmer` keys.
 - **Preview first:** add options to `page.lua` and look before editing `palettes.lua`.
+- **Picked (2026-10-30), all matched to Gr33N's contrast** (the other way, matching only its lightness, was more vivid but dimmer to read and had more colors that clash, so it was dropped): `pink` (OKLCH hue 355), `purple` (300), `electric` (electric blue, 258; `blue` is taken), and the dual themes `cyan-pink` (cyan 195 with pink as the second color) and `pink-cyan` (the reverse). Purple + amber, green + amber and blue + orange weren't picked yet.
+- **Frozen as plain hex** in `palettes.lua`, like the hand-set themes. The derive helpers stay in the same file as a tool for making more.
 
 ## New monochrome themes
 
@@ -68,8 +71,8 @@ Checked on one machine on 2026-10-30: macOS 27.0.1, light mode, default accent (
 
 ## Order of work
 
-1. Prototype the monochrome themes and dual pairings in `page.lua` (no generated files change).
-2. Pick the finalists, rename to `phosphor`, then add them to `palettes.lua` and build.
-3. Dual-theme roles in the apps (syntax, Starship).
+1. ~~Prototype the monochrome themes and dual pairings in `page.lua`.~~ Done.
+2. ~~Pick the finalists and add them to `palettes.lua`.~~ Done for pink, purple, electric, cyan-pink and pink-cyan. The rename to `phosphor` is on hold (see Decided).
+3. Dual-theme roles in the apps: the shimmer, syntax colors and Starship (so far only removed, errors and links use the second hue).
 4. macOS appearance, then neoclear and the switch fade, then a shader.
 5. More apps: `fzf`, then Xcode.
