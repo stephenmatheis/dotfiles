@@ -140,7 +140,7 @@ local claude_keys = {
     { 'inverseText', 'bg' },
     { 'inactive', 'dim' },
     { 'inactiveShimmer', 'normal' },
-    { 'subtle', 'faint' }, -- the pinned prompt draws it on prompt_band, where ansi 8 vanished
+    { 'subtle', 'dim' }, -- the pinned prompt draws it on prompt_band, where a neutral gray read as off-theme
     { 'promptBorder', 'dim' },
     { 'promptBorderShimmer', 'normal' },
     { 'userMessageBackground', 'prompt_band' }, -- dark was too faint to find prompts by

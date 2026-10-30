@@ -129,7 +129,7 @@ hl('RainbowDelimiterViolet', { fg = c.fg })
 hl('RainbowDelimiterCyan', { fg = c.bright })
 
 -- 2. Git Signs
--- added and removed stay green and red in every theme; see palettes.lua
+-- added is the theme's bright and removed its dim, in every theme; see palettes.lua
 hl('Added', { fg = c.added })
 hl('Changed', { fg = c.white })
 hl('Removed', { fg = c.removed })
@@ -151,8 +151,8 @@ hl('GitSignsStagedDeleteCul', { link = 'GitSignsStagedDelete' })
 hl('GitSignsStagedUntrackedCul', { link = 'GitSignsStagedAdd' })
 hl('GitSignsStagedChangedeleteCul', { link = 'GitSignsStagedChange' })
 hl('GitSignsStagedTopdeleteCul', { link = 'GitSignsStagedDelete' })
--- Hunk previews, like VS Code: removed lines keep their text color on the red band (DiffDelete's
--- dark red fg is for the gap's dashes), and changed words get the word colors instead of reverse video
+-- Hunk previews, like VS Code: removed lines keep their text color on the removed band (DiffDelete's
+-- dim fg is for the gap's dashes), and changed words get the word colors instead of reverse video
 hl('GitSignsDeletePreview', { bg = c.diff_del })
 hl('GitSignsDeleteVirtLn', { bg = c.diff_del })
 hl('GitSignsAddInline', { bg = c.diff_add_word })

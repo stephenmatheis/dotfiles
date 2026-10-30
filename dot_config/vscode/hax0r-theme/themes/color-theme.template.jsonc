@@ -192,9 +192,9 @@
         "editorMarkerNavigationWarning.background": "{{warning}}",
         "editorMarkerNavigationInfo.background": "{{bright}}",
 
-        // Diff: diff_green, diff_green_word, diff_red and diff_red_word, the same as nvim's and Claude
-        // Code's diffs (ghostty slots 22/28/52/88): greens as bright as the reds, and dark enough to
-        // keep dim_green comments readable
+        // Diff: diff_add, diff_add_word, diff_del and diff_del_word, the same as nvim's and Claude
+        // Code's diffs (ghostty slots 22/28/52/88): added bands tinted with the theme's bright and
+        // removed bands with white and dim mixed, and dark enough to keep dim comments readable
         "diffEditor.insertedLineBackground": "{{diff_add}}",
         "diffEditor.insertedTextBackground": "{{diff_add_word}}",
         "diffEditor.removedLineBackground": "{{diff_del}}",
@@ -208,7 +208,8 @@
         "merge.incomingHeaderBackground": "{{link}}66",
         "merge.incomingContentBackground": "{{link}}26",
 
-        // Git
+        // Git: added is bright, modified white, deleted dim, conflicts warning, ignored faint (not dim,
+        // which is deleted's color)
         "editorGutter.addedBackground": "{{added}}",
         "editorGutter.modifiedBackground": "{{white}}",
         "editorGutter.deletedBackground": "{{removed}}",
@@ -226,7 +227,7 @@
         "gitDecoration.deletedResourceForeground": "{{removed}}",
         "gitDecoration.stageDeletedResourceForeground": "{{removed}}",
         "gitDecoration.conflictingResourceForeground": "{{warning}}",
-        "gitDecoration.ignoredResourceForeground": "{{dim}}",
+        "gitDecoration.ignoredResourceForeground": "{{faint}}",
         "gitDecoration.submoduleResourceForeground": "{{link}}",
 
         // Symbol icons (breadcrumbs, outline, suggestions): nvim's mini.icons draws every kind in green
@@ -295,8 +296,8 @@
         "scmGraph.historyItemHoverAdditionsForeground": "{{added}}",
         "scmGraph.historyItemHoverDeletionsForeground": "{{removed}}",
 
-        // VS Code's own hues, mapped by meaning: red stays red, yellow and orange become amber,
-        // green becomes bright_green, blue becomes link cyan, purple becomes mint
+        // VS Code's own hues, mapped by meaning onto the theme's roles: red is removed, yellow and
+        // orange are warning, green is added, blue becomes link cyan, purple becomes mint
         "charts.foreground": "{{fg}}",
         "charts.lines": "{{dim}}",
         "charts.red": "{{removed}}",

@@ -5,8 +5,8 @@
 -- "X @ N%" means X composited over the background at N% (or over another color when named).
 --
 -- Rules every theme follows, chosen with Gr33N and carried over:
--- - diffs and git signs stay green and red in every theme, since that's where color carries meaning
--- - when error or warning would be the theme's own text color, it turns white
+-- - git, diff and problem colors aren't set per theme: theme() below builds them from each
+--   theme's own colors, the same way every time, so a theme stays one color
 -- - ansi 7 is fg and ansi 8 is dim, so Claude Code's code text and comments match nvim's
 -- - ansi 12 is the selection color, so Claude Code's inline code stands out from prose
 --   (black on white uses ansi 4 for this, since Claude Code's light base reads that slot)
@@ -15,23 +15,43 @@ local M = {}
 
 M.order = { 'green', 'red', 'blue', 'amber', 'white', 'black' }
 
--- Diff and git colors shared by the dark themes (Ghostty palette slots 22/28/52/88)
-local dark_diffs = {
-  added = '#19e20e',         -- Gr33N's bright green
-  added_dim = '#0b8700',     -- staged: Gr33N's dim green
-  removed = '#ff1111',       -- HaX0R R3D ansi 9
-  removed_dim = '#b00d0d',   -- staged: HaX0R R3D ansi 1
-  diff_add = '#003300',      -- added line, as bright as diff_del
-  diff_add_word = '#004c00', -- added word, as bright as diff_del_word
-  diff_del = '#5f0000',      -- removed line, xterm's 52
-  diff_del_word = '#870000', -- removed word, xterm's 88
-}
-
-local function theme(t)
-  for k, v in pairs(t.diffs or {}) do
-    t[k] = t[k] or v
+-- top composited over base at p (0 to 1), as a hex color
+local function mix(top, base, p)
+  local out = '#'
+  for i = 2, 6, 2 do
+    local t, b = tonumber(top:sub(i, i + 1), 16), tonumber(base:sub(i, i + 1), 16)
+    out = out .. ('%02x'):format(math.floor(b + (t - b) * p + 0.5))
   end
-  t.diffs = nil
+  return out
+end
+
+-- Git, diff and problem colors, from the colors each theme sets below:
+--   added (and untracked)  bright
+--   modified               white (set in the apps' templates, not here)
+--   removed                dim
+--   ignored                faint (set in VS Code's template)
+--   staged                 one step dimmer: added is dim, removed is faint
+--   faint                  white @ 40%: a gray with the theme's background tone, as readable as the
+--                          cyan-gray cursor guide it replaces (Claude Code's subtle text, staged
+--                          changes, VS Code's ignored files)
+--   warning (and conflict) bright halfway to white
+--   error                  bright_white
+--   diff bands             added line and word are bright @ 20% and 33%, removed are white and dim
+--                          mixed half and half @ 20% and 33%, so removes are a muted version of
+--                          the theme's color, not gray (Ghostty palette slots 22/28/52/88)
+local function theme(t)
+  t.faint = mix(t.white, t.bg, 0.40)
+  t.added = t.bright
+  t.added_dim = t.dim
+  t.removed = t.dim
+  t.removed_dim = t.faint
+  t.warning = mix(t.white, t.bright, 0.5)
+  t.error = t.bright_white
+  t.diff_add = mix(t.bright, t.bg, 0.20)
+  t.diff_add_word = mix(t.bright, t.bg, 0.33)
+  local removed_tint = mix(t.white, t.dim, 0.5)
+  t.diff_del = mix(removed_tint, t.bg, 0.20)
+  t.diff_del_word = mix(removed_tint, t.bg, 0.33)
   return t
 end
 
@@ -58,15 +78,11 @@ M.green = theme({
   cursor_line = '#2e4640',    -- cursor guide #b3ecff @ 25%
   gray = '#334843',           -- ansi 8 in ghostty's port: Claude Code's empty rate-limit bar
   -- Added: no hax0r theme has these
-  error = '#ff1111',          -- HaX0R R3D ansi 9
-  warning = '#ffb000',        -- amber phosphor, green screen's monochrome sibling
-  faint = '#496767',          -- cursor guide @ 40%: Claude Code's faint text, staged changes
   selection_tint = '#1b2c18', -- selection @ 12%: selections everywhere, text keeps its color
   border = '#052703',         -- fg @ 15%: VS Code's panel outline, used for every border
   float_border = '#03350b',   -- fg @ 15% over dark
   prompt_band = '#073804',    -- fg @ 25%: Claude Code's prompts
   bash_band = '#2a3529',      -- white @ 16%: Claude Code's ! commands
-  diffs = dark_diffs,
   ansi = {
     [0] = '#001f0b',
     '#15d00d', '#15d00d', '#15d00d', '#15d00d', '#15d00d', '#15d00d',
@@ -101,15 +117,11 @@ M.red = theme({
   cursor_line = '#453c40',    -- cursor guide #b3ecff @ 25%
   gray = '#554040',           -- ansi 8 in ghostty's port
   -- Added
-  error = '#fefefe',          -- not red: red is the text color, so errors turn white
-  warning = '#ffb000',
-  faint = '#5b5f67',          -- cursor guide @ 40%
   selection_tint = '#38181f', -- selection @ 12%
   border = '#3c0303',         -- fg @ 15%
   float_border = '#3b0202',   -- fg @ 15% over dark
   prompt_band = '#4e0505',    -- fg @ 25%
   bash_band = '#432929',      -- white @ 16%
-  diffs = dark_diffs,
   ansi = {
     [0] = '#1f0000',
     '#d81010', '#d81010', '#d81010', '#d81010', '#d81010', '#d81010', -- lifted from #b00d0d with normal
@@ -145,15 +157,11 @@ M.blue = theme({
   cursor_line = '#2e3f50',    -- cursor guide #b3ecff @ 25%
   gray = '#484157',           -- ansi 8 in ghostty's port
   -- Added
-  error = '#ff1111',          -- HaX0R R3D ansi 9, like Gr33N
-  warning = '#ffb000',
-  faint = '#486173',          -- cursor guide @ 40%
   selection_tint = '#182031', -- selection @ 12%
   border = '#032038',         -- fg @ 15%
   float_border = '#032342',   -- fg @ 15% over dark
   prompt_band = '#053250',    -- fg @ 25%
   bash_band = '#292c3a',      -- white @ 16%
-  diffs = dark_diffs,
   ansi = {
     [0] = '#010921',
     '#10b6ff', '#10b6ff', '#10b6ff', '#10b6ff', '#10b6ff', '#10b6ff',
@@ -187,15 +195,11 @@ M.amber = theme({
   badge = '#9c6a00',
   cursor_line = '#3c4240',    -- cursor guide #b3ecff @ 25%
   gray = '#4c4230',           -- as faint as Gr33N's, tinted 30% amber
-  error = '#ff1111',
-  warning = '#fefefe',        -- not amber: amber is the text color, so warnings turn white
-  faint = '#546466',          -- cursor guide @ 40%
   selection_tint = '#302517', -- selection @ 12%
   border = '#301e00',         -- fg @ 15%
   float_border = '#3f2900',   -- fg @ 15% over dark
   prompt_band = '#422a00',    -- fg @ 25%
   bash_band = '#393028',      -- white @ 16%
-  diffs = dark_diffs,
   ansi = {
     [0] = '#261700',
     '#efa500', '#efa500', '#efa500', '#efa500', '#efa500', '#efa500',
@@ -229,15 +233,11 @@ M.white = theme({
   badge = '#999999',
   cursor_line = '#2e2e2e',    -- white @ 18%: a cyan cursor guide looked out of place in gray
   gray = '#3f3f3f',           -- as faint as Gr33N's
-  error = '#ff1111',
-  warning = '#ffb000',
-  faint = '#5c5c5c',          -- white @ 36%, as faint as Gr33N's
   selection_tint = '#1f1f1f', -- selection @ 12%
   border = '#1e1e1e',         -- fg @ 15%
   float_border = '#343434',   -- fg @ 15% over dark
   prompt_band = '#323232',    -- fg @ 25%
   bash_band = '#282828',      -- white @ 16%
-  diffs = dark_diffs,
   ansi = {
     [0] = '#1a1a1a',
     '#ebebeb', '#ebebeb', '#ebebeb', '#ebebeb', '#ebebeb', '#ebebeb',
@@ -271,22 +271,11 @@ M.black = theme({
   badge = '#565656',
   cursor_line = '#ededed',    -- black @ 7%
   gray = '#b7b7b7',           -- as faint as Gr33N's
-  error = '#b00d0d',          -- HaX0R R3D ansi 1, reads on white
-  warning = '#8a5f00',        -- amber darkened to read on white
-  faint = '#8c8c8c',          -- black @ 45%
-  selection_tint = '#e6e6e6', -- black @ 10%
+  selection_tint = '#e6e6e6', -- selection @ 12%
   border = '#e0e0e0',         -- fg @ 15%
   float_border = '#cfcfcf',   -- fg @ 15% over dark
   prompt_band = '#cccccc',    -- fg @ 25%
   bash_band = '#e6e6e6',      -- black @ 10%
-  added = '#098204',          -- Gr33N's bright green darkened to read on white
-  added_dim = '#13be0a',
-  removed = '#b00d0d',
-  removed_dim = '#d88686',
-  diff_add = '#d4f5d0',
-  diff_add_word = '#a9e5a1',
-  diff_del = '#ffd6d6',
-  diff_del_word = '#ffadad',
   ansi = {
     [0] = '#333333', -- 0, not dark: fg, since Claude Code's light base draws code text in slot 0
     '#191919', '#191919', '#191919',

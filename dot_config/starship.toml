@@ -18,7 +18,7 @@ style = "blue"
 [character]
 success_symbol = "[❯](purple)"
 # not red: the hax0r themes make ansi red their own color, so use slot 196, which each hax0r
-# theme sets to its error color (Gr33N's is HaX0R R3D's red)
+# theme sets to its error color (white; black on white's is black)
 error_symbol = "[❯](196)"
 vimcmd_symbol = "[❮](green)"
 

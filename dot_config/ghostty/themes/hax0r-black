@@ -25,9 +25,9 @@ palette = 13=#000000
 palette = 14=#000000
 palette = 15=#000000
 # Claude Code's diff backgrounds: its theme points at these slots
-palette = 22=#d4f5d0
-palette = 28=#a9e5a1
-palette = 52=#ffd6d6
-palette = 88=#ffadad
+palette = 22=#cccccc
+palette = 28=#ababab
+palette = 52=#d5d5d5
+palette = 88=#b9b9b9
 # Errors, for Starship's prompt after a failed command
-palette = 196=#b00d0d
+palette = 196=#000000
