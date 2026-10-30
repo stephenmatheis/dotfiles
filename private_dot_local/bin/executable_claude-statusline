@@ -1,0 +1,72 @@
+#!/bin/sh
+# Claude Code status line, two lines: the session, then the plan's 5-hour and weekly limits.
+#
+#   Now: Opus 5.5, xhigh effort · 21% context (83.5k/400k) · session $12.93
+#   Limits: 5h 2% used, resets in 2h 50m · week 2% used, resets in 4d 16h
+#
+# Session cost is Claude Code's estimate at API list prices, not what the plan charges. Claude Code pipes
+# the session as JSON on stdin; see https://code.claude.com/docs/en/statusline. Set it per machine in
+# ~/.claude/settings.json, rerun every minute so the countdowns keep counting while idle:
+#
+#   "statusLine": { "type": "command", "command": "~/.local/bin/claude-statusline", "refreshInterval": 60 }
+#
+# No colors, only dim and bold, so it follows the hax0r theme: labels are dim, values plain, and a value
+# turns bold when it runs high. Parts Claude Code hasn't sent yet, like limits before the first reply, are
+# left out.
+#
+# Context is measured against the auto-compact window, like the desktop app's "24% used 96.1k / 400k",
+# not the model's full window that the JSON reports. Claude Code takes the window from
+# CLAUDE_CODE_AUTO_COMPACT_WINDOW, then modelSettings.<model>.autoCompactWindow, then autoCompactWindow,
+# so this does the same, reading user settings only.
+
+settings="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
+[ -r "$settings" ] || settings=/dev/null
+
+exec jq -r --slurpfile settings "$settings" '
+  def dim: "\u001b[2m\(.)\u001b[22m";
+  def bold: "\u001b[1m\(.)\u001b[22m";
+  def pct: "\(round)%";
+  # 320, 96.1k, 400k, 1M
+  def tokens: if . >= 1000000 then "\(. / 100000 | round / 10)M"
+    elif . >= 1000 then "\(. / 100 | round / 10)k" else "\(round)" end;
+  # 400000, "400k" or "1m"; anything else, like "auto", is left to the full window
+  def window: if type == "number" then .
+    elif type == "string" then ascii_downcase | capture("^(?<n>[0-9.]+)(?<unit>[km]?)$")
+      | (.n | tonumber) * {"": 1, k: 1000, m: 1000000}[.unit]
+    else empty end;
+  def usd: (. * 100 | round) as $cents
+    | "$\($cents / 100 | floor).\($cents % 100 | tostring | if length < 2 then "0" + . else . end)";
+  # 43m, 2h 50m, 4d 16h
+  def countdown: ((. - now) / 60 | ceil | [., 0] | max) as $m
+    | if $m < 60 then "\($m)m"
+      elif $m < 1440 then "\($m / 60 | floor)h \($m % 60)m"
+      else "\($m / 1440 | floor)d \($m % 1440 / 60 | floor)h" end
+    | sub(" 0[mh]$"; "");
+  def limit($name):
+    .used_percentage as $used
+    | "\($name | dim) \($used | pct | if $used >= 90 then bold else . end) \("used" | dim)"
+      + (if .resets_at then "\(", resets in" | dim) \(.resets_at | countdown)" else "" end);
+
+  ($settings[0] // {}) as $s
+  # Settings key models by canonical name, without a [1m] or date suffix
+  | (.model.id // "" | sub("\\[.*\\]$"; "") | sub("-[0-9]{8}$"; "")) as $model
+  | ([ .context_window.context_window_size,
+      first(($ENV.CLAUDE_CODE_AUTO_COMPACT_WINDOW, $s.modelSettings[$model].autoCompactWindow,
+        $s.autoCompactWindow) | window)
+    ] | map(select(. != null)) | min) as $window
+  | [ ([ .model.display_name, (.effort.level // empty | "\(.) \("effort" | dim)") ]
+        | map(select(. != null)) | join(", " | dim)),
+      (.context_window.current_usage // empty
+        | (.input_tokens + .cache_creation_input_tokens + .cache_read_input_tokens) as $used
+        | select($window)
+        | ($used / $window * 100) as $p
+        | "\($p | pct | if $p >= 80 then bold else . end) \("context" | dim)"
+          + " \("(\($used | tokens)/\($window | tokens))" | dim)"),
+      (.cost.total_cost_usd // empty | "\("session" | dim) \(usd)")
+    ] as $now
+  | [ (.rate_limits.five_hour // empty | select(.used_percentage) | limit("5h")),
+      (.rate_limits.seven_day // empty | select(.used_percentage) | limit("week"))
+    ] as $limits
+  | "\("Now:" | dim) \($now | join(" · " | dim))",
+    if $limits == [] then empty else "\("Limits:" | dim) \($limits | join(" · " | dim))" end
+'

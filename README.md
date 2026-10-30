@@ -18,6 +18,12 @@ Managed with [chezmoi](https://www.chezmoi.io). Shell config (`~/.zshenv`, `~/.z
 
 - `hax0r` needs `jq`, `nvim` and `tmux` (all via Homebrew). Then run `hax0r <theme>` once to create `~/.local/state/hax0r`.
 
+- For the Claude Code status line (session, context, cost and plan limits), add this to `~/.claude/settings.json`, which isn't tracked. It also needs `jq`:
+
+  ```json
+  "statusLine": { "type": "command", "command": "~/.local/bin/claude-statusline", "refreshInterval": 60 }
+  ```
+
 ## How the hax0r theme works
 
 - **One source:** `~/.config/hax0r/palettes.lua`. Each theme lists its base colors, and `theme()` at the top derives the git, diff, warning, error, faint and link colors from them, the same way for every theme. The rules are written there, so change them there.
