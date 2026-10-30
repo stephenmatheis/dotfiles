@@ -22,6 +22,7 @@ Managed with [chezmoi](https://www.chezmoi.io). Shell config (`~/.zshenv`, `~/.z
 
 - **One source:** `~/.config/hax0r/palettes.lua`. Each theme lists its base colors, and `theme()` at the top derives the git, diff, warning, error, faint and link colors from them, the same way for every theme. The rules are written there, so change them there.
 - **Building:** `hax0r build` regenerates each app's theme files from `palettes.lua`, and `hax0r <theme>` switches the apps over. nvim needs no build: `colors/hax0r.lua` reads `palettes.lua` directly. Every generated file says so at the top: edit `palettes.lua` or a template, not the generated file.
+- **Comparing colors:** `nvim -l ~/.config/hax0r/page.lua page.html` writes a web page that draws the themes from `palettes.lua` in exact colors: each app's diffs now and the other options considered, plus where white and black can't tell git and problem colors apart. To weigh a change, add an option to the page and look before editing `palettes.lua`.
 - **What each app lets a theme set:**
   - VS Code and nvim: named colors for nearly everything. VS Code's come from `vscode/hax0r-theme/themes/color-theme.template.jsonc`.
   - Ghostty: the 16 ANSI colors, plus palette slots 22/28/52/88 (Claude Code's diff bands) and 196 (Starship's error prompt). VS Code's terminal sets those slots with escape codes (`terminal-palette.zsh`).
