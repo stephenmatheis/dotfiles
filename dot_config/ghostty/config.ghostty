@@ -1,9 +1,13 @@
-bell-features = no-attention,no-title
-# The hax0r themes live in themes/hax0r-*, built from ~/.config/hax0r/palettes.lua with the
-# palette changes Claude Code needs. `hax0r <theme>` writes the file included below and reloads
-# Ghostty; until it's run, Gr33N
+# default theme if one hasn't been set in the linked file below
 theme = hax0r-green
+
+# hax0r themes live in themes/hax0r-*
+# built from ~/.config/hax0r/palettes.lua
+# run `hax0r <green|amber|red|blue|white|black>` to switch themes
 config-file = ?~/.local/state/hax0r/ghostty
+
+# window
+bell-features = no-attention,no-title
 window-padding-x = 16
 window-padding-y = 0,16
 window-padding-balance = true
