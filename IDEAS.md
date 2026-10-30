@@ -2,6 +2,24 @@
 
 Plans and ideas for these dotfiles, mostly the hax0r themes. Started 2026-10-30. Items marked *unverified* are from memory or a guess and need checking on a machine before anyone builds on them.
 
+## Next up (handoff, written 2026-10-30)
+
+Written on one machine for the other: memory is per machine, so a fresh session there won't know any of this. Read this file and the README first.
+
+- **Where things stand:** the five new themes (`pink`, `purple`, `electric`, `cyan-pink`, `pink-cyan`) are built, applied on the first machine and pushed. `hax0r pink-cyan` was tried in VS Code and Claude Code in Ghostty and looks good. In the dual themes the second hue only takes removed lines, errors, links and VS Code's submodule color, so they read as pink or cyan with a few accents. The rename is on hold.
+- **Staged for review:** `page.lua` has a section, "The second hue in more places", with mock-ups for the two dual themes only. Nothing in the apps uses any of it yet. To see it, after `chezmoi update`:
+
+  ```zsh
+  nvim -l ~/.config/hax0r/page.lua page.html && open page.html
+  ```
+
+- **Decisions to make from that section:**
+  1. Claude Code's shimmer: keep Now, or run it into the second hue (`Second hue`). It would change only the dual themes' Shimmer keys in `generate.lua`. Unknown: whether Claude Code blends the two colors or switches between them; blending cyan into pink passes through gray.
+  2. Starship: Now, Prompt only, Prompt and time, or Git in the second hue. My recommendation is a new palette slot (see Dual themes) over remapping ANSI colors.
+  3. git's red as the second hue: yes or no. It's an ANSI remap, so it reaches every terminal tool.
+- **Then build whatever is chosen:** the Shimmer keys and any new palette slot in `generate.lua` (the Ghostty themes and `terminal-palette.zsh` both set slots), `starship.toml` to use the slot, then `hax0r build`, `chezmoi re-add`, and commit with the `palettes.lua` or template change that caused it (README, "Working on this repo").
+
+
 ## Decided
 
 - **Name:** `phosphor` was the pick to replace `hax0r` (typed as plain letters, and `palettes.lua` already calls amber "phosphor"), but **on hold: still thinking (2026-10-30), so everything is still `hax0r`.** The notes below are for when it happens. Rename before generating more themes, as its own commit. The "HaX0R Gr33N / R3D / BLUE" titles stay: they're credited to the original iTerm themes.
@@ -33,7 +51,10 @@ Two hues that go together, with equal OKLCH lightness so neither dominates. The 
 - green + amber (colors that already exist, a two-tone phosphor look)
 - blue + orange (teal and orange)
 
-Later: let syntax colors (strings, types) use the accent, and map Starship's named colors (directory, prompt, git status) across the two hues.
+Later: let syntax colors (strings, types) use the accent. Mock-ups of three more uses are on the page (see Next up): Claude Code's shimmer, Starship, and git's red.
+
+- **Starship:** it names ANSI colors, which are all the theme's one color. Two ways to give it the second hue. A new palette slot like 196 (the error slot), set by each Ghostty theme and by VS Code's `terminal-palette.zsh`: the second hue in a dual theme and the normal color in the rest, so nothing else changes (the safer one). Or remap ANSI colors, which changes every terminal tool.
+- **git's red:** git (and ripgrep, `ls`) color removed lines, unstaged changes and untracked files with ANSI red, and added and staged with green, and every theme makes both the one color. Giving ANSI red the second hue fixes that, but it's the remap, so it may also change Claude Code's code blocks. Undecided.
 
 ## Animations
 
