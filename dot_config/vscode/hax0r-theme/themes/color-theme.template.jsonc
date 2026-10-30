@@ -6,8 +6,8 @@
 //   bg #020f01, fg #16b10e, dark #001f0b (ansi 0), normal #15d00d (ansi 1-6),
 //   bright #19e20e (ansi 9-14), bold #19e30f, white #fafafa, bright_white #fefefe,
 //   cursor_text #ffffff, selection #d4ffc1, link #75d868, selection_tint #1b2c18,
-//   dim #0b8700 (badge #14ff00 @ 50% over bg), cursor_line #2e4640, error #fefefe, warning #8aee84,
-//   diff_add #073904, diff_add_word #0a5505, diff_del #0c1d0b, diff_del_word #1c331a.
+//   dim #0b8700 (badge #14ff00 @ 50% over bg), cursor_line #094e05, ignored #0e7009, error #fefefe,
+//   warning #8aee84, diff_add #073904, diff_add_word #0a5505, diff_del #0c1d0b, diff_del_word #1c331a.
 // Hue mapping for VS Code's own colors: red is error (or removed, for git and diffs), yellow and
 // orange are warning, green is bright (or added, for git and diffs), blue is link, purple is selection.
 // Chrome borders are #16b10e26, fg at 15%: the faint outline VS Code itself draws around its
@@ -208,8 +208,8 @@
         "merge.incomingHeaderBackground": "{{link}}66",
         "merge.incomingContentBackground": "{{link}}26",
 
-        // Git: added is bright, modified white, deleted dim, conflicts warning, ignored faint (not dim,
-        // which is deleted's color)
+        // Git: added is bright, modified white, deleted dim, conflicts warning, ignored fg @ 60% (not
+        // dim, which is deleted's color)
         "editorGutter.addedBackground": "{{added}}",
         "editorGutter.modifiedBackground": "{{white}}",
         "editorGutter.deletedBackground": "{{removed}}",
@@ -227,7 +227,7 @@
         "gitDecoration.deletedResourceForeground": "{{removed}}",
         "gitDecoration.stageDeletedResourceForeground": "{{removed}}",
         "gitDecoration.conflictingResourceForeground": "{{warning}}",
-        "gitDecoration.ignoredResourceForeground": "{{faint}}",
+        "gitDecoration.ignoredResourceForeground": "{{ignored}}",
         "gitDecoration.submoduleResourceForeground": "{{link}}",
 
         // Symbol icons (breadcrumbs, outline, suggestions): nvim's mini.icons draws every kind in green

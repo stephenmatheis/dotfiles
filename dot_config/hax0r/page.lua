@@ -1,14 +1,15 @@
 -- `nvim -l ~/.config/hax0r/page.lua <out.html> [label]`: a web page of the hax0r themes drawn from
 -- palettes.lua in exact colors, for judging colors by eye where a terminal can't show them. It
--- draws how each app shows diffs now, next to the other options considered, then for each theme in
--- SHOW the `hax0r preview` panel and every place an app uses a git, diff or problem color, with
--- colors that can't be told apart flagged. To weigh a change, add an option row to DIFFS (or a
--- section of its own) that draws it next to Now. label names the version shown, like a commit.
+-- draws the single colors in CHOICES and how each app shows diffs, each now next to the other options
+-- considered, then for each theme in SHOW the `hax0r preview` panel and every place an app uses a
+-- git, diff or problem color, with colors that can't be told apart flagged. To weigh a change, add
+-- an option row to CHOICES or DIFFS (or a section of its own) that draws it next to Now. label
+-- names the version shown, like a commit.
 local config = vim.env.XDG_CONFIG_HOME or (vim.env.HOME .. '/.config')
 local P = dofile(config .. '/hax0r/palettes.lua')
 local out = assert(arg[1], 'usage: nvim -l page.lua <out.html> [label]')
 local label = arg[2]
-local SHOW = { 'white', 'black' }
+local SHOW = { 'amber', 'red', 'green' }
 local SAME = 1.15 -- two colors closer than this contrast ratio read as the same color
 
 local function rgb(h)
@@ -125,7 +126,7 @@ local GROUPS = {
       { 'white', 'Modified', file('palettes.lua', 'M', 'white'), cmp = 'files', where = 'also renamed and staged modified' },
       { 'removed', 'Deleted', file('preview.lua', 'D', 'removed'), cmp = 'files' },
       { 'warning', 'Conflict', file('merge.lua', '!', 'warning'), cmp = 'files' },
-      { 'faint', 'Ignored', file('.DS_Store', '', 'faint'), cmp = 'files' },
+      { 'ignored', 'Ignored', file('.DS_Store', '', 'ignored'), cmp = 'files' },
       { 'warning', 'Has warnings', file('util.lua', '1', 'warning'), cmp = 'files' },
       { 'error', 'Has errors', file('init.lua', '2', 'error'), cmp = 'files' },
     },
@@ -350,6 +351,98 @@ local DIFFS = {
   },
 }
 
+-- A color under test, with its contrast against each color it has to stand apart from.
+-- against: { palette key, what that color is }
+local function verdict(c, v, against)
+  local parts = {}
+  for _, a in ipairs(against) do
+    local r = contrast(v, c[a[1]])
+    local text = ('%.2f:1 %s'):format(r, a[2])
+    table.insert(parts, r < SAME and ('<b>≈ ' .. text .. '</b>') or text)
+  end
+  return ('<div class="cap">%s<small>%s</small></div>'):format(chip(v), table.concat(parts, '<br>'))
+end
+
+-- VS Code's explorer, then nvim, with hover in the color under test. The explorer rows: a folder,
+-- the selection while the sidebar isn't focused (dark), an ignored folder, the row under the
+-- mouse, the selection while it's focused (fg). nvim's cursor is on line 12, with 'Visual' selected.
+local function hover_mock(c, hover)
+  return table.concat({
+    line(c, { { '  › public', 'fg' } }),
+    line(c, { { '  › src', 'fg' } }, 'dark'),
+    line(c, { { '  › test-results', 'ignored' } }),
+    line(c, { { '    index.html', 'bright' } }, hover),
+    line(c, { { '    package.json', 'bg' } }, 'fg'),
+    line(c, { { '    vite.config.ts', 'fg' } }),
+    line(c, {}),
+    line(c, { { ' 11 ', 'dim' }, { 'local function', 'bold', 'b' }, { ' ', 'fg' }, { 'hl', 'normal' }, { '(group, opts)', 'fg' } }),
+    line(c, { { ' 12 ', 'bright' }, { '  vim.api.', 'fg' }, { 'nvim_set_hl', 'normal' }, { '(0, group, opts)', 'fg' } }, hover),
+    line(c, { { ' 13 ', 'dim' }, { 'end', 'bold', 'b' } }),
+    line(c, { { ' 14 ', 'dim' }, { 'hl', 'normal' }, { '(', 'fg' }, { "'Visual'", 'normal', '', 'selection_tint' },
+      { ', { bg = c.tint })', 'fg' } }),
+  })
+end
+
+-- VS Code's explorer in the wallet repo, with ignored names in the color under test. A deleted file
+-- only shows in Open Editors and Source Control, struck through, but it's drawn here to compare.
+local function ignored_mock(c, ignored)
+  local function row(lead, name, key, badge, attrs)
+    return line(c, { { lead .. name, key, attrs }, { (' '):rep(34 - #name) .. (badge or ''), key } })
+  end
+  return table.concat({
+    row('  › ', '.claude', ignored),
+    row('  › ', '.vite-hooks', 'fg'),
+    row('  › ', 'dist', ignored),
+    row('  › ', 'node_modules', ignored),
+    row('  › ', 'src', 'fg'),
+    row('  › ', 'transactions', ignored),
+    row('    ', '.env', ignored),
+    row('    ', 'features.md', 'white', 'M'),
+    row('    ', 'old-notes.md', 'removed', 'D', 's'),
+    row('    ', 'vite.config.ts', 'fg'),
+  })
+end
+
+local function try_hover(pick)
+  return function(c)
+    local v = pick(c)
+    return hover_mock(c, v), verdict(c, v, { { 'bg', 'on bg' }, { 'dark', 'vs the unfocused selection (dark)' },
+      { 'selection_tint', 'vs Visual (selection_tint)' } })
+  end
+end
+
+local function try_ignored(pick)
+  return function(c)
+    local v = pick(c)
+    return ignored_mock(c, v), verdict(c, v, { { 'bg', 'on bg' }, { 'fg', 'vs other files (fg)' }, { 'removed', 'vs Deleted (dim)' } })
+  end
+end
+
+-- Single colors as set now, then the other options considered. An option returns its mock and then
+-- a caption, drawn under it.
+local CHOICES = {
+  {
+    title = 'Hover background',
+    note = 'cursor_line: VS Code’s hover on list rows, status bar items, menus, sticky scroll and secondary buttons (and its drop target and find range), and nvim’s CursorLine and CursorColumn. The explorer shows every state a row can be in at once: a folder, the selection while the sidebar isn’t focused, an ignored folder, the row under the mouse, and the selection while it’s focused. Below it, nvim with the cursor on line 12 and \'Visual\' selected.',
+    options = {
+      { 'Now', 'bright @ 30%: the theme’s color itself, in every theme', try_hover(function(c) return c.cursor_line end) },
+      { 'Cyan guide @ 25%', 'before: cursor guide #b3ecff @ 25%, Gr33N’s pale cyan over each background', try_hover(function(c) return mix('#b3ecff', c.bg, 0.25) end) },
+      { 'Selection @ 25%', 'each theme’s own pale color in place of the cyan, at the same 25%', try_hover(function(c) return mix(c.selection, c.bg, 0.25) end) },
+      { 'White @ 18%', 'white’s rule before, from when the cyan looked out of place in gray', try_hover(function(c) return mix(c.white, c.bg, 0.18) end) },
+    },
+  },
+  {
+    title = 'Ignored files',
+    note = 'ignored, VS Code’s gitDecoration.ignoredResourceForeground. Ignored names have to read dimmer than other files, and the template keeps them apart from Deleted. faint, which it used before, is still nvim’s staged change and staged delete signs; Claude Code’s subtle text moved off faint for the same reason, because a neutral gray read as off-theme. This is the wallet repo’s explorer; old-notes.md is drawn deleted to compare, though deleted files only show in Open Editors and Source Control.',
+    options = {
+      { 'Now', 'fg @ 60%: a darker shade of the text color', try_ignored(function(c) return c.ignored end) },
+      { 'faint', 'before: white @ 40%, still nvim’s staged signs', try_ignored(function(c) return c.faint end) },
+      { 'Selection @ 40%', 'faint’s strength in each theme’s pale color', try_ignored(function(c) return mix(c.selection, c.bg, 0.40) end) },
+      { 'dim', 'Deleted’s color, which Claude Code’s subtle text uses', try_ignored(function(c) return c.dim end) },
+    },
+  },
+}
+
 local function mock_grid(d)
   local head = { '<th>Option</th>' }
   for _, name in ipairs(SHOW) do
@@ -360,7 +453,8 @@ local function mock_grid(d)
     local cells = { ('<th class="opt">%s<small>%s</small></th>'):format(o[1], o[2]) }
     for _, name in ipairs(SHOW) do
       local c = P[name]
-      table.insert(cells, ('<td><div class="swatch mock" style="background:%s">%s</div></td>'):format(c.bg, o[3](c)))
+      local mock, caption = o[3](c)
+      table.insert(cells, ('<td><div class="swatch mock" style="background:%s">%s</div>%s</td>'):format(c.bg, mock, caption or ''))
     end
     table.insert(rows, '<tr>' .. table.concat(cells) .. '</tr>')
   end
@@ -372,18 +466,28 @@ local function mock_grid(d)
   </div>]]):format(d.title, d.note, table.concat(head), table.concat(rows))
 end
 
-local diff_parts = {}
-for _, d in ipairs(DIFFS) do
-  table.insert(diff_parts, mock_grid(d))
-end
-local diffs = ([[
-<section class="theme" id="diffs">
+-- A section of option grids, one per entry in list
+local function grids(id, heading, sub, meta, list)
+  local parts = {}
+  for _, d in ipairs(list) do
+    table.insert(parts, mock_grid(d))
+  end
+  return ([[
+<section class="theme" id="%s">
   <header>
-    <h2>Diffs <span>now, and the other options considered</span></h2>
-    <p class="meta">The same small change in each app that shows diffs: first as it’s set up now, then the other options. These are mocks drawn from palettes.lua by each app’s rules, not screenshots. Faint text (Claude Code’s removed lines, git’s dim) is drawn the way Ghostty draws it, halfway to the background.</p>
+    <h2>%s <span>%s</span></h2>
+    <p class="meta">%s</p>
   </header>
   %s
-</section>]]):format(table.concat(diff_parts, '\n'))
+</section>]]):format(id, heading, sub, meta, table.concat(parts, '\n'))
+end
+
+local choices = grids('choices', 'Hover and ignored', 'now, and the other options considered',
+  ('VS Code’s hover background and ignored files, which read as gray in amber, each drawn as it’s set now and with the other options. These are mocks drawn from palettes.lua by each app’s rules, not screenshots. Under each one: the color, and its contrast against the colors it has to stand apart from, with ≈ on any pair under %.2f:1.'):format(SAME),
+  CHOICES)
+local diffs = grids('diffs', 'Diffs', 'now, and the other options considered',
+  'The same small change in each app that shows diffs: first as it’s set up now, then the other options. These are mocks drawn from palettes.lua by each app’s rules, not screenshots. Faint text (Claude Code’s removed lines, git’s dim) is drawn the way Ghostty draws it, halfway to the background.',
+  DIFFS)
 
 local sections = {}
 for _, name in ipairs(SHOW) do
@@ -417,7 +521,7 @@ for _, name in ipairs(SHOW) do
 end
 
 local page = ([[
-<title>hax0r White &amp; Black</title>
+<title>hax0r Hover &amp; Ignored</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -503,6 +607,7 @@ th.who small { display: block; font: 400 12px var(--sans); color: var(--muted) }
 .cap { display: grid; gap: 1px; margin-top: 5px; font-size: 12px }
 .cap small { color: var(--muted); font: 11.5px var(--mono); font-variant-numeric: tabular-nums }
 .cap b { font-weight: 600 }
+.cap small b { color: var(--ink) }
 th.opt { text-align: left; font: 600 13px var(--sans); width: 24ch; min-width: 16ch }
 th.opt small { display: block; margin-top: 2px; font: 400 11.5px/1.45 var(--mono); color: var(--muted) }
 thead .sub { font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 4px }
@@ -517,15 +622,16 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
 
 <main>
   <div class="intro">
-    <h1>hax0r white &amp; black</h1>
-    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, how each app draws diffs now, next to the other options considered. Then white and black as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
+    <h1>hax0r hover &amp; ignored</h1>
+    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, VS Code’s hover background and ignored files, which read as gray in amber, now next to the other options considered. Then how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
     <p>“Same color as” lists the other colors in that spot that have to be told apart by color alone and are under %.2f:1 against this one. Colors that share a palette key on purpose, like Added and Untracked, aren’t listed.</p>
   </div>
   %s
   %s
+  %s
   <footer>Built by <code>~/.config/hax0r/page.lua</code>, which reads <code>palettes.lua</code> and redraws <code>preview.lua</code>’s panel as HTML.</footer>
 </main>
-]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, diffs, table.concat(sections, '\n'))
+]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, choices, diffs, table.concat(sections, '\n'))
 
 local f = assert(io.open(out, 'w'))
 f:write(page)

@@ -25,15 +25,16 @@ local function mix(top, base, p)
   return out
 end
 
--- Git, diff, problem and link colors, from the colors each theme sets below:
+-- Git, diff, problem, link and hover colors, from the colors each theme sets below:
 --   added (and untracked)  bright
 --   modified               white (set in the apps' templates, not here)
 --   removed                dim
---   ignored                faint (set in VS Code's template)
+--   ignored                fg @ 60%: a darker shade of the text, where faint's neutral gray read
+--                          as off-theme in amber (VS Code's ignored files)
 --   staged                 one step dimmer: added is dim, removed is faint
 --   faint                  white @ 40%: a gray with the theme's background tone, as readable as the
---                          cyan-gray cursor guide it replaces (Claude Code's subtle text, staged
---                          changes, VS Code's ignored files)
+--                          cyan-gray cursor guide it replaces (nvim's staged change and staged
+--                          delete signs)
 --   warning (and conflict) bright halfway to white
 --   error                  bright_white
 --   diff bands             added line and word are bright @ 20% and 33%, removed are white and dim
@@ -42,12 +43,15 @@ end
 --                          already marked by their − and dim text (Ghostty palette slots 22/28/52/88)
 --   link                   fg halfway to selection, so it stands apart from both the prose and
 --                          the inline code it sits next to (also Claude Code's plan mode and skills)
+--   cursor_line            bright @ 30%: the theme's own color, where Gr33N's cyan cursor guide
+--                          read as gray over amber (VS Code's hovers, nvim's cursor line)
 local function theme(t)
   t.faint = mix(t.white, t.bg, 0.40)
   t.added = t.bright
   t.added_dim = t.dim
   t.removed = t.dim
   t.removed_dim = t.faint
+  t.ignored = mix(t.fg, t.bg, 0.60)
   t.warning = mix(t.white, t.bright, 0.5)
   t.error = t.bright_white
   t.diff_add = mix(t.bright, t.bg, 0.20)
@@ -56,6 +60,7 @@ local function theme(t)
   t.diff_del = mix(removed_tint, t.bg, 0.08)
   t.diff_del_word = mix(removed_tint, t.bg, 0.20)
   t.link = mix(t.selection, t.fg, 0.5)
+  t.cursor_line = mix(t.bright, t.bg, 0.30)
   return t
 end
 
@@ -78,7 +83,6 @@ M.green = theme({
   -- HaX0R Gr33N, derived from iTerm-only colors
   dim = '#0b8700',            -- badge #14ff00 @ 50%: comments, line numbers
   badge = '#14ff0080',        -- badge itself, for VS Code's count badges
-  cursor_line = '#2e4640',    -- cursor guide #b3ecff @ 25%
   gray = '#334843',           -- ansi 8 in ghostty's port: Claude Code's empty rate-limit bar
   -- Added: no hax0r theme has these
   selection_tint = '#1b2c18', -- selection @ 12%: selections everywhere, text keeps its color
@@ -116,7 +120,6 @@ M.red = theme({
   selection = '#ffc1c1',      -- not R3D's lavender #ebc1ff: red as pale as Gr33N's mint
   dim = '#b00d0d',            -- not badge #ff2600 @ 50% (#901400, 2.14:1): R3D's ansi 1, lifted with fg
   badge = '#b00d0d',          -- dim, like the other themes
-  cursor_line = '#453c40',    -- cursor guide #b3ecff @ 25%
   gray = '#554040',           -- ansi 8 in ghostty's port
   -- Added
   selection_tint = '#3b1818', -- selection @ 12%
@@ -155,7 +158,6 @@ M.blue = theme({
   selection = '#c1e4ff',
   dim = '#0b79ad',            -- not badge @ 50%: BLUE's badge is red-orange #ff2600, so fg @ 65%, as readable as Gr33N's
   badge = '#0b79ad',          -- dim, like the other themes
-  cursor_line = '#2e3f50',    -- cursor guide #b3ecff @ 25%
   gray = '#484157',           -- ansi 8 in ghostty's port
   -- Added
   selection_tint = '#182031', -- selection @ 12%
@@ -193,7 +195,6 @@ M.amber = theme({
   selection = '#ffecc1',      -- amber as pale as Gr33N's mint
   dim = '#9c6a00',
   badge = '#9c6a00',
-  cursor_line = '#3c4240',    -- cursor guide #b3ecff @ 25%
   gray = '#4c4230',           -- as faint as Gr33N's, tinted 30% amber
   selection_tint = '#302517', -- selection @ 12%
   border = '#301e00',         -- fg @ 15%
@@ -230,7 +231,6 @@ M.white = theme({
   selection = '#ffffff',      -- inline code: pure white against gray prose
   dim = '#999999',
   badge = '#999999',
-  cursor_line = '#2e2e2e',    -- white @ 18%: a cyan cursor guide looked out of place in gray
   gray = '#3f3f3f',           -- as faint as Gr33N's
   selection_tint = '#1f1f1f', -- selection @ 12%
   border = '#1e1e1e',         -- fg @ 15%
@@ -267,7 +267,6 @@ M.black = theme({
   selection = '#000000',      -- inline code: pure black against gray prose
   dim = '#565656',
   badge = '#565656',
-  cursor_line = '#ededed',    -- black @ 7%
   gray = '#b7b7b7',           -- as faint as Gr33N's
   selection_tint = '#e6e6e6', -- selection @ 10%
   border = '#e0e0e0',         -- fg @ 15%
