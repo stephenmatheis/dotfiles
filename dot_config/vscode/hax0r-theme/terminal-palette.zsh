@@ -16,6 +16,11 @@ _hax0r_palette() {
         amber) printf '\e]4;22;#432b00\a\e]4;28;#624100\a\e]4;52;#23170a\a\e]4;88;#392c19\a\e]4;196;#fefefe\a' ;;
         white) printf '\e]4;22;#333333\a\e]4;28;#545454\a\e]4;52;#101010\a\e]4;88;#282828\a\e]4;196;#ffffff\a' ;;
         black) printf '\e]4;22;#cccccc\a\e]4;28;#ababab\a\e]4;52;#eeeeee\a\e]4;88;#d5d5d5\a\e]4;196;#000000\a' ;;
+        pink) printf '\e]4;22;#482433\a\e]4;28;#65394b\a\e]4;52;#2b0c1b\a\e]4;88;#441b31\a\e]4;196;#fefefe\a' ;;
+        purple) printf '\e]4;22;#36264f\a\e]4;28;#4f3d6b\a\e]4;52;#1f0e34\a\e]4;88;#35214f\a\e]4;196;#fefefe\a' ;;
+        electric) printf '\e]4;22;#202f4b\a\e]4;28;#344868\a\e]4;52;#0b182f\a\e]4;88;#1a2c49\a\e]4;196;#fefefe\a' ;;
+        cyan-pink) printf '\e]4;22;#043737\a\e]4;28;#065151\a\e]4;52;#380b2c\a\e]4;88;#5e0840\a\e]4;196;#feaaca\a' ;;
+        pink-cyan) printf '\e]4;22;#482433\a\e]4;28;#65394b\a\e]4;52;#14222a\a\e]4;88;#0f383e\a\e]4;196;#11d9d9\a' ;;
         *) printf '\e]4;22;#073904\a\e]4;28;#0a5505\a\e]4;52;#0c1d0b\a\e]4;88;#1c331a\a\e]4;196;#fefefe\a' ;;
     esac
 }

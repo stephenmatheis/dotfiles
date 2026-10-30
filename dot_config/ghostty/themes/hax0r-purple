@@ -1,0 +1,33 @@
+# hax0r purple for Ghostty: Purple.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+background = #100223
+foreground = #b07efd
+cursor-color = #c3a2fe
+cursor-text = #100223
+# Selections tint the background and let each character keep its own color
+selection-background = #2b1f3d
+selection-foreground = cell-foreground
+# The 16 colors, with ansi 7, 8 and 12 changed for Claude Code (see palettes.lua)
+palette = 0=#27003b
+palette = 1=#c3a2fe
+palette = 2=#c3a2fe
+palette = 3=#c3a2fe
+palette = 4=#c3a2fe
+palette = 5=#c3a2fe
+palette = 6=#c3a2fe
+palette = 7=#b07efd
+palette = 8=#993bff
+palette = 9=#cfb6fe
+palette = 10=#cfb6fe
+palette = 11=#cfb6fe
+palette = 12=#f2f0ff
+palette = 13=#cfb6fe
+palette = 14=#cfb6fe
+palette = 15=#fefefe
+# Claude Code's diff backgrounds: its theme points at these slots
+palette = 22=#36264f
+palette = 28=#4f3d6b
+palette = 52=#1f0e34
+palette = 88=#35214f
+# Errors, for Starship's prompt after a failed command
+palette = 196=#fefefe

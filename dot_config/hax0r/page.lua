@@ -580,7 +580,7 @@ local function helper_check()
 <section class="theme" id="helper-check">
   <header>
     <h2>Helper check <span>the derive helper against the themes set by hand</span></h2>
-    <p class="meta">Each theme rebuilt from its own hue, so any difference is the helper’s. Green is the source and has to match (its cursor text and badge are set differently on purpose). Amber was matched to Gr33N by hand, so it should land close. Red and blue were kept deeper than a Gr33N match on purpose, so they differ. Distance is OKLab; 0.02 is about the least anyone sees, and 0.05 or more is bold. Hover a box for its role and color.</p>
+    <p class="meta">Each theme rebuilt from its own hue, so any difference is the helper’s. Green is the source, so it has to match, except where Gr33N is set differently on purpose (its cursor text and badge, and a gray and black that lean teal). Amber was matched to Gr33N by hand, so it should land close, and does. Red and blue were kept deeper than a Gr33N match on purpose, so they differ. Distance is OKLab; 0.02 is about the least anyone sees, and 0.05 or more is bold. Hover a box for its role and color.</p>
   </header>
   <div class="table-wrap"><table class="grid"><thead><tr><th>Theme</th><th>Set by hand</th><th>Rebuilt</th><th>Distance</th></tr></thead><tbody>%s</tbody></table></div>
 </section>]]):format(table.concat(rows))

@@ -13,7 +13,7 @@
 
 local M = {}
 
-M.order = { 'green', 'red', 'blue', 'amber', 'white', 'black' }
+M.order = { 'green', 'red', 'blue', 'amber', 'white', 'black', 'pink', 'purple', 'electric', 'cyan-pink', 'pink-cyan' }
 
 -- top composited over base at p (0 to 1), as a hex color
 local function mix(top, base, p)
@@ -298,6 +298,197 @@ M.black = theme({
   },
 })
 
+-- Pink: Gr33N's colors at OKLCH hue 355, each as readable against the background as Gr33N's
+-- (made by derive.mono and derive.duo below, then frozen as hex, like the others)
+M.pink = theme({
+  title = 'Pink',
+  light = false,
+  bg = '#1a020d',             -- background
+  fg = '#fd5ca7',             -- foreground
+  dark = '#340013',           -- ansi 0: floats, statuslines, panels
+  normal = '#fe91bd',         -- ansi 1-6: strings, functions, constants
+  bright = '#feaaca',         -- ansi 9-14: types, active items
+  bold = '#feabcb',           -- bold: keywords, titles
+  white = '#fafafa',          -- ansi 7: changed lines, Claude Code's auto-accept
+  bright_white = '#fefefe',   -- ansi 15
+  black = '#260012',          -- ansi 8: float shadows
+  cursor = '#fe91bd',         -- cursor
+  cursor_text = '#1a020d',    -- cursor text
+  selection = '#ffedf5',      -- selection: inline code, Claude Code's highlights
+  dim = '#de0084',            -- comments, line numbers
+  badge = '#de0084',          -- dim, like the other themes
+  gray = '#603747',           -- ansi 8 in ghostty's port: Claude Code's empty rate-limit bar
+  selection_tint = '#351e29', -- selection @ 12%: selections everywhere, text keeps its color
+  border = '#3c1024',         -- fg @ 15%: VS Code's panel outline, used for every border
+  float_border = '#520e29',   -- fg @ 15% over dark
+  prompt_band = '#531934',    -- fg @ 25%: Claude Code's prompts
+  bash_band = '#3e2a33',      -- white @ 16%: Claude Code's ! commands
+  ansi = {
+    [0] = '#340013',
+    '#fe91bd', '#fe91bd', '#fe91bd', '#fe91bd', '#fe91bd', '#fe91bd',
+    '#fd5ca7', -- 7: fg
+    '#de0084', -- 8: dim
+    '#feaaca', '#feaaca', '#feaaca',
+    '#ffedf5', -- 12: selection
+    '#feaaca', '#feaaca',
+    '#fefefe',
+  },
+})
+
+-- Purple: Gr33N's colors at OKLCH hue 300, each as readable against the background as Gr33N's
+-- (made by derive.mono and derive.duo below, then frozen as hex, like the others)
+M.purple = theme({
+  title = 'Purple',
+  light = false,
+  bg = '#100223',             -- background
+  fg = '#b07efd',             -- foreground
+  dark = '#27003b',           -- ansi 0: floats, statuslines, panels
+  normal = '#c3a2fe',         -- ansi 1-6: strings, functions, constants
+  bright = '#cfb6fe',         -- ansi 9-14: types, active items
+  bold = '#cfb7fe',           -- bold: keywords, titles
+  white = '#fafafa',          -- ansi 7: changed lines, Claude Code's auto-accept
+  bright_white = '#fefefe',   -- ansi 15
+  black = '#180032',          -- ansi 8: float shadows
+  cursor = '#c3a2fe',         -- cursor
+  cursor_text = '#100223',    -- cursor text
+  selection = '#f2f0ff',      -- selection: inline code, Claude Code's highlights
+  dim = '#993bff',            -- comments, line numbers
+  badge = '#993bff',          -- dim, like the other themes
+  gray = '#4c3a6a',           -- ansi 8 in ghostty's port: Claude Code's empty rate-limit bar
+  selection_tint = '#2b1f3d', -- selection @ 12%: selections everywhere, text keeps its color
+  border = '#281544',         -- fg @ 15%: VS Code's panel outline, used for every border
+  float_border = '#3c1358',   -- fg @ 15% over dark
+  prompt_band = '#38215a',    -- fg @ 25%: Claude Code's prompts
+  bash_band = '#352a45',      -- white @ 16%: Claude Code's ! commands
+  ansi = {
+    [0] = '#27003b',
+    '#c3a2fe', '#c3a2fe', '#c3a2fe', '#c3a2fe', '#c3a2fe', '#c3a2fe',
+    '#b07efd', -- 7: fg
+    '#993bff', -- 8: dim
+    '#cfb6fe', '#cfb6fe', '#cfb6fe',
+    '#f2f0ff', -- 12: selection
+    '#cfb6fe', '#cfb6fe',
+    '#fefefe',
+  },
+})
+
+-- Electric blue: Gr33N's colors at OKLCH hue 258, each as readable against the background as Gr33N's
+-- (made by derive.mono and derive.duo below, then frozen as hex, like the others)
+M.electric = theme({
+  title = 'Electric blue',
+  light = false,
+  bg = '#010a1e',             -- background
+  fg = '#5398fd',             -- foreground
+  dark = '#060056',           -- ansi 0: floats, statuslines, panels
+  normal = '#83b5fe',         -- ansi 1-6: strings, functions, constants
+  bright = '#9dc5fe',         -- ansi 9-14: types, active items
+  bold = '#9fc6fe',           -- bold: keywords, titles
+  white = '#fafafa',          -- ansi 7: changed lines, Claude Code's auto-accept
+  bright_white = '#fefefe',   -- ansi 15
+  black = '#000f2c',          -- ansi 8: float shadows
+  cursor = '#83b5fe',         -- cursor
+  cursor_text = '#010a1e',    -- cursor text
+  selection = '#eaf3ff',      -- selection: inline code, Claude Code's highlights
+  dim = '#006feb',            -- comments, line numbers
+  badge = '#006feb',          -- dim, like the other themes
+  gray = '#314462',           -- ansi 8 in ghostty's port: Claude Code's empty rate-limit bar
+  selection_tint = '#1d2639', -- selection @ 12%: selections everywhere, text keeps its color
+  border = '#0d1f3f',         -- fg @ 15%: VS Code's panel outline, used for every border
+  float_border = '#12176f',   -- fg @ 15% over dark
+  prompt_band = '#162e56',    -- fg @ 25%: Claude Code's prompts
+  bash_band = '#293041',      -- white @ 16%: Claude Code's ! commands
+  ansi = {
+    [0] = '#060056',
+    '#83b5fe', '#83b5fe', '#83b5fe', '#83b5fe', '#83b5fe', '#83b5fe',
+    '#5398fd', -- 7: fg
+    '#006feb', -- 8: dim
+    '#9dc5fe', '#9dc5fe', '#9dc5fe',
+    '#eaf3ff', -- 12: selection
+    '#9dc5fe', '#9dc5fe',
+    '#fefefe',
+  },
+})
+
+-- Cyan + pink: cyan (hue 195) with pink (355) as the second color, at Gr33N's contrast
+-- (made by derive.mono and derive.duo below, then frozen as hex, like the others)
+M['cyan-pink'] = theme({
+  title = 'Cyan + pink',
+  light = false,
+  bg = '#010e0e',             -- background
+  fg = '#11aaaa',             -- foreground
+  dark = '#001d20',           -- ansi 0: floats, statuslines, panels
+  normal = '#10c8c8',         -- ansi 1-6: strings, functions, constants
+  bright = '#11d9d9',         -- ansi 9-14: types, active items
+  bold = '#12dada',           -- bold: keywords, titles
+  white = '#fafafa',          -- ansi 7: changed lines, Claude Code's auto-accept
+  bright_white = '#fefefe',   -- ansi 15
+  black = '#001414',          -- ansi 8: float shadows
+  cursor = '#10c8c8',         -- cursor
+  cursor_text = '#010e0e',    -- cursor text
+  selection = '#befff9',      -- selection: inline code, Claude Code's highlights
+  dim = '#008281',            -- comments, line numbers
+  badge = '#008281',          -- dim, like the other themes
+  gray = '#334847',           -- ansi 8 in ghostty's port: Claude Code's empty rate-limit bar
+  selection_tint = '#182b2a', -- selection @ 12%: selections everywhere, text keeps its color
+  border = '#032525',         -- fg @ 15%: VS Code's panel outline, used for every border
+  float_border = '#033235',   -- fg @ 15% over dark
+  prompt_band = '#053535',    -- fg @ 25%: Claude Code's prompts
+  bash_band = '#293434',      -- white @ 16%: Claude Code's ! commands
+  accent = '#fe91bd',         -- the second color: links
+  accent_bright = '#feaaca',  -- the second color: errors
+  accent_dim = '#de0084',     -- the second color: removed lines and their bands
+  ansi = {
+    [0] = '#001d20',
+    '#10c8c8', '#10c8c8', '#10c8c8', '#10c8c8', '#10c8c8', '#10c8c8',
+    '#11aaaa', -- 7: fg
+    '#008281', -- 8: dim
+    '#11d9d9', '#11d9d9', '#11d9d9',
+    '#befff9', -- 12: selection
+    '#11d9d9', '#11d9d9',
+    '#fefefe',
+  },
+})
+
+-- Pink + cyan: pink (hue 355) with cyan (195) as the second color, at Gr33N's contrast
+-- (made by derive.mono and derive.duo below, then frozen as hex, like the others)
+M['pink-cyan'] = theme({
+  title = 'Pink + cyan',
+  light = false,
+  bg = '#1a020d',             -- background
+  fg = '#fd5ca7',             -- foreground
+  dark = '#340013',           -- ansi 0: floats, statuslines, panels
+  normal = '#fe91bd',         -- ansi 1-6: strings, functions, constants
+  bright = '#feaaca',         -- ansi 9-14: types, active items
+  bold = '#feabcb',           -- bold: keywords, titles
+  white = '#fafafa',          -- ansi 7: changed lines, Claude Code's auto-accept
+  bright_white = '#fefefe',   -- ansi 15
+  black = '#260012',          -- ansi 8: float shadows
+  cursor = '#fe91bd',         -- cursor
+  cursor_text = '#1a020d',    -- cursor text
+  selection = '#ffedf5',      -- selection: inline code, Claude Code's highlights
+  dim = '#de0084',            -- comments, line numbers
+  badge = '#de0084',          -- dim, like the other themes
+  gray = '#603747',           -- ansi 8 in ghostty's port: Claude Code's empty rate-limit bar
+  selection_tint = '#351e29', -- selection @ 12%: selections everywhere, text keeps its color
+  border = '#3c1024',         -- fg @ 15%: VS Code's panel outline, used for every border
+  float_border = '#520e29',   -- fg @ 15% over dark
+  prompt_band = '#531934',    -- fg @ 25%: Claude Code's prompts
+  bash_band = '#3e2a33',      -- white @ 16%: Claude Code's ! commands
+  accent = '#10c8c8',         -- the second color: links
+  accent_bright = '#11d9d9',  -- the second color: errors
+  accent_dim = '#008281',     -- the second color: removed lines and their bands
+  ansi = {
+    [0] = '#340013',
+    '#fe91bd', '#fe91bd', '#fe91bd', '#fe91bd', '#fe91bd', '#fe91bd',
+    '#fd5ca7', -- 7: fg
+    '#de0084', -- 8: dim
+    '#feaaca', '#feaaca', '#feaaca',
+    '#ffedf5', -- 12: selection
+    '#feaaca', '#feaaca',
+    '#fefefe',
+  },
+})
+
 -- Deriving a theme in another hue: Gr33N's colors turned to a new OKLCH hue. Each keeps its
 -- lightness and how much of the chroma sRGB allows at its hue, so every hue gets Gr33N's levels
 -- and none comes out darker or duller by accident. The rest is filled in the way the hand-set
@@ -408,12 +599,16 @@ local function derive(title, h, equal)
   local g, t = M.green, { title = title, light = false }
   local dh, original_bg = h - hue(g.normal), equal ~= 'lightness' and g.bg
   t.white, t.bright_white = g.white, g.bright_white
-  for _, k in ipairs({ 'bg', 'dark', 'black' }) do
+  for _, k in ipairs({ 'bg', 'dark' }) do
     t[k] = rotate(g[k], dh)
   end
-  for _, k in ipairs({ 'fg', 'normal', 'bright', 'bold', 'selection', 'dim', 'gray' }) do
+  for _, k in ipairs({ 'fg', 'normal', 'bright', 'bold', 'selection', 'dim' }) do
     t[k] = rotate(g[k], dh, original_bg, t.bg)
   end
+  -- Gr33N's black and gray lean teal, 35 degrees off its hue, where amber's don't lean at all:
+  -- turned along with the rest they'd tint pink brown, so they take the theme's own hue
+  t.black = rotate(g.black, h - hue(g.black))
+  t.gray = rotate(g.gray, h - hue(g.gray), original_bg, t.bg)
   t.cursor = t.normal
   t.cursor_text = contrast(t.cursor, t.white) >= 3 and t.white or t.bg -- as amber: white on a light cursor is hard to read
   t.badge = t.dim

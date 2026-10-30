@@ -3,7 +3,7 @@ theme = hax0r-green
 
 # hax0r themes live in themes/hax0r-*
 # built from ~/.config/hax0r/palettes.lua
-# run `hax0r <green|amber|red|blue|white|black>` to switch themes
+# run `hax0r` to list the themes and `hax0r <theme>` to switch
 config-file = ?~/.local/state/hax0r/ghostty
 
 # window
