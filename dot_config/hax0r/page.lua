@@ -1,16 +1,19 @@
 -- `nvim -l ~/.config/hax0r/page.lua <out.html> [label]`: a web page of the hax0r themes drawn from
 -- palettes.lua in exact colors, for judging colors by eye where a terminal can't show them. It
--- draws the single colors in CHOICES and how each app shows diffs, each now next to the other options
+-- draws the new themes under consideration (MONO and DUO, built by palettes.lua's derive helpers),
+-- the single colors in CHOICES and how each app shows diffs, each now next to the other options
 -- considered, then for each theme in SHOW the `hax0r preview` panel and every place an app uses a
 -- git, diff or problem color, with colors that can't be told apart flagged. To weigh a change, add
 -- an option row to CHOICES or DIFFS (or a section of its own) that draws it next to Now. label
 -- names the version shown, like a commit.
 local config = vim.env.XDG_CONFIG_HOME or (vim.env.HOME .. '/.config')
 local P = dofile(config .. '/hax0r/palettes.lua')
+local D = P.derive
 local out = assert(arg[1], 'usage: nvim -l page.lua <out.html> [label]')
 local label = arg[2]
 local SHOW = { 'amber', 'red', 'green' }
 local SAME = 1.15 -- two colors closer than this contrast ratio read as the same color
+local APART = 0.06 -- in a dual theme, two colors at least this far apart (OKLab) read as different colors anyway
 
 local function rgb(h)
   return tonumber(h:sub(2, 3), 16), tonumber(h:sub(4, 5), 16), tonumber(h:sub(6, 7), 16)
@@ -167,7 +170,7 @@ local function chip(hex)
   return ('<span class="chip"><i style="background:%s"></i>%s</span>'):format(hex, hex)
 end
 
-local function table_for(c)
+local function table_for(c, by_hue)
   local html, clashes = {}, {}
   for _, g in ipairs(GROUPS) do
     table.insert(html, ('<tr class="group"><th colspan="4"><span>%s</span> %s</th></tr>'):format(g.title, g.note))
@@ -175,7 +178,8 @@ local function table_for(c)
       local key = r[1]
       local same = {}
       for _, o in ipairs(g.rows) do
-        if o ~= r and o.cmp == r.cmp and o[1] ~= key and contrast(c[o[1]], c[key]) < SAME then
+        if o ~= r and o.cmp == r.cmp and o[1] ~= key and contrast(c[o[1]], c[key]) < SAME
+            and not (by_hue and D.distance(c[o[1]], c[key]) >= APART) then
           table.insert(same, o[2])
         end
       end
@@ -482,6 +486,114 @@ local function grids(id, heading, sub, meta, list)
 </section>]]):format(id, heading, sub, meta, table.concat(parts, '\n'))
 end
 
+-- New themes under consideration, built by palettes.lua's derive helpers. A hue is OKLCH degrees, or
+-- a theme's name for that theme's own hue. Each is drawn both ways palettes.lua can match Gr33N.
+local function hue_of(h)
+  return type(h) == 'number' and h or D.hue(P[h].normal)
+end
+
+local EQUALS = {
+  { 'contrast', 'Gr33N’s contrast against the background, as amber was matched' },
+  { 'lightness', 'Gr33N’s lightness only: more vivid, dimmer to read' },
+}
+
+local MONO = {}
+for _, spec in ipairs({
+  { 'Pink', { 355, 340, 325 } },
+  { 'Purple', { 310, 300, 290 } },
+  { 'Electric blue', { 266, 258, 250 } },
+}) do
+  for _, h in ipairs(spec[2]) do
+    local name = ('%s %d°'):format(spec[1], h)
+    table.insert(MONO, { name, ('hue %d'):format(h), function(equal) return D.mono(name, h, equal) end })
+  end
+end
+
+local DUO = {}
+for _, spec in ipairs({
+  { 'Cyan + pink', 195, 350 },
+  { 'Purple + amber', 300, 'amber' },
+  { 'Green + amber', 'green', 'amber' },
+  { 'Blue + orange', 'blue', 55 },
+}) do
+  local name, a, b = spec[1], hue_of(spec[2]), hue_of(spec[3])
+  table.insert(DUO, { name, ('hues %.0f + %.0f'):format(a, b), function(equal) return D.duo(name, a, b, equal) end })
+end
+
+local function candidate_cell(equal, c, by_hue)
+  local _, summary = table_for(c, by_hue)
+  local chips = {}
+  for _, k in ipairs(c.accent and { 'fg', 'dim', 'bright', 'accent', 'accent_dim' } or { 'fg', 'dim', 'normal', 'bright', 'selection' }) do
+    table.insert(chips, chip(c[k]))
+  end
+  return ('<td><div class="scroll"><div class="panel" style="background:%s">%s</div></div><p class="meta">%s</p><ul class="clashes">%s</ul></td>'):format(
+    c.bg, panel(equal, c), table.concat(chips, ' '),
+    #summary > 0 and table.concat(summary) or '<li>Every pair that has to differ does.</li>')
+end
+
+local function candidates(id, heading, sub, meta, list, by_hue)
+  local head = { '<th>Option</th>' }
+  for _, e in ipairs(EQUALS) do
+    table.insert(head, ('<th>Equal %s <span class="sub">%s</span></th>'):format(e[1], e[2]))
+  end
+  local rows = {}
+  for _, o in ipairs(list) do
+    local cells = { ('<th class="opt">%s<small>%s</small></th>'):format(o[1], o[2]) }
+    for _, e in ipairs(EQUALS) do
+      table.insert(cells, candidate_cell(e[1], o[3](e[1]), by_hue))
+    end
+    table.insert(rows, '<tr>' .. table.concat(cells) .. '</tr>')
+  end
+  return ([[
+<section class="theme" id="%s">
+  <header>
+    <h2>%s <span>%s</span></h2>
+    <p class="meta">%s</p>
+  </header>
+  <div class="table-wrap"><table class="grid cands"><thead><tr>%s</tr></thead><tbody>%s</tbody></table></div>
+</section>]]):format(id, heading, sub, meta, table.concat(head), table.concat(rows))
+end
+
+-- The derive helper against the themes set by hand: green is its source, so it has to match;
+-- amber was matched to Gr33N by hand; red and blue were kept deeper than a Gr33N match
+local function helper_check()
+  local function strip(c)
+    local boxes = {}
+    for _, k in ipairs({ 'fg', 'dim', 'normal', 'bright', 'selection' }) do
+      table.insert(boxes, ('<i style="background:%s" title="%s %s"></i>'):format(c[k], k, c[k]))
+    end
+    return ('<div class="strip" style="background:%s">%s</div>'):format(c.bg, table.concat(boxes))
+  end
+  local rows = {}
+  for _, name in ipairs({ 'green', 'amber', 'red', 'blue' }) do
+    local c = P[name]
+    local d = D.mono(c.title, D.hue(c.normal))
+    local far = {}
+    for _, k in ipairs({ 'bg', 'fg', 'dim', 'normal', 'bright', 'selection' }) do
+      local dist = D.distance(c[k], d[k])
+      table.insert(far, (dist >= 0.05 and '<b>%s %.2f</b>' or '%s %.2f'):format(k, dist))
+    end
+    table.insert(rows, ('<tr><th class="opt">%s<small>hue %.0f°</small></th><td>%s</td><td>%s</td><td class="hex"><small>%s</small></td></tr>')
+      :format(name, D.hue(c.normal), strip(c), strip(d), table.concat(far, '<br>')))
+  end
+  return ([[
+<section class="theme" id="helper-check">
+  <header>
+    <h2>Helper check <span>the derive helper against the themes set by hand</span></h2>
+    <p class="meta">Each theme rebuilt from its own hue, so any difference is the helper’s. Green is the source and has to match (its cursor text and badge are set differently on purpose). Amber was matched to Gr33N by hand, so it should land close. Red and blue were kept deeper than a Gr33N match on purpose, so they differ. Distance is OKLab; 0.02 is about the least anyone sees, and 0.05 or more is bold. Hover a box for its role and color.</p>
+  </header>
+  <div class="table-wrap"><table class="grid"><thead><tr><th>Theme</th><th>Set by hand</th><th>Rebuilt</th><th>Distance</th></tr></thead><tbody>%s</tbody></table></div>
+</section>]]):format(table.concat(rows))
+end
+
+local monos = candidates('mono', 'New single-color themes', 'pink, purple and electric blue',
+  ('Gr33N’s colors turned to each hue, drawn both ways. Contrast is the readable one, since blue and purple fall short of Gr33N’s contrast at its lightness. Under each: its key colors, then the pairs that can’t be told apart by color. Comments (dim) and text have to read as well as Gr33N’s (4.2:1 and 6.8:1) to be as easy on the eyes.'),
+  MONO)
+local duos = candidates('duo', 'New dual themes', 'a second hue for removed, errors and links',
+  'The first hue is the theme; the second (accent) takes removed lines, errors and links, and Claude Code’s shimmer later on. Cyan + pink puts the warm color on errors; green + amber uses colors that already exist. Pairs that differ in hue count as told apart even when their lightness is close.',
+  DUO, true)
+local check = helper_check()
+
 local choices = grids('choices', 'Hover and ignored', 'now, and the other options considered',
   ('VS Code’s hover background and ignored files, which read as gray in amber, each drawn as it’s set now and with the other options. These are mocks drawn from palettes.lua by each app’s rules, not screenshots. Under each one: the color, and its contrast against the colors it has to stand apart from, with ≈ on any pair under %.2f:1.'):format(SAME),
   CHOICES)
@@ -521,7 +633,7 @@ for _, name in ipairs(SHOW) do
 end
 
 local page = ([[
-<title>hax0r Hover &amp; Ignored</title>
+<title>hax0r Candidates</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -617,13 +729,21 @@ thead .sub { font-weight: 400; text-transform: none; letter-spacing: 0; margin-l
 .swatch.mock .sbs .ln { width: 24ch; flex: none }
 .sbs .sep { width: 1px; flex: none }
 
+.cands th.opt { width: 14ch; min-width: 12ch }
+.cands td { padding-right: 24px }
+.cands .meta { margin-top: 6px }
+.cands .panel { width: 62ch }
+ul.clashes { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 2px; font-size: 12px; color: var(--muted) }
+.strip { display: inline-flex; gap: 6px; padding: 10px; border-radius: 3px }
+.strip i { width: 28px; height: 28px; border-radius: 2px }
+
 footer { color: var(--muted); font-size: 13px; max-width: 70ch }
 </style>
 
 <main>
   <div class="intro">
-    <h1>hax0r hover &amp; ignored</h1>
-    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, VS Code’s hover background and ignored files, which read as gray in amber, now next to the other options considered. Then how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
+    <h1>hax0r candidates</h1>
+    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, the new single-color and dual themes under consideration, built by <code>palettes.lua</code>’s derive helpers, and a check of those helpers against the themes set by hand. Then VS Code’s hover background and ignored files, now next to the other options considered, how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
     <p>“Same color as” lists the other colors in that spot that have to be told apart by color alone and are under %.2f:1 against this one. Colors that share a palette key on purpose, like Added and Untracked, aren’t listed.</p>
   </div>
   %s
@@ -631,7 +751,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
   %s
   <footer>Built by <code>~/.config/hax0r/page.lua</code>, which reads <code>palettes.lua</code> and redraws <code>preview.lua</code>’s panel as HTML.</footer>
 </main>
-]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, choices, diffs, table.concat(sections, '\n'))
+]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ monos, duos, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
 
 local f = assert(io.open(out, 'w'))
 f:write(page)

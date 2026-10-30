@@ -45,6 +45,11 @@ end
 --                          the inline code it sits next to (also Claude Code's plan mode and skills)
 --   cursor_line            bright @ 30%: the theme's own color, where Gr33N's cyan cursor guide
 --                          read as gray over amber (VS Code's hovers, nvim's cursor line)
+--
+-- A dual theme also sets accent, accent_bright and accent_dim: a second hue. It takes the jobs one
+-- hue can only do with brightness: removed is accent_dim and error accent_bright, links are accent,
+-- and the removed bands are accent_dim @ 25% and 42%, nearly as strong as the added ones since
+-- their hue sets them apart (accent_dim, because the paler shades are too gray to tint a band).
 local function theme(t)
   t.faint = mix(t.white, t.bg, 0.40)
   t.added = t.bright
@@ -61,6 +66,14 @@ local function theme(t)
   t.diff_del_word = mix(removed_tint, t.bg, 0.20)
   t.link = mix(t.selection, t.fg, 0.5)
   t.cursor_line = mix(t.bright, t.bg, 0.30)
+  if t.accent then
+    t.removed = t.accent_dim
+    t.removed_dim = mix(t.accent_dim, t.bg, 0.60)
+    t.error = t.accent_bright
+    t.diff_del = mix(t.accent_dim, t.bg, 0.25)
+    t.diff_del_word = mix(t.accent_dim, t.bg, 0.42)
+    t.link = t.accent
+  end
   return t
 end
 
@@ -284,5 +297,157 @@ M.black = theme({
     '#000000', -- 15: the strongest text, like bright white on a dark theme
   },
 })
+
+-- Deriving a theme in another hue: Gr33N's colors turned to a new OKLCH hue. Each keeps its
+-- lightness and how much of the chroma sRGB allows at its hue, so every hue gets Gr33N's levels
+-- and none comes out darker or duller by accident. The rest is filled in the way the hand-set
+-- themes do it.
+--   mono(title, hue)               one hue
+--   duo(title, hue, accent_hue)    a second hue for removed, errors and links (see theme())
+-- Hues are OKLCH degrees, or `hue(color)` for a color's own. Each takes a last argument, `equal`:
+-- 'contrast' (the default) gives every color Gr33N's contrast against the background, as amber was
+-- matched; 'lightness' gives it only Gr33N's lightness, which is more vivid and dimmer to read.
+
+-- hex as linear-light r, g, b, each 0 to 1
+local function linear(hex)
+  local out = {}
+  for i = 2, 6, 2 do
+    local v = tonumber(hex:sub(i, i + 1), 16) / 255
+    table.insert(out, v <= 0.04045 and v / 12.92 or ((v + 0.055) / 1.055) ^ 2.4)
+  end
+  return out[1], out[2], out[3]
+end
+
+local function contrast(a, b)
+  local function luminance(hex)
+    local r, g, bl = linear(hex)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl
+  end
+  local la, lb = luminance(a), luminance(b)
+  return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05)
+end
+
+-- OKLab (Björn Ottosson's): lightness, then the two color axes
+local function oklab(hex)
+  local r, g, b = linear(hex)
+  local l = (0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b) ^ (1 / 3)
+  local m = (0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b) ^ (1 / 3)
+  local s = (0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b) ^ (1 / 3)
+  return 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+    1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+    0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s
+end
+
+-- linear r, g, b of an OKLab color: a channel outside 0 to 1 is outside the sRGB gamut
+local function oklab_linear(L, a, b)
+  local l = (L + 0.3963377774 * a + 0.2158037573 * b) ^ 3
+  local m = (L - 0.1055613458 * a - 0.0638541728 * b) ^ 3
+  local s = (L - 0.0894841775 * a - 1.2914855480 * b) ^ 3
+  return 4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+end
+
+local atan2 = math.atan2 or math.atan
+
+local function hue(hex)
+  local _, a, b = oklab(hex)
+  return math.deg(atan2(b, a)) % 360
+end
+
+-- the most chroma sRGB allows at a lightness and hue
+local function max_chroma(L, h)
+  local ca, sa = math.cos(math.rad(h)), math.sin(math.rad(h))
+  local lo, hi = 0, 0.4
+  for _ = 1, 24 do
+    local mid = (lo + hi) / 2
+    local fits = true
+    for _, v in ipairs({ oklab_linear(L, mid * ca, mid * sa) }) do
+      fits = fits and v > -1e-4 and v < 1 + 1e-4
+    end
+    if fits then lo = mid else hi = mid end
+  end
+  return lo
+end
+
+local function oklch_hex(L, C, h)
+  local out = '#'
+  for _, v in ipairs({ oklab_linear(L, C * math.cos(math.rad(h)), C * math.sin(math.rad(h))) }) do
+    v = math.min(1, math.max(0, v))
+    v = v <= 0.0031308 and 12.92 * v or 1.055 * v ^ (1 / 2.4) - 0.055
+    out = out .. ('%02x'):format(math.floor(v * 255 + 0.5))
+  end
+  return out
+end
+
+-- hex with its hue turned by dh degrees. Given the original's background and the new one, its
+-- lightness is then moved until it reads against the new one as well as the original did against
+-- its own: equal lightness isn't equal contrast, and blue and purple fall short of it
+local function rotate(hex, dh, original_bg, bg)
+  local L, a, b = oklab(hex)
+  local h = hue(hex)
+  local top = max_chroma(L, h)
+  local used = top > 1e-4 and math.min(math.sqrt(a * a + b * b) / top, 1) or 0
+  local turned = (h + dh) % 360
+  local function at(l)
+    return oklch_hex(l, used * max_chroma(l, turned), turned)
+  end
+  if not original_bg then
+    return at(L)
+  end
+  local want, lo, hi = contrast(hex, original_bg), 0, 1
+  for _ = 1, 20 do
+    local mid = (lo + hi) / 2
+    if contrast(at(mid), bg) < want then lo = mid else hi = mid end
+  end
+  return at(hi)
+end
+
+-- a theme's colors before theme() fills in the rest
+local function derive(title, h, equal)
+  local g, t = M.green, { title = title, light = false }
+  local dh, original_bg = h - hue(g.normal), equal ~= 'lightness' and g.bg
+  t.white, t.bright_white = g.white, g.bright_white
+  for _, k in ipairs({ 'bg', 'dark', 'black' }) do
+    t[k] = rotate(g[k], dh)
+  end
+  for _, k in ipairs({ 'fg', 'normal', 'bright', 'bold', 'selection', 'dim', 'gray' }) do
+    t[k] = rotate(g[k], dh, original_bg, t.bg)
+  end
+  t.cursor = t.normal
+  t.cursor_text = contrast(t.cursor, t.white) >= 3 and t.white or t.bg -- as amber: white on a light cursor is hard to read
+  t.badge = t.dim
+  t.selection_tint = mix(t.selection, t.bg, 0.12)
+  t.border = mix(t.fg, t.bg, 0.15)
+  t.float_border = mix(t.fg, t.dark, 0.15)
+  t.prompt_band = mix(t.fg, t.bg, 0.25)
+  t.bash_band = mix(t.white, t.bg, 0.16)
+  t.ansi = {
+    [0] = t.dark,
+    t.normal, t.normal, t.normal, t.normal, t.normal, t.normal,
+    t.fg, t.dim,
+    t.bright, t.bright, t.bright, t.selection, t.bright, t.bright,
+    t.bright_white,
+  }
+  return t
+end
+
+M.derive = {
+  hue = hue,
+  mono = function(title, h, equal)
+    return theme(derive(title, h, equal))
+  end,
+  duo = function(title, h, accent_h, equal)
+    local t, accent = derive(title, h, equal), derive(title, accent_h, equal)
+    t.accent, t.accent_bright, t.accent_dim, t.accent_pale = accent.normal, accent.bright, accent.dim, accent.selection
+    return theme(t)
+  end,
+  -- how far apart two colors look, whatever their lightness: 0.02 is about the least anyone sees
+  distance = function(a, b)
+    local l1, a1, b1 = oklab(a)
+    local l2, a2, b2 = oklab(b)
+    return math.sqrt((l1 - l2) ^ 2 + (a1 - a2) ^ 2 + (b1 - b2) ^ 2)
+  end,
+}
 
 return M
