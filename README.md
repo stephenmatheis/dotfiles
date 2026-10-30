@@ -43,3 +43,4 @@ Managed with [chezmoi](https://www.chezmoi.io). Shell config (`~/.zshenv`, `~/.z
 - **Checking a change:** `hax0r build` only writes files whose contents changed, so a second run should print nothing. `hax0r preview` shows every theme in the terminal, and `page.lua` (above) shows exact colors in a browser.
 - **Not tracked, per machine:** the current theme (`~/.local/state/hax0r`), `~/.claude/themes/hax0r.json`, `~/.claude/settings.json` and the shell config.
 - **Commits:** one change per commit, with a one-line subject in lowercase after a `feat:`, `fix:`, `chore:` or `docs:` prefix.
+- **Ideas and plans:** `IDEAS.md` lists what's decided, what's next and what's still unverified. Like this README, `.chezmoiignore` keeps it out of `~`.
