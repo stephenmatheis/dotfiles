@@ -34,3 +34,12 @@ Managed with [chezmoi](https://www.chezmoi.io). Shell config (`~/.zshenv`, `~/.z
   - Ghostty: the 16 ANSI colors, plus palette slots 22/28/52/88 (Claude Code's diff bands) and 196 (Starship's error prompt). VS Code's terminal sets those slots with escape codes (`terminal-palette.zsh`).
   - Claude Code: named keys, listed in `hax0r/generate.lua`. Its diff keys are backgrounds only. For example, its `subtle` key colors the `· summary` tag.
 - **What the apps decide themselves:** Claude Code draws the text of removed diff lines dim. Ghostty blends dim text toward the background, and its `faint-opacity` setting defaults to 0.5. We don't set it.
+
+## Working on this repo
+
+- **Source and live copies:** `dot_config/` here becomes `~/.config` and `private_dot_local/bin/` becomes `~/.local/bin`. The `hax0r` scripts read and write the live copies, so a change made here has to reach them (`chezmoi apply`) before `hax0r build` can see it. Run `chezmoi diff` first if the live files might have changed, since apply overwrites them.
+- **After `hax0r build`:** it writes the generated files into `~/.config`, not into this repo. Run `chezmoi re-add` to bring them back, then commit them together with the `palettes.lua` or template change that caused them.
+- **Generated files:** the per-theme files for Ghostty, tmux, Claude Code and VS Code, plus `hax0r/themes`, `vscode/hax0r-theme/package.json` and `vscode/hax0r-theme/terminal-palette.zsh`. Edit `palettes.lua` or a template instead.
+- **Checking a change:** `hax0r build` only writes files whose contents changed, so a second run should print nothing. `hax0r preview` shows every theme in the terminal, and `page.lua` (above) shows exact colors in a browser.
+- **Not tracked, per machine:** the current theme (`~/.local/state/hax0r`), `~/.claude/themes/hax0r.json`, `~/.claude/settings.json` and the shell config.
+- **Commits:** one change per commit, with a one-line subject in lowercase after a `feat:`, `fix:`, `chore:` or `docs:` prefix.
