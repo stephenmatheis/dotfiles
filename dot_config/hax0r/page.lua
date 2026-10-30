@@ -448,14 +448,15 @@ local CHOICES = {
 }
 
 local function mock_grid(d)
+  local shown = d.show or SHOW
   local head = { '<th>Option</th>' }
-  for _, name in ipairs(SHOW) do
+  for _, name in ipairs(shown) do
     table.insert(head, ('<th>%s <span class="sub">%s</span></th>'):format(name, P[name].title))
   end
   local rows = {}
   for _, o in ipairs(d.options) do
     local cells = { ('<th class="opt">%s<small>%s</small></th>'):format(o[1], o[2]) }
-    for _, name in ipairs(SHOW) do
+    for _, name in ipairs(shown) do
       local c = P[name]
       local mock, caption = o[3](c)
       table.insert(cells, ('<td><div class="swatch mock" style="background:%s">%s</div>%s</td>'):format(c.bg, mock, caption or ''))
@@ -593,6 +594,109 @@ local duos = candidates('duo', 'New dual themes', 'a second hue for removed, err
   'The first hue is the theme; the second (accent) takes removed lines, errors and links, and Claude Code’s shimmer later on. Cyan + pink puts the warm color on errors; green + amber uses colors that already exist. Pairs that differ in hue count as told apart even when their lightness is close.',
   DUO, true)
 local check = helper_check()
+
+-- What the second hue could do in more places, drawn for the dual themes only. These are options,
+-- not what's set: the apps use the second hue only for removed lines, errors and links so far.
+local DUAL_SHOW = { 'cyan-pink', 'pink-cyan' }
+
+-- text in its base color with a band of shimmer swept across it, drawn at three positions.
+-- Claude Code draws the real sweep itself; this only shows the two colors against each other
+local function frames(c, text, base, shimmer)
+  local chars = {}
+  for ch in text:gmatch('[%z\1-\127\194-\244][\128-\191]*') do
+    table.insert(chars, ch)
+  end
+  local out = {}
+  for _, at in ipairs({ 0.1, 0.5, 0.9 }) do
+    local parts = { { ' ', 'fg' } }
+    for i, ch in ipairs(chars) do
+      local k = math.max(0, 1 - math.abs(i - 1 - at * #chars) / 4)
+      table.insert(parts, { ch, mix(c[shimmer], c[base], k) })
+    end
+    table.insert(out, line(c, parts))
+  end
+  return table.concat(out)
+end
+
+-- s: shimmer roles for Claude Code's spinner, its prompt border and its permission prompt, over
+-- the base colors generate.lua sets (claude: bright, promptBorder: dim, permission: selection)
+local function shimmer_mock(c, s)
+  return table.concat({
+    frames(c, '✻ Thinking… (esc to interrupt)', 'bright', s[1]),
+    line(c, {}),
+    frames(c, ('─'):rep(30), 'dim', s[2]),
+    line(c, {}),
+    frames(c, 'Do you want to make this edit?', 'selection', s[3]),
+  })
+end
+
+-- o: roles for the directory, branch, git status, command time and prompt character. Starship
+-- names ANSI colors, so today each is the theme's one color, except the branch (dim). A failed
+-- command's prompt is palette slot 196, the theme's error color
+local function starship_mock(c, o)
+  local gap = { ' ', 'fg' }
+  return table.concat({
+    line(c, { { '~/dotfiles', o[1] }, gap, { 'main', o[2] }, gap, { '*', 'bright_white' }, gap, { '⇡1 ≡', o[3] }, gap, { '3s', o[4] } }),
+    line(c, { { '❯ ', o[5] }, { 'git push', 'fg' } }),
+    line(c, {}),
+    line(c, { { '❯ ', 'error' }, { 'false', 'fg' }, { '  after a failed command', 'dim' } }),
+  })
+end
+
+-- git colors changed lines and status letters with ANSI red and green, so red is the one to give
+-- the second hue: removed and unstaged in it, added and staged in the theme's color
+local function git_mock(c, red)
+  local old, new = faint(red, c.bg), c.ansi[2]
+  return table.concat({
+    git_diff(c, { old, '' }, { new, 'b' }),
+    line(c, {}),
+    line(c, { { '## main...origin/main', 'fg' } }),
+    line(c, { { 'M ', new }, { ' page.lua', 'fg' } }),
+    line(c, { { ' M', red }, { ' palettes.lua', 'fg' } }),
+    line(c, { { '??', red }, { ' notes.md', 'fg' } }),
+  })
+end
+
+local DUAL = {
+  {
+    title = 'Claude Code shimmer',
+    note = 'Claude Code sweeps a band of each Shimmer color across text drawn in its base color. It’s drawn here at three positions, left, middle and right, blending the two colors across the band: the sweep itself is Claude Code’s, so this only shows the colors. I don’t know whether Claude Code blends them or switches between them. If it blends, cyan into pink passes through a grayish lavender at the band’s edges, which could look muddy; if it switches, it won’t. Only the dual themes would change, through the Shimmer keys in generate.lua; the single-color themes keep Now.',
+    show = DUAL_SHOW,
+    options = {
+      { 'Now', 'claudeShimmer = selection, promptBorderShimmer = normal, permissionShimmer = bright_white',
+        function(c) return shimmer_mock(c, { 'selection', 'normal', 'bright_white' }) end },
+      { 'Second hue', 'claudeShimmer and permissionShimmer = accent_bright, promptBorderShimmer = accent',
+        function(c) return shimmer_mock(c, { 'accent_bright', 'accent', 'accent_bright' }) end },
+    },
+  },
+  {
+    title = 'Starship prompt',
+    note = 'Starship names ANSI colors, and in every theme those are all the theme’s one color, so the prompt is one color apart from the dim branch and the bright-white *. Two ways to give it the second hue: a new palette slot like 196 (each Ghostty theme and VS Code’s terminal would set it, to the second hue in a dual theme and to the normal color in the others, so nothing else changes), or remapping ANSI colors, which would change every terminal tool. The slot is the safer one; the mock-ups are the same either way.',
+    show = DUAL_SHOW,
+    options = {
+      { 'Now', 'every named color is the theme’s one color; the branch is dim',
+        function(c) return starship_mock(c, { 'normal', 'dim', 'normal', 'normal', 'normal' }) end },
+      { 'Prompt only', 'the ❯ in the second hue',
+        function(c) return starship_mock(c, { 'normal', 'dim', 'normal', 'normal', 'accent' }) end },
+      { 'Prompt and time', 'the ❯ and the command time in the second hue',
+        function(c) return starship_mock(c, { 'normal', 'dim', 'normal', 'accent', 'accent' }) end },
+      { 'Git in the second hue', 'branch and status in it, the rest in the theme’s color',
+        function(c) return starship_mock(c, { 'normal', 'accent_dim', 'accent', 'normal', 'normal' }) end },
+    },
+  },
+  {
+    title = 'git diff and status',
+    note = 'git colors removed lines, unstaged changes and untracked files with ANSI red, and added lines and staged changes with green. Every theme makes both the one color, so only the + and − tell them apart. Giving red the second hue fixes that, but it’s the ANSI remap: red would change in every terminal tool that uses it (ripgrep matches, ls and others), and possibly in Claude Code’s code blocks. Not decided; this is here to see what it would look like.',
+    show = DUAL_SHOW,
+    options = {
+      { 'Now', 'ANSI red and green are both the theme’s color', function(c) return git_mock(c, c.ansi[1]) end },
+      { 'ANSI red = second hue', 'removed, unstaged and untracked in the second hue', function(c) return git_mock(c, c.accent) end },
+    },
+  },
+}
+local dual = grids('dual', 'The second hue in more places', 'Claude Code’s shimmer, Starship and git',
+  'Mock-ups for the two dual themes only. None of this is set yet: the apps use the second hue only for removed lines, errors and links so far. Drawn from palettes.lua by each app’s rules, not screenshots.',
+  DUAL)
 
 local choices = grids('choices', 'Hover and ignored', 'now, and the other options considered',
   ('VS Code’s hover background and ignored files, which read as gray in amber, each drawn as it’s set now and with the other options. These are mocks drawn from palettes.lua by each app’s rules, not screenshots. Under each one: the color, and its contrast against the colors it has to stand apart from, with ≈ on any pair under %.2f:1.'):format(SAME),
@@ -743,7 +847,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
 <main>
   <div class="intro">
     <h1>hax0r candidates</h1>
-    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, the new single-color and dual themes under consideration, built by <code>palettes.lua</code>’s derive helpers, and a check of those helpers against the themes set by hand. Then VS Code’s hover background and ignored files, now next to the other options considered, how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
+    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, the new single-color and dual themes under consideration, built by <code>palettes.lua</code>’s derive helpers, mock-ups of what the second hue could do in Claude Code, Starship and git, and a check of those helpers against the themes set by hand. Then VS Code’s hover background and ignored files, now next to the other options considered, how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
     <p>“Same color as” lists the other colors in that spot that have to be told apart by color alone and are under %.2f:1 against this one. Colors that share a palette key on purpose, like Added and Untracked, aren’t listed.</p>
   </div>
   %s
@@ -751,7 +855,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
   %s
   <footer>Built by <code>~/.config/hax0r/page.lua</code>, which reads <code>palettes.lua</code> and redraws <code>preview.lua</code>’s panel as HTML.</footer>
 </main>
-]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ monos, duos, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
+]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
 
 local f = assert(io.open(out, 'w'))
 f:write(page)
