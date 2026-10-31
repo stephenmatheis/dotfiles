@@ -336,12 +336,12 @@ local function vscode_terminal()
   }, '\n') .. '\n')
 end
 
--- The list `hax0r` shows: name, title, background and foreground, in palettes.lua's order
+-- The list `hax0r` shows: name, title, background, foreground and light or dark, in palettes.lua's order
 local function theme_list()
   local lines = {}
   for _, name in ipairs(P.order) do
     local c = P[name]
-    table.insert(lines, table.concat({ name, c.title, c.bg, c.fg }, '\t'))
+    table.insert(lines, table.concat({ name, c.title, c.bg, c.fg, c.light and 'light' or 'dark' }, '\t'))
   end
   write(config .. '/hax0r/themes', table.concat(lines, '\n') .. '\n')
 end

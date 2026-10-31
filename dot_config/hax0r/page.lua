@@ -475,7 +475,7 @@ end
 local function grids(id, heading, sub, meta, list)
   local parts = {}
   for _, d in ipairs(list) do
-    table.insert(parts, mock_grid(d))
+    table.insert(parts, d.html or mock_grid(d))
   end
   return ([[
 <section class="theme" id="%s">
@@ -770,6 +770,113 @@ local syntax = grids('syntax', 'Syntax colors', 'code in the second hue',
     },
   } })
 
+-- macOS around the terminal. Accents are System Settings' fixed set with their AppleAccentColor
+-- values; only Blue was read off this machine, the rest are from memory. Window colors are close, not exact
+local MAC_ACCENTS = {
+  { 'Red', '#ff5257', 0 }, { 'Orange', '#f7821b', 1 }, { 'Yellow', '#ffc600', 2 }, { 'Green', '#62ba46', 3 },
+  { 'Blue', '#007aff', 4 }, { 'Purple', '#a550a7', 5 }, { 'Pink', '#f74f9e', 6 }, { 'Graphite', '#8c8c8c', -1 },
+}
+local MAC_WALL = '#5f7fa6' -- stands in for the current dynamic wallpaper
+local MAC_LIGHT = { menu = '#e9e9eb', win = '#ffffff', side = '#f0f0f2', text = '#1d1d1f', muted = '#7a7a7f' }
+local MAC_DARK = { menu = '#2b2b2d', win = '#1f1f21', side = '#2c2c2e', text = '#e8e8ea', muted = '#98989d' }
+
+-- Nearest first, by hue alone: lightness would send pale themes to Graphite. A gray theme gets Graphite
+local function mac_accents(c)
+  local r, g, b = rgb(c.normal)
+  local gray = math.max(r, g, b) - math.min(r, g, b) < 24
+  local function away(a)
+    if a[1] == 'Graphite' then return gray and -1 or 360 end
+    local d = math.abs(D.hue(c.normal) - D.hue(a[2])) % 360
+    return math.min(d, 360 - d)
+  end
+  local sorted = vim.deepcopy(MAC_ACCENTS)
+  table.sort(sorted, function(x, y) return away(x) < away(y) end)
+  return sorted
+end
+
+local function mac_highlight(c, m)
+  return mix(c.bright, m.win, 0.45)
+end
+
+-- o: light (bool), wall, accent and highlight colors. A menu bar, a window on the wallpaper, and
+-- the terminal below it in the theme's own colors. Each row is exactly 42 columns
+local function mac_mock(c, name, o)
+  local m = o.light and MAC_LIGHT or MAC_DARK
+  local function pad(s, n) return s .. (' '):rep(n - vim.api.nvim_strwidth(s)) end
+  local function gap(n) return { (' '):rep(n), 'fg', '', o.wall } end
+  local function win(parts)
+    table.insert(parts, 1, gap(2))
+    table.insert(parts, gap(4))
+    return line(c, parts, o.wall)
+  end
+  local function side(s, selected)
+    return { pad(' ' .. s, 11), selected and '#ffffff' or m.text, '', selected and o.accent or m.side }
+  end
+  local function body(s, n) return { pad(s, n), m.text, '', m.win } end
+  local function term(s, key)
+    return line(c, { gap(2), { pad(' ' .. s, 36), key, '', c.bg }, gap(4) }, o.wall)
+  end
+  return table.concat({
+    line(c, { { pad(' ⌘  Finder  File  Edit  View', 36) .. '10:24 ', m.text, '', m.menu } }, m.menu),
+    line(c, {}, o.wall),
+    win({ { pad(' ● ● ●  Notes', 36), m.muted, '', m.side } }),
+    win({ side('Recents', true), body(' Colors follow the', 25) }),
+    win({ side('Documents'), body(' theme, and ', 12), { 'this text', m.text, '', o.highlight }, body('', 4) }),
+    win({ side('Downloads'), body(' ', 1), { ' Save ', '#ffffff', '', o.accent }, body('', 18) }),
+    line(c, {}, o.wall),
+    term('~/dotfiles main', 'normal'),
+    term('❯ hax0r ' .. name, 'normal'),
+    line(c, {}, o.wall),
+  })
+end
+
+local function mac_option(title, about, steps)
+  return { title, about, function(c)
+    local name
+    for n, t in pairs(P) do if t == c then name = n end end
+    local m = steps.mode and (c.light and MAC_LIGHT or MAC_DARK) or MAC_LIGHT
+    local accent = steps.accent and mac_accents(c)[1][2] or '#007aff'
+    return mac_mock(c, name, {
+      light = m == MAC_LIGHT,
+      wall = steps.wall and c.bg or MAC_WALL,
+      accent = accent,
+      highlight = steps.highlight and mac_highlight(c, m) or (m == MAC_LIGHT and '#b3d7ff' or mix('#007aff', m.win, 0.45)),
+    })
+  end }
+end
+
+local MAC_OPTIONS = {
+  mac_option('Before', 'light, blue accent, the dynamic wallpaper (drawn as one flat color)', {}),
+  mac_option('Light/Dark', 'follows the theme; black is light, every other theme dark', { mode = true }),
+  mac_option('Now: + wallpaper', 'plus a solid wallpaper in the theme’s background', { mode = true, wall = true }),
+  mac_option('+ accent', 'plus the nearest of macOS’s eight accents', { mode = true, wall = true, accent = true }),
+  mac_option('+ highlight', 'plus a text highlight from the theme’s bright color', { mode = true, wall = true, accent = true, highlight = true }),
+}
+
+local function mac_table()
+  local rows = {}
+  for _, name in ipairs(P.order) do
+    local c = P[name]
+    local a = mac_accents(c)
+    table.insert(rows, ('<tr><td class="role"><b>%s</b></td><td class="role">%s</td><td class="hex">%s</td><td class="hex">%s %s</td><td class="role">%s</td><td class="hex">%s</td></tr>'):format(
+      name, c.light and 'Light' or 'Dark', chip(c.bg), chip(a[1][2]), a[1][1], a[1][1] == 'Graphite' and '—' or a[2][1], chip(c.bright)))
+  end
+  return ([[
+  <div class="part">
+    <h3>What each theme would set</h3>
+    <p>The nearest accent is measured against the theme’s normal color. The highlight is the color macOS is given; it softens it, so the mock-ups draw it at 45%%, which is a guess until it’s tried.</p>
+    <div class="table-wrap"><table><thead><tr><th>Theme</th><th>Appearance</th><th>Wallpaper</th><th>Nearest accent</th><th>Next nearest</th><th>Highlight</th></tr></thead><tbody>%s</tbody></table></div>
+  </div>]]):format(table.concat(rows))
+end
+
+local macos = grids('macos', 'macOS appearance', 'the desktop around the terminal',
+  'Each row adds one thing to the row above. Picked: + wallpaper, set by <code>hax0r macos on</code> per machine with documented macOS features. The accent and highlight stayed out: they can only be set in System Settings by hand, or by writing undocumented defaults that running apps may not pick up until they restart. Window colors are close, not exact.',
+  {
+    { title = 'Single-color themes', note = 'Amber is on now. Black is the one light theme.', show = { 'amber', 'green', 'black' }, options = MAC_OPTIONS },
+    { title = 'Dual themes', note = 'The accent follows the theme’s first hue.', show = { 'cyan-pink', 'pink-cyan' }, options = MAC_OPTIONS },
+    { html = mac_table() },
+  })
+
 local choices = grids('choices', 'Hover and ignored', 'now, and the other options considered',
   ('VS Code’s hover background and ignored files, which read as gray in amber, each drawn as it’s set now and with the other options. These are mocks drawn from palettes.lua by each app’s rules, not screenshots. Under each one: the color, and its contrast against the colors it has to stand apart from, with ≈ on any pair under %.2f:1.'):format(SAME),
   CHOICES)
@@ -920,7 +1027,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
 <main>
   <div class="intro">
     <h1>hax0r candidates</h1>
-    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, the syntax color options for the dual themes. Then the new single-color and dual themes under consideration, built by <code>palettes.lua</code>’s derive helpers, mock-ups of what the second hue could do in Claude Code, Starship and git, and a check of those helpers against the themes set by hand. Then VS Code’s hover background and ignored files, now next to the other options considered, how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
+    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, the macOS appearance options and the syntax color options for the dual themes. Then the new single-color and dual themes under consideration, built by <code>palettes.lua</code>’s derive helpers, mock-ups of what the second hue could do in Claude Code, Starship and git, and a check of those helpers against the themes set by hand. Then VS Code’s hover background and ignored files, now next to the other options considered, how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
     <p>“Same color as” lists the other colors in that spot that have to be told apart by color alone and are under %.2f:1 against this one. Colors that share a palette key on purpose, like Added and Untracked, aren’t listed.</p>
   </div>
   %s
@@ -928,7 +1035,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
   %s
   <footer>Built by <code>~/.config/hax0r/page.lua</code>, which reads <code>palettes.lua</code> and redraws <code>preview.lua</code>’s panel as HTML.</footer>
 </main>
-]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
+]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ macos, syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
 
 local f = assert(io.open(out, 'w'))
 f:write(page)

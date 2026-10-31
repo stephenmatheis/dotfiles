@@ -77,12 +77,12 @@ Tools that use the ANSI palette already follow Ghostty. The ones that need hex c
 
 ## macOS
 
-Checked on one machine on 2026-10-30: macOS 27.0.1, light mode, default accent (no appearance keys set). Confirm each option on the machine before wiring it in.
+**Built (2026-10-30), picked from the page:** `hax0r macos on` sets Light/Dark and a solid wallpaper, opt-in per machine; the README has the details. The accent and highlight stayed out, as below. Both were tested on a single display, with one Space in use.
 
-- **Official and scriptable:** Light/Dark through System Events AppleScript, and a generated solid wallpaper in the theme's background color.
+Checked on one machine on 2026-10-30: macOS 27.0.1, light mode, default accent (no appearance keys set). Confirm each remaining option on the machine before wiring it in.
+
 - **Official, in System Settings:** accent color (a fixed set, so the nearest match) and highlight color (custom). Accessibility ▸ Display ▸ Color Filters has a color tint, which gives a full-screen phosphor effect.
 - **Second, not a documented API:** writing `AppleAccentColor` and `AppleHighlightColor` with `defaults write -g`, which is what the UI writes.
-- A dark theme flips macOS to dark, so make it opt-in per machine.
 
 ## Other ideas
 
@@ -95,5 +95,5 @@ Checked on one machine on 2026-10-30: macOS 27.0.1, light mode, default accent (
 1. ~~Prototype the monochrome themes and dual pairings in `page.lua`.~~ Done.
 2. ~~Pick the finalists and add them to `palettes.lua`.~~ Done for pink, purple, electric, cyan-pink and pink-cyan. The rename to `phosphor` is on hold (see Decided).
 3. ~~Dual-theme roles in the apps.~~ Done: the shimmer and comments use the second hue, and Starship and git stay as they are.
-4. macOS appearance, then the switch fade, then a shader. ~~neoclear~~ is done on one machine.
+4. The switch fade, then a shader. ~~macOS appearance~~ is done, and ~~neoclear~~ is done on one machine.
 5. More apps: `fzf`, then Xcode.

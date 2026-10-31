@@ -65,6 +65,7 @@ Managed with [chezmoi](https://www.chezmoi.io). Shell config (`~/.zshenv`, `~/.z
   - VS Code and nvim: named colors for nearly everything. VS Code's come from `vscode/hax0r-theme/themes/color-theme.template.jsonc`.
   - Ghostty: the 16 ANSI colors, plus palette slots 22/28/52/88 (Claude Code's diff bands) and 196 (Starship's error prompt). VS Code's terminal sets those slots with escape codes (`terminal-palette.zsh`).
   - Claude Code: named keys, listed in `hax0r/generate.lua`. Its diff keys are backgrounds only. For example, its `subtle` key colors the `· summary` tag.
+- **macOS, opt-in per machine:** `hax0r macos on` makes themes also set Light/Dark and a solid wallpaper in the theme's background, and saves the current ones in `~/.local/state/hax0r/macos`. `hax0r macos off` restores them, including a dynamic wallpaper. A wallpaper chosen by hand while it's on gets replaced at the next switch, and `off` goes back to the one from before `on`. macOS may ask once to let the terminal control System Events.
 - **What the apps decide themselves:** Claude Code draws the text of removed diff lines dim. Ghostty blends dim text toward the background, and its `faint-opacity` setting defaults to 0.5. We don't set it.
 
 ## Working on this repo

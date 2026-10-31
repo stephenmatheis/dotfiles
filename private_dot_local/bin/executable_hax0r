@@ -6,6 +6,7 @@
 #   hax0r preview    show every theme side by side
 #   hax0r build      rebuild each app's theme files after editing ~/.config/hax0r/palettes.lua
 #   hax0r clear      clear the terminal with neoclear in the current theme's color
+#   hax0r macos      show or set (on, off) whether themes also set macOS's Light/Dark and wallpaper
 #
 # The choice is per machine, kept in ~/.local/state/hax0r: dotfiles share the themes, not which one is on.
 
@@ -17,6 +18,8 @@ themes=$config/hax0r/themes
 claude_dir=${CLAUDE_CONFIG_DIR:-$HOME/.claude}
 claude_settings=$claude_dir/settings.json
 vscode_settings="$HOME/Library/Application Support/Code/User/settings.json"
+macos_state=$state/macos
+wallpaper_store="$HOME/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
 
 current() {
     local theme=green
@@ -33,8 +36,8 @@ swatch() {
 }
 
 list() {
-    local cur=$(current) name title bg fg mark
-    while IFS=$'\t' read -r name title bg fg; do
+    local cur=$(current) name title bg fg mode mark
+    while IFS=$'\t' read -r name title bg fg mode; do
         [[ $name == $cur ]] && mark='>' || mark=' '
         printf '%s %s  %s\n' $mark "$(swatch " $(printf '%-6s' $name) " $bg $fg)" $title
     done < $themes
@@ -98,7 +101,63 @@ switch() {
         fi
     fi
 
+    macos_apply $name
+
     print "hax0r: switched to $(swatch " $title " $(awk -F'\t' -v name=$name '$1 == name { print $3, $4 }' $themes))"
+}
+
+# A one-pixel PNG in a color, for the wallpaper: a BMP is simple to write by hand, and every Mac has sips
+solid_png() {
+    local hex=$1 png=$state/wallpapers/${1#\#}.png
+    if [[ ! -f $png ]]; then
+        mkdir -p ${png:h}
+        printf "BM\x3a\0\0\0\0\0\0\0\x36\0\0\0\x28\0\0\0\x01\0\0\0\x01\0\0\0\x01\0\x18\0\0\0\0\0\x04\0\0\0\x13\x0b\0\0\x13\x0b\0\0\0\0\0\0\0\0\0\0\x${hex:5:2}\x${hex:3:2}\x${hex:1:2}\0" > ${png:r}.bmp
+        sips -s format png ${png:r}.bmp --out $png > /dev/null
+        rm -f ${png:r}.bmp
+    fi
+    print -r -- $png
+}
+
+# macOS follows the theme only where `hax0r macos on` was run: $macos_state holds what to restore
+macos_apply() {
+    [[ -d $macos_state ]] || return 0
+    local bg mode
+    bg=$(awk -F'\t' -v name=$1 '$1 == name { print $3 }' $themes)
+    mode=$(awk -F'\t' -v name=$1 '$1 == name { print $5 }' $themes)
+    osascript -e 'tell application "System Events"' \
+        -e "set dark mode of appearance preferences to $([[ $mode == light ]] && print false || print true)" \
+        -e "tell every desktop to set picture to \"$(solid_png $bg)\"" \
+        -e 'end tell' > /dev/null || print -u2 "hax0r: couldn't set macOS's Light/Dark and wallpaper"
+}
+
+macos() {
+    case $1 in
+        '') [[ -d $macos_state ]] && print on || print off ;;
+        on)
+            if [[ ! -d $macos_state ]]; then
+                mkdir -p $macos_state
+                if ! osascript -e 'tell application "System Events" to get dark mode of appearance preferences' > $macos_state/dark \
+                    || ! cp $wallpaper_store $macos_state/wallpaper.plist; then
+                    rm -rf $macos_state
+                    print -u2 "hax0r: couldn't save macOS's current settings, so nothing changed"
+                    return 1
+                fi
+            fi
+            macos_apply $(current)
+            ;;
+        off)
+            [[ -d $macos_state ]] || return 0
+            osascript -e "tell application \"System Events\" to set dark mode of appearance preferences to $(<$macos_state/dark)" > /dev/null
+            # The agent writes the store as it quits, so quit it first. It starts again by itself
+            killall WallpaperAgent 2> /dev/null
+            cp $macos_state/wallpaper.plist $wallpaper_store && killall WallpaperAgent 2> /dev/null
+            rm -rf $macos_state
+            ;;
+        *)
+            print -u2 "hax0r: use macos on or macos off"
+            return 1
+            ;;
+    esac
 }
 
 # neoclear isn't in the dotfiles (see the README), so a machine without it gets a plain clear
@@ -113,9 +172,10 @@ clear_screen() {
 
 case $1 in
     '') list ;;
-    -h | --help | help) sed -n '2,10s/^# \{0,1\}//p' $0 ;;
+    -h | --help | help) sed -n '2,11s/^# \{0,1\}//p' $0 ;;
     build) nvim -l $config/hax0r/generate.lua && switch $(current) ;;
     clear) shift; clear_screen "$@" ;;
+    macos) shift; macos "$@" ;;
     preview) HAX0R_COLUMNS=$COLUMNS nvim -l $config/hax0r/preview.lua ;;
     *) switch $1 ;;
 esac
