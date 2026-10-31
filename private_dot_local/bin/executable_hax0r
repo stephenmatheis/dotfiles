@@ -8,6 +8,7 @@
 #   hax0r clear      clear the terminal with neoclear in the current theme's color
 #   hax0r macos      show or set (on, off) whether themes also set macOS's Light/Dark and wallpaper
 #   hax0r shader     show or set (on, off) whether Ghostty draws the CRT shader
+#   hax0r xcode      show or set (on, off) whether themes also switch Xcode
 #
 # The choice is per machine, kept in ~/.local/state/hax0r: dotfiles share the themes, not which one is on.
 
@@ -21,6 +22,7 @@ claude_settings=$claude_dir/settings.json
 vscode_settings="$HOME/Library/Application Support/Code/User/settings.json"
 macos_state=$state/macos
 shader_state=$state/ghostty-shader
+xcode_theme="$HOME/Library/Developer/Xcode/UserData/FontAndColorThemes/hax0r.xcworkspacecolortheme"
 wallpaper_store="$HOME/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
 
 current() {
@@ -123,6 +125,8 @@ switch() {
 
     # fzf: reads this file each time it starts, through FZF_DEFAULT_OPTS_FILE in ~/.zshenv
     cp $config/hax0r/fzf/$name $state/fzf
+
+    xcode_apply $name
 
     # Claude Code: a running session reads its theme setting only at startup, but reloads
     # ~/.claude/themes when a file there changes. So the setting stays custom:hax0r and the
@@ -313,6 +317,45 @@ shader() {
     esac
 }
 
+# UNOFFICIAL WORKAROUND, on only where `hax0r xcode on` was run.
+#
+# What it does: copies the theme's file, in Xcode's own format, over one saved theme called hax0r, in
+# the folder where Xcode keeps the themes it saves. You choose that theme in Xcode's settings, which
+# is official, once for Light and once for Dark, since Xcode remembers one for each. A running Xcode
+# reloads the file by itself within a few seconds.
+#
+# What can go wrong: Apple doesn't document the format or the folder, or say that Xcode watches the
+# file, so an Xcode update could break this. It would probably show as Xcode ignoring the file or
+# using other colors. `hax0r` doesn't check, and nothing else depends on it: `hax0r xcode off` deletes
+# the file, which is all this ever writes. Xcode 27.2 is what this was tested on.
+#
+# Official routes tried first: Xcode's scripting dictionary has nothing about themes, and the only
+# theme command found opens a dialog. Importing a classic .xccolortheme in Settings ▸ Appearance works,
+# but by hand per theme, and it reads colors as Generic RGB, so some land slightly off.
+xcode_apply() {
+    [[ -f $xcode_theme ]] && cp $config/hax0r/xcode/$1.xcworkspacecolortheme $xcode_theme
+}
+
+xcode() {
+    case $1 in
+        '') [[ -f $xcode_theme ]] && print on || print off ;;
+        on)
+            if [[ ! -d /Applications/Xcode.app ]]; then
+                print -u2 "hax0r: Xcode isn't in /Applications, so nothing changed"
+                return 1
+            fi
+            mkdir -p ${xcode_theme:h}
+            cp $config/hax0r/xcode/$(current).xcworkspacecolortheme $xcode_theme
+            print "Now choose it once each in macOS's Light and Dark: Xcode ▸ Settings ▸ Appearance ▸ Choose… ▸ hax0r"
+            ;;
+        off) rm -f $xcode_theme ;;
+        *)
+            print -u2 "hax0r: use xcode on or xcode off"
+            return 1
+            ;;
+    esac
+}
+
 # neoclear isn't in the dotfiles (see the README), so a machine without it gets a plain clear
 clear_screen() {
     if (( ! $+commands[neoclear] )); then
@@ -325,11 +368,12 @@ clear_screen() {
 
 case $1 in
     '') list ;;
-    -h | --help | help) sed -n '2,12s/^# \{0,1\}//p' $0 ;;
+    -h | --help | help) sed -n '2,13s/^# \{0,1\}//p' $0 ;;
     build) nvim -l $config/hax0r/generate.lua && switch $(current) ;;
     clear) shift; clear_screen "$@" ;;
     macos) shift; macos "$@" ;;
     preview) HAX0R_COLUMNS=$COLUMNS nvim -l $config/hax0r/preview.lua ;;
     shader) shift; shader "$@" ;;
+    xcode) shift; xcode "$@" ;;
     *) switch $1 ;;
 esac

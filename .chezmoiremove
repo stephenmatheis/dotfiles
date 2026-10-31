@@ -2,3 +2,5 @@
 # ~/.claude/themes/hax0r.json stays: `hax0r <theme>` overwrites it on each machine
 .config/vscode/hax0r-theme/themes/hax0r-color-theme.json
 .config/vscode/hax0r-theme/icons/hax0r-icon-theme.json
+# Replaced by Xcode's own format, <theme>.xcworkspacecolortheme
+.config/hax0r/xcode/hax0r-*.xccolortheme

@@ -641,6 +641,11 @@ end
 
 M.derive = {
   hue = hue,
+  -- OKLCH: lightness, chroma, and hue in radians, 0 to 2 pi
+  oklch = function(hex)
+    local L, a, b = oklab(hex)
+    return L, math.sqrt(a ^ 2 + b ^ 2), atan2(b, a) % (2 * math.pi)
+  end,
   mono = function(title, h, equal)
     return theme(derive(title, h, equal))
   end,

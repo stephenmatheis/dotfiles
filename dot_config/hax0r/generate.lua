@@ -140,147 +140,75 @@ local function fzf(name, c)
   write(('%s/hax0r/fzf/%s'):format(config, name), table.concat(lines, '\n') .. '\n')
 end
 
--- Xcode: a classic color theme per theme, for Xcode's settings to import. The syntax roles match
--- nvim's and VS Code's, and the fonts stay Xcode's own SF Mono, apart from bold keywords and italic comments
-local function xcode(name, c)
-  -- Xcode reads a classic theme's numbers as Apple's old Generic RGB (gamma 1.8, its own primaries),
-  -- found by comparing a file with what its import saved. Written as plain sRGB, every color imports
-  -- lighter, so convert them. A color Generic RGB can't reach clamps at 0
-  local function color(hex)
-    local linear = {}
-    for i, part in ipairs({ hex:match('#(%x%x)(%x%x)(%x%x)') }) do
-      local v = tonumber(part, 16) / 255
-      linear[i] = v <= 0.04045 and v / 12.92 or ((v + 0.055) / 1.055) ^ 2.4
-    end
-    local out = {}
-    for i, row in ipairs({
-      { 0.975004, 0.027295, -0.002144 },
-      { -0.020003, 1.054185, -0.034201 },
-      { 0.001691, 0.001564, 0.996506 },
-    }) do
-      out[i] = math.max(row[1] * linear[1] + row[2] * linear[2] + row[3] * linear[3], 0) ^ (1 / 1.8)
-    end
-    return ('%.6f %.6f %.6f 1'):format(out[1], out[2], out[3])
-  end
-  local regular, bold, italic = 'SFMono-Medium - 12.0', 'SFMono-Bold - 12.0', 'SFMono-MediumItalic - 12.0'
-  local syntax = {
-    plain = { c.fg, regular },
-    comment = { c.comment, italic },
-    ['comment.doc'] = { c.comment, italic },
-    ['comment.doc.keyword'] = { c.comment, bold },
-    mark = { c.comment, bold },
-    string = { c.normal, regular },
-    character = { c.normal, regular },
-    number = { c.normal, regular },
-    keyword = { c.bold, bold },
-    preprocessor = { c.bright, regular },
-    attribute = { c.bright, regular },
-    url = { c.link, regular },
-    ['declaration.type'] = { c.bright, regular },
-    ['declaration.other'] = { c.normal, regular },
-    ['identifier.class'] = { c.bright, regular },
-    ['identifier.class.system'] = { c.bright, regular },
-    ['identifier.type'] = { c.bright, regular },
-    ['identifier.type.system'] = { c.bright, regular },
-    ['identifier.function'] = { c.normal, regular },
-    ['identifier.function.system'] = { c.normal, regular },
-    ['identifier.constant'] = { c.normal, regular },
-    ['identifier.constant.system'] = { c.normal, regular },
-    ['identifier.macro'] = { c.normal, regular },
-    ['identifier.macro.system'] = { c.normal, regular },
-    ['identifier.variable'] = { c.fg, regular },
-    ['identifier.variable.system'] = { c.fg, regular },
-    ['markup.code'] = { c.fg, regular },
-    ['markup.aside.kind'] = { c.dim, regular },
-  }
-  local colors = {
-    DVTSourceTextBackground = c.bg,
-    DVTSourceTextCurrentLineHighlightColor = c.cursor_line,
-    DVTSourceTextSelectionColor = c.selection_tint,
-    DVTSourceTextInsertionPointColor = c.cursor,
-    DVTSourceTextInvisiblesColor = c.faint,
-    DVTSourceTextBlockDimBackgroundColor = c.dark,
-    DVTDebuggerInstructionPointerColor = c.diff_add,
-    DVTConsoleTextBackgroundColor = c.bg,
-    DVTConsoleTextSelectionColor = c.selection_tint,
-    DVTConsoleTextInsertionPointColor = c.cursor,
-    DVTConsoleDebuggerPromptTextColor = c.bright,
-    DVTConsoleDebuggerInputTextColor = c.fg,
-    DVTConsoleDebuggerOutputTextColor = c.dim,
-    DVTConsoleExectuableInputTextColor = c.bright,
-    DVTConsoleExectuableOutputTextColor = c.fg,
-    DVTMarkupTextBackgroundColor = c.dark,
-    DVTMarkupTextBorderColor = c.border,
-    DVTMarkupTextNormalColor = c.fg,
-    DVTMarkupTextEmphasisColor = c.fg,
-    DVTMarkupTextStrongColor = c.bright,
-    DVTMarkupTextInlineCodeColor = c.normal,
-    DVTMarkupTextLinkColor = c.link,
-    DVTMarkupTextPrimaryHeadingColor = c.bright,
-    DVTMarkupTextSecondaryHeadingColor = c.bright,
-    DVTMarkupTextOtherHeadingColor = c.bright,
-    DVTScrollbarMarkerAnalyzerColor = c.link,
-    DVTScrollbarMarkerBreakpointColor = c.link,
-    DVTScrollbarMarkerDiffColor = c.dim,
-    DVTScrollbarMarkerDiffConflictColor = c.error,
-    DVTScrollbarMarkerErrorColor = c.error,
-    DVTScrollbarMarkerRuntimeIssueColor = c.warning,
-    DVTScrollbarMarkerWarningColor = c.warning,
-  }
-  local fonts = {
-    DVTConsoleDebuggerPromptTextFont = bold,
-    DVTConsoleDebuggerInputTextFont = bold,
-    DVTConsoleDebuggerOutputTextFont = regular,
-    DVTConsoleExectuableInputTextFont = regular,
-    DVTConsoleExectuableOutputTextFont = regular,
-    DVTMarkupTextCodeFont = 'SFMono-Regular - 10.0',
-    DVTMarkupTextNormalFont = '.AppleSystemUIFont - 10.0',
-    DVTMarkupTextEmphasisFont = '.AppleSystemUIFontItalic - 10.0',
-    DVTMarkupTextStrongFont = '.AppleSystemUIFontBold - 10.0',
-    DVTMarkupTextLinkFont = '.AppleSystemUIFont - 10.0',
-    DVTMarkupTextPrimaryHeadingFont = '.AppleSystemUIFont - 24.0',
-    DVTMarkupTextSecondaryHeadingFont = '.AppleSystemUIFont - 18.0',
-    DVTMarkupTextOtherHeadingFont = '.AppleSystemUIFont - 14.0',
-  }
+-- Xcode: its own theme format, one file per theme, that `hax0r <theme>` copies over the theme Xcode
+-- has selected (see the comment above xcode_apply in the hax0r script). Colors are OKLCH. The syntax
+-- roles match nvim's and VS Code's. Fonts aren't in here: Xcode keeps them separately
+local XCODE_ROLES = {
+  plainText = 'fg',
+  comment = 'comment',
+  commentEmphasized = 'comment',
+  markdown = 'comment',
+  keyword = 'bold',
+  ['keyword.attribute'] = 'bright',
+  preprocessor = 'bright',
+  ['preprocessor.macro'] = 'normal',
+  ['preprocessor.macroSystem'] = 'normal',
+  string = 'normal',
+  ['string.regex'] = 'normal',
+  number = 'normal',
+  ['number.character'] = 'normal',
+  link = 'link',
+  typeDeclaration = 'bright',
+  memberDeclaration = 'normal',
+  otherType = 'bright',
+  ['otherType.class'] = 'bright',
+  ['otherType.type'] = 'bright',
+  projectType = 'bright',
+  ['projectType.class'] = 'bright',
+  ['projectType.type'] = 'bright',
+  otherMember = 'normal',
+  ['otherMember.constant'] = 'normal',
+  ['otherMember.function'] = 'normal',
+  ['otherMember.variable'] = 'fg',
+  projectMember = 'normal',
+  ['projectMember.constant'] = 'normal',
+  ['projectMember.function'] = 'normal',
+  ['projectMember.variable'] = 'fg',
+  debugger = 'bright',
+  insertionPointColor = 'cursor',
+  invisibles = 'faint',
+  currentLineHighlight = 'cursor_line',
+  selectedTextBackgroundColor = 'selection_tint',
+}
 
-  local function entries(indent, map)
-    local keys = vim.tbl_keys(map)
-    table.sort(keys)
-    local out = {}
-    for _, key in ipairs(keys) do
-      table.insert(out, ('%s<key>%s</key>\n%s<string>%s</string>'):format(indent, key, indent, map[key]))
-    end
-    return table.concat(out, '\n')
+local function xcode(name, c)
+  local function color(hex)
+    local L, C, h = P.derive.oklch(hex)
+    return ('{"chroma":{"exact":%.12f},"gamut":"P3","hue":{"radians":%.12f},"lightness":{"exact":%.12f},"opacity":1}'):format(C, h, L)
   end
-  local top, syntax_colors, syntax_fonts = {}, {}, {}
-  for key, hex in pairs(colors) do top[key] = color(hex) end
-  for key, font in pairs(fonts) do top[key] = font end
-  for key, role in pairs(syntax) do
-    syntax_colors['xcode.syntax.' .. key] = color(role[1])
-    syntax_fonts['xcode.syntax.' .. key] = role[2]
+  local keys = vim.tbl_keys(XCODE_ROLES)
+  table.sort(keys)
+  local overrides = {}
+  for _, key in ipairs(keys) do
+    local kind = (key == 'currentLineHighlight' or key == 'selectedTextBackgroundColor') and 'colorWithOpacity' or 'color'
+    table.insert(overrides, ('      "%s":{"%s":%s}'):format(key, kind, color(c[XCODE_ROLES[key]])))
   end
-  write(('%s/hax0r/xcode/hax0r-%s.xccolortheme'):format(config, name), table.concat({
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">',
-    ('<!-- hax0r %s for Xcode: %s. -->'):format(name, c.title),
-    generated_by('<!--', 'palettes.lua') .. ' -->',
-    '<plist version="1.0">',
-    '<dict>',
-    entries('\t', top),
-    '\t<key>DVTFontAndColorVersion</key>',
-    '\t<integer>1</integer>',
-    '\t<key>DVTLineSpacing</key>',
-    '\t<real>1.100000023841858</real>',
-    '\t<key>DVTSourceTextSyntaxColors</key>',
-    '\t<dict>',
-    entries('\t\t', syntax_colors),
-    '\t</dict>',
-    '\t<key>DVTSourceTextSyntaxFonts</key>',
-    '\t<dict>',
-    entries('\t\t', syntax_fonts),
-    '\t</dict>',
-    '</dict>',
-    '</plist>',
+  write(('%s/hax0r/xcode/%s.xcworkspacecolortheme'):format(config, name), table.concat({
+    '{',
+    '  "fileVersion":1,',
+    '  "recipe":{',
+    ('    "background":{"customColor":%s},'):format(color(c.bg)),
+    ('    "colorScheme":"%s",'):format(c.light and 'light' or 'dark'),
+    '    "palette":{',
+    '      "colorOverrides":{',
+    table.concat(overrides, ',\n'),
+    '      },',
+    ('      "primary":{"custom":%s},'):format(color(c.bright)),
+    ('      "secondary":{"custom":%s}'):format(color(c.bg)),
+    '    }',
+    '  },',
+    '  "showsInAllColorSchemes":true',
+    '}',
     '',
   }, '\n'))
 end
