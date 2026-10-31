@@ -63,7 +63,7 @@ Two hues that go together, with equal OKLCH lightness so neither dominates. The 
   - Wrapper: `hax0r clear` passes the current theme's foreground as `--color` and falls back to plain `clear` without neoclear. Fades go to black, not the theme's background, and the head glyph tints toward white, so check `black` (white background) by eye.
   - The alias (`alias clear="hax0r clear --hold-sync"`) and the `PROMPT+=` line that closes the update are in `~/.zshrc`, which isn't tracked, so they're on the README's new-machine checklist. `~/.config/neoclear/config.toml` sets `fade_ms = 0`.
 - **Theme-switch fade:** built (2026-10-30). `hax0r <theme>` holds the terminal at the old colors with OSC 10/11 escape codes, signals every app at once, fades, then resets with OSC 110/111. It only fades the Ghostty terminal that ran it, and not under tmux; the others get the normal reload. ANSI colors change at the reload, as the fade starts. Each app and wallpaper still starts on its own reload time: macOS is the slowest, about half a second in, because `WallpaperAgent` has to restart. Tried in Ghostty after the reorder (2026-10-30): a bit faster, and good enough for now. Holding everything back to match the wallpaper would slow every switch, so it wasn't done.
-- **Ghostty shader:** `custom-shader` and `custom-shader-animation` for CRT scanlines, glow and flicker, tinted per theme. Costs some GPU and battery. *Unverified* for Ghostty 1.4.0: check `ghostty +show-config --docs`.
+- **Ghostty shader:** built (2026-10-31), picked from a live preview page: scanlines at 0.50 and glow at 0.65, opt-in per machine with `hax0r shader on`. The README has the details. Flicker was dropped: at 0.02 it couldn't be seen, and it would have needed the animation loop, which Ghostty puts at generally under 10% more CPU. Tried in Ghostty 1.4.0 in test windows: it compiles, turning it on and off reaches a running window, and with the background changed by escape codes, as the switch fade does, the background stays within one color step of the theme's. A real `hax0r <theme>` fade with the shader on works (2026-10-31): still a little choppy, with each window and app starting and ending at its own pace, and everything settled within 2 to 3 seconds. Accepted for now. *Unverified:* how it feels over a day of use.
 - **nvim:** a cursor-smear plugin would work (`vim.pack` is already in use). Low priority.
 
 ## Where else to apply the theme
@@ -95,5 +95,5 @@ Checked on one machine on 2026-10-30: macOS 27.0.1, light mode, default accent (
 1. ~~Prototype the monochrome themes and dual pairings in `page.lua`.~~ Done.
 2. ~~Pick the finalists and add them to `palettes.lua`.~~ Done for pink, purple, electric, cyan-pink and pink-cyan. The rename to `phosphor` is on hold (see Decided).
 3. ~~Dual-theme roles in the apps.~~ Done: the shimmer and comments use the second hue, and Starship and git stay as they are.
-4. A shader. ~~macOS appearance~~ and the ~~switch fade~~ are done, and ~~neoclear~~ is done on one machine.
+4. ~~A shader~~, ~~macOS appearance~~ and the ~~switch fade~~ are done, and ~~neoclear~~ is done on one machine.
 5. More apps: `fzf`, then Xcode.

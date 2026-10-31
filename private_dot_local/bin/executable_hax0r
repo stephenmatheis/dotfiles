@@ -7,6 +7,7 @@
 #   hax0r build      rebuild each app's theme files after editing ~/.config/hax0r/palettes.lua
 #   hax0r clear      clear the terminal with neoclear in the current theme's color
 #   hax0r macos      show or set (on, off) whether themes also set macOS's Light/Dark and wallpaper
+#   hax0r shader     show or set (on, off) whether Ghostty draws the CRT shader
 #
 # The choice is per machine, kept in ~/.local/state/hax0r: dotfiles share the themes, not which one is on.
 
@@ -19,6 +20,7 @@ claude_dir=${CLAUDE_CONFIG_DIR:-$HOME/.claude}
 claude_settings=$claude_dir/settings.json
 vscode_settings="$HOME/Library/Application Support/Code/User/settings.json"
 macos_state=$state/macos
+shader_state=$state/ghostty-shader
 wallpaper_store="$HOME/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
 
 current() {
@@ -287,6 +289,27 @@ macos() {
     esac
 }
 
+# Ghostty draws the shader only where `hax0r shader on` was run: config.ghostty includes $shader_state.
+# Nothing in the shader animates, so Ghostty can run it only when the terminal redraws
+shader() {
+    case $1 in
+        '') [[ -f $shader_state ]] && print on || print off ;;
+        on)
+            mkdir -p $state
+            print -rl -- "custom-shader = $config/ghostty/shaders/crt.glsl" 'custom-shader-animation = false' > $shader_state
+            pkill -USR2 -a -x ghostty
+            ;;
+        off)
+            rm -f $shader_state
+            pkill -USR2 -a -x ghostty
+            ;;
+        *)
+            print -u2 "hax0r: use shader on or shader off"
+            return 1
+            ;;
+    esac
+}
+
 # neoclear isn't in the dotfiles (see the README), so a machine without it gets a plain clear
 clear_screen() {
     if (( ! $+commands[neoclear] )); then
@@ -299,10 +322,11 @@ clear_screen() {
 
 case $1 in
     '') list ;;
-    -h | --help | help) sed -n '2,11s/^# \{0,1\}//p' $0 ;;
+    -h | --help | help) sed -n '2,12s/^# \{0,1\}//p' $0 ;;
     build) nvim -l $config/hax0r/generate.lua && switch $(current) ;;
     clear) shift; clear_screen "$@" ;;
     macos) shift; macos "$@" ;;
     preview) HAX0R_COLUMNS=$COLUMNS nvim -l $config/hax0r/preview.lua ;;
+    shader) shift; shader "$@" ;;
     *) switch $1 ;;
 esac

@@ -6,6 +6,9 @@ theme = hax0r-green
 # run `hax0r` to list the themes and `hax0r <theme>` to switch
 config-file = ?~/.local/state/hax0r/ghostty
 
+# the CRT shader, shaders/crt.glsl: this file only exists where `hax0r shader on` was run
+config-file = ?~/.local/state/hax0r/ghostty-shader
+
 # window
 bell-features = no-attention,no-title
 window-padding-x = 16
