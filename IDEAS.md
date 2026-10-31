@@ -77,7 +77,7 @@ Tools that use the ANSI palette already follow Ghostty. The ones that need hex c
 
 ## macOS
 
-**Built (2026-10-30), picked from the page:** `hax0r macos on` sets Light/Dark and a solid wallpaper, opt-in per machine; the README has the details. The accent and highlight stayed out, as below. The wallpaper goes on every Space and display by editing macOS's undocumented wallpaper store, since AppleScript only reaches each display's current Space. Replacing per-Space entries directly with an image doesn't stick, so `hax0r` goes through the saved store first. It was tested with two displays, and macOS reports the new image on both. *Unverified:* moving between several Spaces by eye.
+**Built (2026-10-30), picked from the page:** `hax0r macos on` sets Light/Dark and a solid wallpaper, opt-in per machine; the README has the details. The accent and highlight stayed out, as below. The wallpaper goes on every Space and display through an unofficial workaround, which edits macOS's undocumented wallpaper store. Official routes were tried first with two Spaces: `NSWorkspace`, System Events, and the Shortcuts action Set Wallpaper Photo, even signed with its hidden `showOnAllSpaces` on. Each reaches every Space only once, then only the current one. The comment above `wallpaper_set` in `hax0r` has the details. Retry them after macOS updates, and delete the workaround if one works. The workaround was tested with two displays, and with two Spaces on one display by reading the store. *Unverified:* moving between several Spaces by eye.
 
 Checked on one machine on 2026-10-30: macOS 27.0.1, light mode, default accent (no appearance keys set). Confirm each remaining option on the machine before wiring it in.
 

@@ -195,9 +195,29 @@ wallpaper_install() {
     return 1
 }
 
-# Sets one wallpaper for every Space and display, the way System Settings' "Show on all Spaces"
-# stores it. AppleScript's `set picture` only reaches each display's current Space, so this edits
-# the store, which isn't a documented format: Idle and the defaults are left as they are
+# UNOFFICIAL WORKAROUND: macOS has no official way to keep one wallpaper on every Space.
+#
+# What it does, on every theme switch while `hax0r macos` is on:
+# - Rewrites ~/Library/Application Support/com.apple.wallpaper/Store/Index.plist, whose format Apple
+#   doesn't document. AllSpacesAndDisplays.Desktop becomes the image, the way System Settings'
+#   "Show on all Spaces" stores a wallpaper, and Spaces and Displays are emptied. Idle and
+#   SystemDefault are left alone.
+# - Kills WallpaperAgent so macOS reads the file. launchd starts it again by itself.
+# `hax0r macos off` puts back the copy of that file saved by `on`, and restarts the agent the same way.
+#
+# What could go wrong: a macOS update could change the format. The check only sees whether the file
+# still holds the new value, so if macOS started ignoring the file, this could report success with
+# nothing changed. Light/Dark doesn't depend on any of this.
+#
+# Official routes tried first (2026-10-30, macOS 27.0.1, two Spaces). Each changes every Space only
+# while macOS is in "Show on all Spaces" mode, and also takes it out of that mode, so a second
+# switch only reaches the current Space:
+# - NSWorkspace.setDesktopImageURL and System Events `set picture`
+# - the Shortcuts action Set Wallpaper Photo (is.workflow.actions.wallpaper.set), including a signed
+#   shortcut with its hidden showOnAllSpaces set to true, which it ignores
+# Shortcuts doesn't offer the "Update Show wallpaper on all Spaces" action that could turn the mode
+# back on. Clicking that switch in System Settings by script would work, but opens its window on
+# every switch. Try these again after a macOS update: if one works, delete this workaround.
 wallpaper_set() {
     local tmp=$state/wallpaper-store.$$ now config
     local shared=AllSpacesAndDisplays.Desktop
