@@ -97,4 +97,4 @@ Checked on one machine on 2026-10-30: macOS 27.0.1, light mode, default accent (
 2. ~~Pick the finalists and add them to `palettes.lua`.~~ Done for pink, purple, electric, cyan-pink and pink-cyan. The rename to `phosphor` is on hold (see Decided).
 3. ~~Dual-theme roles in the apps.~~ Done: the shimmer and comments use the second hue, and Starship and git stay as they are.
 4. ~~A shader~~, ~~macOS appearance~~ and the ~~switch fade~~ are done, and ~~neoclear~~ is done on one machine.
-5. More apps: ~~`fzf`~~ and ~~Xcode~~ are done.
+5. More apps: ~~`fzf`~~, ~~Xcode~~ and ~~`lazygit`~~ are done.
