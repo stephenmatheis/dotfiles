@@ -1,0 +1,15 @@
+# hax0r black for lazygit: Black on white.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+gui:
+  theme:
+    activeBorderColor: ['#000000', bold]
+    inactiveBorderColor: ['#565656']
+    searchingActiveBorderColor: ['#1a1a1a', bold]
+    optionsTextColor: ['#565656']
+    selectedLineBgColor: ['#b3b3b3']
+    inactiveViewSelectedLineBgColor: ['#e6e6e6']
+    cherryPickedCommitFgColor: ['#1a1a1a']
+    cherryPickedCommitBgColor: ['#cccccc']
+    unstagedChangesColor: ['#000000']
+    authorColors:
+      '*': '#565656'

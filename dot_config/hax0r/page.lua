@@ -926,6 +926,207 @@ local fzf_section = grids('fzf', 'fzf', 'in the shell',
     options = FZF_OPTIONS,
   } })
 
+-- lazygit: a focused Commits panel with its selected line, then a Files panel, which has no band
+-- because lazygit draws none in a panel that isn't focused. Layout and every color come from what
+-- lazygit 0.66.2 sends the terminal. It hard-codes ANSI slots for hashes, staged files and most other
+-- text, so those are drawn from c.ansi. o holds only what a theme can set, as roles or hex.
+local function lg_mock(c, o, files_only)
+  local function frame(text, active, count)
+    local fg = active and o.active or o.inactive
+    return { text, fg, active and 'b' or '', 'bg' }
+  end
+  -- Frame lines stretch their dashes to fit: the font's box-drawing characters can come from a
+  -- fallback font a little wider than the text, which would push the corner out of the panel
+  local function edge(left, active, right)
+    local parts = {}
+    for _, p in ipairs(left) do table.insert(parts, span(c, p, c.bg)) end
+    return ('<div class="ln lgframe" style="background:%s">%s<span class="lgfill">%s</span>%s</div>'):format(
+      c.bg, table.concat(parts), span(c, frame(('─'):rep(60), active), c.bg), span(c, frame(right, active), c.bg))
+  end
+  local function top(num, title, active)
+    return edge({ frame(('╭─[%d]─'):format(num), active), { title, o.active, active and 'b' or '', 'bg' } }, active, '╮')
+  end
+  local function bottom(count, active)
+    return edge({ frame('╰', active) }, active, count .. '─╯')
+  end
+  -- A row of a panel. Selected with a band: the row takes the band and bold. Reversed: each part's
+  -- color becomes its background, and its text takes the terminal's background
+  local function row(parts, active, selected)
+    local out = { frame('│', active) }
+    local width = 0
+    local reversed = selected and o.reverse
+    for _, p in ipairs(parts) do
+      width = width + vim.api.nvim_strwidth(p[1])
+      if reversed then
+        table.insert(out, { p[1], 'bg', 'b', p[2] })
+      elseif selected then
+        table.insert(out, { p[1], p[2], 'b', o.band })
+      else
+        table.insert(out, { p[1], p[2], '', 'bg' })
+      end
+    end
+    local filler = (' '):rep(40 - width)
+    table.insert(out, { filler, 'fg', '', reversed and 'fg' or (selected and o.band or 'bg') })
+    table.insert(out, frame('│', active))
+    return line(c, out)
+  end
+  local function commit(hash, hash_color, subject, selected)
+    return row({
+      { hash, hash_color }, { ' ', 'fg' },
+      { 'SM', o.author }, { ' ', 'fg' },
+      { '○', selected and c.ansi[15] or o.author }, { ' ', 'fg' },
+      { subject, 'fg' },
+    }, true, selected)
+  end
+  local files = {
+    top(2, 'Files', files_only),
+    row({ { '  ', 'fg' }, { '??', o.unstaged }, { ' generate.lua', 'fg' } }, files_only),
+    row({ { '  ', 'fg' }, { 'M  page.lua', c.ansi[2] } }, files_only),
+    row({ { '   ', 'fg' }, { 'M', o.unstaged }, { ' palettes.lua', 'fg' } }, files_only),
+    bottom('1 of 3', files_only),
+  }
+  if files_only then
+    return '<div class="lg">' .. table.concat(files) .. '</div>'
+  end
+  return '<div class="lg">' .. table.concat({
+    top(4, 'Commits', true),
+    commit('dea09a02', c.ansi[1], 'chore: tidy', true),
+    commit('55e72acf', c.ansi[3], 'fix: page colors'),
+    commit('45ee00ed', c.ansi[2], 'feat: add palettes'),
+    bottom('1 of 3', true),
+    table.concat(files),
+    line(c, { { 'Stage: <space> | Commit: c | Stash: s', o.options } }),
+  }) .. '</div>'
+end
+
+local LG_THEME = { band = 'cursor_line', active = 'bright', inactive = 'dim', options = 'dim', unstaged = 'white', author = 'dim' }
+
+-- lazygit's own colors, read from a real run: on a light terminal its selected line is blue @ 25%,
+-- and the author's color is hashed from the name, so Before draws the one this repo's author gets
+local function lg_before(c)
+  return {
+    band = c.light and mix('#0064ff', c.bg, 0.25) or c.ansi[4],
+    active = c.ansi[2], inactive = 'fg', options = c.ansi[4], unstaged = c.ansi[1],
+    author = c.light and '#2f5401' or '#5c9b04',
+  }
+end
+
+local function lg_with(o)
+  local all = {}
+  for k, v in pairs(LG_THEME) do all[k] = v end
+  for k, v in pairs(o) do all[k] = v end
+  return all
+end
+
+-- verdict looks colors up by role, and here some are hex, so let it take either
+local function lg_colors(c)
+  return setmetatable({}, { __index = function(_, key) return c[key] or key end })
+end
+
+local function lg_band_option(name, about, make)
+  return { name, about, function(c)
+    local o = make(c)
+    local colors = lg_colors(c)
+    local caption
+    if o.reverse then
+      caption = verdict(colors, colors.fg, { { 'bg', 'its text' } })
+    else
+      caption = verdict(colors, colors[o.band], { { c.ansi[1], 'the hash' }, { 'fg', 'the subject' }, { o.author, 'the author' }, { 'bg', 'the background' } })
+    end
+    return lg_mock(c, o), caption
+  end }
+end
+
+local function lg_unstaged_option(name, about, make)
+  return { name, about, function(c)
+    local o = make(c)
+    local colors = lg_colors(c)
+    return lg_mock(c, o, true), verdict(colors, colors[o.unstaged], { { c.ansi[2], 'staged' }, { 'bg', 'the background' } })
+  end }
+end
+
+local function lg_frame_option(name, about, make)
+  return { name, about, function(c)
+    local o = make(c)
+    local colors = lg_colors(c)
+    return lg_mock(c, o), verdict(colors, colors[o.active], { { o.inactive, 'other panels' }, { 'bg', 'the background' } })
+      .. verdict(colors, colors[o.inactive], { { 'bg', 'the background' } })
+  end }
+end
+
+local LG_SHOW = { 'green', 'amber', 'black', 'cyan-pink', 'pink-cyan' }
+
+-- A commit copied for cherry-pick: lazygit draws its hash in these colors, but on the selected line
+-- the band replaces the background and the text color stays, so one text color has to read on both.
+-- Colors read from a real run in black. Row 1 has the cursor on it, row 3 has it elsewhere
+local function lg_copied_mock(c, o)
+  local function pad(parts, back)
+    local width = 0
+    for _, p in ipairs(parts) do width = width + vim.api.nvim_strwidth(p[1]) end
+    table.insert(parts, { (' '):rep(42 - width), 'fg', '', back })
+    return line(c, parts)
+  end
+  return '<div class="lg">' .. table.concat({
+    pad({ { 'dea09a02', o.fg, 'b', 'cursor_line' }, { ' ', 'fg', 'b', 'cursor_line' }, { 'SM', 'dim', 'b', 'cursor_line' }, { ' ', 'fg', 'b', 'cursor_line' },
+      { '○', c.ansi[15], 'b', 'cursor_line' }, { ' chore: tidy', 'fg', 'b', 'cursor_line' } }, 'cursor_line'),
+    pad({ { '55e72acf', c.ansi[3], '', 'bg' }, { ' ', 'fg', '', 'bg' }, { 'SM', 'dim', '', 'bg' }, { ' ○ fix: page colors', 'dim', '', 'bg' } }, 'bg'),
+    pad({ { '45ee00ed', o.fg, '', o.bg }, { ' ', 'fg', '', 'bg' }, { 'SM', 'dim', '', 'bg' }, { ' ○ ', 'dim', '', 'bg' }, { 'feat: add palettes', 'fg', '', 'bg' } }, 'bg'),
+  }) .. '</div>'
+end
+
+local function lg_copied_option(name, about, o)
+  return { name, about, function(c)
+    return lg_copied_mock(c, o), verdict(c, c[o.fg], { { 'cursor_line', 'the selected line' }, { o.bg, 'its own band' } })
+  end }
+end
+
+local lazygit_section = grids('lazygit', 'lazygit', 'in the shell',
+  'Picked: the cursor_line band, unstaged in white, and bright frames with the others dim, built by hax0r build. Drawn from palettes.lua by what lazygit 0.66.2 sends the terminal. A theme can set the selected line, the frames, the key hints, unstaged files and authors. Hashes and staged files are hard-coded ANSI, so unpushed, pushed and merged hashes stay one color in every row, and only remapping ANSI could change that. Diffs in the right-hand panel come from git, with the dim and bold already set in ~/.config/git/config. Authors are dim in every row except Before, where lazygit colors them by a hash of the name, the same in every theme.',
+  {
+    {
+      title = 'The selected line',
+      note = 'With lazygit’s default, a dark theme’s band is ANSI blue, which hax0r makes the same color as the text on it. Under each one: the band against what sits on it, with ≈ on any pair under the same-color limit.',
+      show = LG_SHOW,
+      options = {
+        lg_band_option('Before', 'lazygit’s own colors', lg_before),
+        lg_band_option('Now: cursor_line band', 'the same band as fzf and nvim’s cursor line', function() return LG_THEME end),
+        lg_band_option('prompt_band band', 'quieter: the band on Claude Code’s prompts', function() return lg_with({ band = 'prompt_band' }) end),
+        lg_band_option('Reversed', 'each color swaps with the background', function() return lg_with({ reverse = true }) end),
+      },
+    },
+    {
+      title = 'Unstaged files',
+      note = 'Staged files are hard-coded ANSI green, so this color alone tells staged from unstaged, along with the column the M is in. Under each one: this color against staged and the background.',
+      show = LG_SHOW,
+      options = {
+        lg_unstaged_option('Before', 'ANSI red, which hax0r makes the staged color', function(c) return lg_with({ unstaged = c.ansi[1] }) end),
+        lg_unstaged_option('Now: white', 'the color changed lines have in nvim and VS Code', function() return LG_THEME end),
+        lg_unstaged_option('link', 'the second hue in the dual themes', function() return lg_with({ unstaged = 'link' }) end),
+      },
+    },
+    {
+      title = 'Panel frames and key hints',
+      note = 'The active color also draws each panel’s current tab name. Under each one: the active frame against other panels and the background, then other panels against the background, since their [1] to [5] labels have to stay readable.',
+      show = LG_SHOW,
+      options = {
+        lg_frame_option('Before', 'lazygit’s own colors', function(c) return lg_with({ active = c.ansi[2], inactive = 'fg', options = c.ansi[4] }) end),
+        lg_frame_option('Now: bright, others dim', 'active = bright, other panels = dim, hints = dim', function() return LG_THEME end),
+        lg_frame_option('Like tmux', 'active = dim, other panels = border, hints = dim', function() return lg_with({ active = 'dim', inactive = 'border' }) end),
+        lg_frame_option('link, others dim', 'active = link (second hue in dual), other panels = dim', function() return lg_with({ active = 'link' }) end),
+      },
+    },
+    {
+      title = 'Copied commits',
+      note = 'Picked: link on prompt_band, built by hax0r build. A commit copied with C, with the cursor on it in the first row and elsewhere in the third. Under each one: the hash color against both backgrounds it sits on.',
+      show = LG_SHOW,
+      options = {
+        lg_copied_option('Before', 'background color on a link band, as first built', { fg = 'bg', bg = 'link' }),
+        lg_copied_option('Now: link on prompt_band', 'one rule for every theme, and the second hue in dual', { fg = 'link', bg = 'prompt_band' }),
+        lg_copied_option('white on removed', 'a stronger band, and the second hue in dual', { fg = 'white', bg = 'removed' }),
+      },
+    },
+  })
+
 local choices = grids('choices', 'Hover and ignored', 'now, and the other options considered',
   ('VS Code’s hover background and ignored files, which read as gray in amber, each drawn as it’s set now and with the other options. These are mocks drawn from palettes.lua by each app’s rules, not screenshots. Under each one: the color, and its contrast against the colors it has to stand apart from, with ≈ on any pair under %.2f:1.'):format(SAME),
   CHOICES)
@@ -1061,6 +1262,9 @@ thead .sub { font-weight: 400; text-transform: none; letter-spacing: 0; margin-l
 .swatch.mock .sbs { display: flex }
 .swatch.mock .sbs .ln { width: 24ch; flex: none }
 .sbs .sep { width: 1px; flex: none }
+.swatch.mock .lg .ln { line-height: 1.25 }
+.swatch.mock .lg .lgframe { display: flex }
+.lgfill { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap }
 
 .cands th.opt { width: 14ch; min-width: 12ch }
 .cands td { padding-right: 24px }
@@ -1076,7 +1280,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
 <main>
   <div class="intro">
     <h1>hax0r candidates</h1>
-    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, the fzf options, then the macOS appearance options and the syntax color options for the dual themes. Then the new single-color and dual themes under consideration, built by <code>palettes.lua</code>’s derive helpers, mock-ups of what the second hue could do in Claude Code, Starship and git, and a check of those helpers against the themes set by hand. Then VS Code’s hover background and ignored files, now next to the other options considered, how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
+    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, the lazygit options and the fzf options, then the macOS appearance options and the syntax color options for the dual themes. Then the new single-color and dual themes under consideration, built by <code>palettes.lua</code>’s derive helpers, mock-ups of what the second hue could do in Claude Code, Starship and git, and a check of those helpers against the themes set by hand. Then VS Code’s hover background and ignored files, now next to the other options considered, how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
     <p>“Same color as” lists the other colors in that spot that have to be told apart by color alone and are under %.2f:1 against this one. Colors that share a palette key on purpose, like Added and Untracked, aren’t listed.</p>
   </div>
   %s
@@ -1084,7 +1288,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
   %s
   <footer>Built by <code>~/.config/hax0r/page.lua</code>, which reads <code>palettes.lua</code> and redraws <code>preview.lua</code>’s panel as HTML.</footer>
 </main>
-]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ fzf_section, macos, syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
+]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ lazygit_section, fzf_section, macos, syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
 
 local f = assert(io.open(out, 'w'))
 f:write(page)

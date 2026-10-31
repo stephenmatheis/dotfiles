@@ -140,6 +140,38 @@ local function fzf(name, c)
   write(('%s/hax0r/fzf/%s'):format(config, name), table.concat(lines, '\n') .. '\n')
 end
 
+-- lazygit: a config file per theme, copied to where LG_CONFIG_FILE points. Its text stays the
+-- terminal's, so the switch fade and the shader still apply. It hard-codes ANSI slots for hashes and
+-- staged files, and those can't be set here. A copied commit's hash keeps its text color when the
+-- selected line's band replaces its own, so that color has to read on both. lazygit 0.66.2 doesn't
+-- use the markedBaseCommit colors, so they aren't set
+local function lazygit(name, c)
+  local function set(key, ...)
+    local values = {}
+    for _, value in ipairs({ ... }) do
+      table.insert(values, value:match('^#') and ("'%s'"):format(value) or value)
+    end
+    return ('    %s: [%s]'):format(key, table.concat(values, ', '))
+  end
+  write(('%s/hax0r/lazygit/%s.yml'):format(config, name), table.concat({
+    ('# hax0r %s for lazygit: %s.'):format(name, c.title),
+    generated_by('#', 'palettes.lua'),
+    'gui:',
+    '  theme:',
+    set('activeBorderColor', c.bright, 'bold'),
+    set('inactiveBorderColor', c.dim),
+    set('searchingActiveBorderColor', c.link, 'bold'),
+    set('optionsTextColor', c.dim),
+    set('selectedLineBgColor', c.cursor_line),
+    set('inactiveViewSelectedLineBgColor', c.selection_tint),
+    set('cherryPickedCommitFgColor', c.link),
+    set('cherryPickedCommitBgColor', c.prompt_band),
+    set('unstagedChangesColor', c.white),
+    '    authorColors:',
+    ("      '*': '%s'"):format(c.dim),
+  }, '\n') .. '\n')
+end
+
 -- Xcode: its own theme format, one file per theme, that `hax0r <theme>` copies over the theme Xcode
 -- has selected (see the comment above xcode_apply in the hax0r script). Colors are OKLCH. The syntax
 -- roles match nvim's and VS Code's. Fonts aren't in here: Xcode keeps them separately
@@ -442,6 +474,7 @@ for _, name in ipairs(P.order) do
   ghostty(name, c)
   tmux(name, c)
   fzf(name, c)
+  lazygit(name, c)
   xcode(name, c)
   claude_theme(name, c)
   vscode_themes(name, c)

@@ -1,5 +1,5 @@
 #!/bin/zsh
-# hax0r: switch Ghostty, tmux, nvim, fzf, Claude Code and VS Code between the hax0r themes.
+# hax0r: switch Ghostty, tmux, nvim, fzf, lazygit, Claude Code and VS Code between the hax0r themes.
 #
 #   hax0r            list the themes, marking the current one
 #   hax0r <theme>    switch every app to <theme>
@@ -125,6 +125,10 @@ switch() {
 
     # fzf: reads this file each time it starts, through FZF_DEFAULT_OPTS_FILE in ~/.zshenv
     cp $config/hax0r/fzf/$name $state/fzf
+
+    # lazygit: reads this file through LG_CONFIG_FILE in ~/.zshenv, and again when a running one
+    # gets focus back
+    cp $config/hax0r/lazygit/$name.yml $state/lazygit.yml
 
     xcode_apply $name
 

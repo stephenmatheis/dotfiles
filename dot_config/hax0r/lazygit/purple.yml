@@ -1,0 +1,15 @@
+# hax0r purple for lazygit: Purple.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+gui:
+  theme:
+    activeBorderColor: ['#cfb6fe', bold]
+    inactiveBorderColor: ['#993bff']
+    searchingActiveBorderColor: ['#d1b7fe', bold]
+    optionsTextColor: ['#993bff']
+    selectedLineBgColor: ['#493865']
+    inactiveViewSelectedLineBgColor: ['#2b1f3d']
+    cherryPickedCommitFgColor: ['#d1b7fe']
+    cherryPickedCommitBgColor: ['#38215a']
+    unstagedChangesColor: ['#fafafa']
+    authorColors:
+      '*': '#993bff'

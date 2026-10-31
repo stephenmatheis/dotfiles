@@ -1,0 +1,15 @@
+# hax0r pink-cyan for lazygit: Pink + cyan.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+gui:
+  theme:
+    activeBorderColor: ['#feaaca', bold]
+    inactiveBorderColor: ['#de0084']
+    searchingActiveBorderColor: ['#10c8c8', bold]
+    optionsTextColor: ['#de0084']
+    selectedLineBgColor: ['#5e3446']
+    inactiveViewSelectedLineBgColor: ['#351e29']
+    cherryPickedCommitFgColor: ['#10c8c8']
+    cherryPickedCommitBgColor: ['#531934']
+    unstagedChangesColor: ['#fafafa']
+    authorColors:
+      '*': '#de0084'

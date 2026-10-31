@@ -1,0 +1,15 @@
+# hax0r electric for lazygit: Electric blue.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+gui:
+  theme:
+    activeBorderColor: ['#9dc5fe', bold]
+    inactiveBorderColor: ['#006feb']
+    searchingActiveBorderColor: ['#9fc6fe', bold]
+    optionsTextColor: ['#006feb']
+    selectedLineBgColor: ['#304261']
+    inactiveViewSelectedLineBgColor: ['#1d2639']
+    cherryPickedCommitFgColor: ['#9fc6fe']
+    cherryPickedCommitBgColor: ['#162e56']
+    unstagedChangesColor: ['#fafafa']
+    authorColors:
+      '*': '#006feb'

@@ -1,0 +1,15 @@
+# hax0r amber for lazygit: Amber.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+gui:
+  theme:
+    activeBorderColor: ['#ffb000', bold]
+    inactiveBorderColor: ['#9c6a00']
+    searchingActiveBorderColor: ['#e6bc61', bold]
+    optionsTextColor: ['#9c6a00']
+    selectedLineBgColor: ['#5b3c00']
+    inactiveViewSelectedLineBgColor: ['#302517']
+    cherryPickedCommitFgColor: ['#e6bc61']
+    cherryPickedCommitBgColor: ['#422a00']
+    unstagedChangesColor: ['#fafafa']
+    authorColors:
+      '*': '#9c6a00'
