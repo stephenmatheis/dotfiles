@@ -47,7 +47,7 @@ local function panel(name, c)
   return {
     row(c, { { ' ' .. name, 'bright', 'b' }, { '  ' .. c.title, 'fg' }, { ('  %s on %s'):format(c.fg, c.bg), 'dim' } }),
     row(c, {}),
-    row(c, { nr(1), { '-- palette for the hax0r theme', 'dim', 'i' } }),
+    row(c, { nr(1), { '-- palette for the hax0r theme', 'comment', 'i' } }),
     row(c, { nr(2), { 'local function', 'bold', 'b' }, { ' ', 'fg' }, { 'hl', 'normal' }, { '(group, opts)', 'fg' } }),
     row(c, { { '  3 ', 'bright', '', cl }, { '  ', 'fg', '', cl }, { 'return', 'bold', 'b', cl }, { ' set(', 'fg', '', cl },
       { "'Normal'", 'normal', '', cl }, { ', ', 'fg', '', cl }, { 'Color', 'bright', '', cl }, { ')', 'fg', '', cl } }, cl),
@@ -65,11 +65,11 @@ local function panel(name, c)
       { 'the docs', 'link', 'u' }, { ' (2 lines hidden)', 'faint' } }),
     row(c, { { '   ✻ Thinking… ', 'bright' }, { 'esc to interrupt', 'dim' } }),
     row(c, { { '  3 ', 'dim', '', c.diff_del }, { "-  fg = '", 'fg', '', c.diff_del }, { '#16b10e', 'normal', '', c.diff_del_word },
-      { "',", 'fg', '', c.diff_del }, { ' -- old green', 'dim', 'i', c.diff_del } }, c.diff_del),
+      { "',", 'fg', '', c.diff_del }, { ' -- old green', 'comment', 'i', c.diff_del } }, c.diff_del),
     row(c, { { '  3 ', 'dim', '', c.diff_add }, { "+  fg = '", 'fg', '', c.diff_add }, { '#19e20e', 'normal', '', c.diff_add_word },
-      { "',", 'fg', '', c.diff_add }, { ' -- brighter', 'dim', 'i', c.diff_add } }, c.diff_add),
+      { "',", 'fg', '', c.diff_add }, { ' -- brighter', 'comment', 'i', c.diff_add } }, c.diff_add),
     row(c, {}),
-    row(c, { { (' contrast: text %s  comments %s  bright %s  error %s'):format(ratio('fg'), ratio('dim'), ratio('bright'), ratio('error')), 'dim' } }),
+    row(c, { { (' contrast: text %s  comments %s  bright %s  error %s'):format(ratio('fg'), ratio('comment'), ratio('bright'), ratio('error')), 'dim' } }),
   }
 end
 

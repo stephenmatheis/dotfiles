@@ -6,7 +6,7 @@ Plans and ideas for these dotfiles, mostly the hax0r themes. Started 2026-10-30.
 
 Written on one machine for the other: memory is per machine, so a fresh session there won't know any of this. Read this file and the README first.
 
-- **Where things stand:** the five new themes (`pink`, `purple`, `electric`, `cyan-pink`, `pink-cyan`) are built, applied on the first machine and pushed. `hax0r pink-cyan` was tried in VS Code and Claude Code in Ghostty and looks good. In the dual themes the second hue takes removed lines, errors, links, VS Code's submodule color and Claude Code's shimmer, so they read as pink or cyan with a few accents. The rename is on hold.
+- **Where things stand:** the five new themes (`pink`, `purple`, `electric`, `cyan-pink`, `pink-cyan`) are built, applied on the first machine and pushed. `hax0r pink-cyan` was tried in VS Code and Claude Code in Ghostty and looks good. In the dual themes the second hue takes comments in nvim and VS Code, removed lines, errors, links, VS Code's submodule color and Claude Code's shimmer, so they read as pink or cyan with a few accents. The rename is on hold.
 - **Mock-ups:** `page.lua` has a section, "The second hue in more places", for the two dual themes only. To see it, after `chezmoi update`:
 
   ```zsh
@@ -17,6 +17,7 @@ Written on one machine for the other: memory is per machine, so a fresh session 
   1. Claude Code's shimmer: second hue. Built, in `theme()` in `palettes.lua`.
   2. Starship: Now, no change.
   3. git: Now, no change.
+- **Syntax colors, decided from the page's first section (2026-10-30):** comments only, as `accent_dim`, through the `comment` role in `theme()`. It's the one option that didn't land on the error or link color. It shows in nvim and VS Code; Claude Code's code blocks read ANSI 8, so their comments keep the theme's dim color.
 
 
 ## Decided
@@ -50,7 +51,7 @@ Two hues that go together, with equal OKLCH lightness so neither dominates. The 
 - green + amber (colors that already exist, a two-tone phosphor look)
 - blue + orange (teal and orange)
 
-Later: let syntax colors (strings, types) use the accent.
+- **Syntax colors: comments take the accent (2026-10-30), picked from the page.** Strings, functions and constants would match links and sit 1.18:1 from errors, and types and keywords the reverse, which is why they stayed in the first hue.
 
 - **Starship and git: no change (2026-10-30), picked from the page.** If they come back, don't remap ANSI colors, which changes every terminal tool. Two new palette slots work: 197 and 198 were built and then removed, the second hue and its dim shade in a dual theme and `normal` and `dim` in the rest, which match ANSI 1, 2 and 6 and ANSI 8 in every theme, so the single-color themes don't change. Each Ghostty theme and `terminal-palette.zsh` would set them, Starship's styles can name them, and git's config too (`color.diff.old = 197 dim`, `color.status.changed` and `untracked`), which keeps it to git alone. Terminals that don't set the slots would show their standard pinks.
 
@@ -93,6 +94,6 @@ Checked on one machine on 2026-10-30: macOS 27.0.1, light mode, default accent (
 
 1. ~~Prototype the monochrome themes and dual pairings in `page.lua`.~~ Done.
 2. ~~Pick the finalists and add them to `palettes.lua`.~~ Done for pink, purple, electric, cyan-pink and pink-cyan. The rename to `phosphor` is on hold (see Decided).
-3. Dual-theme roles in the apps: syntax colors. The shimmer is done, and Starship and git stay as they are.
+3. ~~Dual-theme roles in the apps.~~ Done: the shimmer and comments use the second hue, and Starship and git stay as they are.
 4. macOS appearance, then the switch fade, then a shader. ~~neoclear~~ is done on one machine.
 5. More apps: `fzf`, then Xcode.

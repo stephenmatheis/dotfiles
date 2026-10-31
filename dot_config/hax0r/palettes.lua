@@ -8,6 +8,7 @@
 -- - git, diff, problem and link colors aren't set per theme: theme() below builds them from each
 --   theme's own colors, the same way every time, so a theme stays one color
 -- - ansi 7 is fg and ansi 8 is dim, so Claude Code's code text and comments match nvim's
+--   (except a dual theme's comments, which only nvim and VS Code draw in the second hue)
 -- - ansi 12 is the selection color, so Claude Code's inline code stands out from prose
 --   (black on white uses ansi 4 for this, since Claude Code's light base reads that slot)
 
@@ -50,8 +51,11 @@ end
 -- hue can only do with brightness: removed is accent_dim and error accent_bright, links are accent,
 -- and the removed bands are accent_dim @ 25% and 42%, nearly as strong as the added ones since
 -- their hue sets them apart (accent_dim, because the paler shades are too gray to tint a band).
--- Claude Code's shimmer goes from selection, normal and bright_white to accent_bright and accent.
+-- Comments in nvim and VS Code are accent_dim too: the one syntax role that doesn't land on the
+-- error or link color. Claude Code's shimmer goes from selection, normal and bright_white to
+-- accent_bright and accent.
 local function theme(t)
+  t.comment = t.dim
   t.faint = mix(t.white, t.bg, 0.40)
   t.added = t.bright
   t.added_dim = t.dim
@@ -71,6 +75,7 @@ local function theme(t)
   t.border_shimmer = t.normal
   t.permission_shimmer = t.bright_white
   if t.accent then
+    t.comment = t.accent_dim
     t.removed = t.accent_dim
     t.removed_dim = mix(t.accent_dim, t.bg, 0.60)
     t.error = t.accent_bright
@@ -501,7 +506,7 @@ M['pink-cyan'] = theme({
 -- and none comes out darker or duller by accident. The rest is filled in the way the hand-set
 -- themes do it.
 --   mono(title, hue)               one hue
---   duo(title, hue, accent_hue)    a second hue for removed, errors and links (see theme())
+--   duo(title, hue, accent_hue)    a second hue for comments, removed, errors and links (see theme())
 -- Hues are OKLCH degrees, or `hue(color)` for a color's own. Each takes a last argument, `equal`:
 -- 'contrast' (the default) gives every color Gr33N's contrast against the background, as amber was
 -- matched; 'lightness' gives it only Gr33N's lightness, which is more vivid and dimmer to read.

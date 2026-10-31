@@ -521,7 +521,7 @@
         {
             "name": "Comment",
             "scope": ["comment", "punctuation.definition.comment"],
-            "settings": { "foreground": "{{dim}}", "fontStyle": "italic" }
+            "settings": { "foreground": "{{comment}}", "fontStyle": "italic" }
         },
         {
             "name": "String, Character",
@@ -633,7 +633,7 @@
         "number": "{{normal}}",
         "regexp": "{{bright}}",
         "keyword": { "foreground": "{{bold}}", "bold": true },
-        "comment": { "foreground": "{{dim}}", "italic": true },
+        "comment": { "foreground": "{{comment}}", "italic": true },
         "operator": "{{fg}}",
         "parameter": "{{fg}}",
         "variable": "{{fg}}",

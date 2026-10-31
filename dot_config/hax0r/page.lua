@@ -84,7 +84,7 @@ local function panel(name, c)
   return table.concat({
     line(c, { { ' ' .. name, 'bright', 'b' }, { '  ' .. c.title, 'fg' }, { ('  %s on %s'):format(c.fg, c.bg), 'dim' } }),
     line(c, {}),
-    line(c, { nr(1), { '-- palette for the hax0r theme', 'dim', 'i' } }),
+    line(c, { nr(1), { '-- palette for the hax0r theme', 'comment', 'i' } }),
     line(c, { nr(2), { 'local function', 'bold', 'b' }, { ' ', 'fg' }, { 'hl', 'normal' }, { '(group, opts)', 'fg' } }),
     line(c, { { '  3 ', 'bright', '', cl }, { '  ', 'fg', '', cl }, { 'return', 'bold', 'b', cl }, { ' set(', 'fg', '', cl },
       { "'Normal'", 'normal', '', cl }, { ', ', 'fg', '', cl }, { 'Color', 'bright', '', cl }, { ')', 'fg', '', cl } }, cl),
@@ -102,11 +102,11 @@ local function panel(name, c)
       { 'the docs', 'link', 'u' }, { ' (2 lines hidden)', 'faint' } }),
     line(c, { { '   ✻ Thinking… ', 'bright' }, { 'esc to interrupt', 'dim' } }),
     line(c, { { '  3 ', 'dim', '', c.diff_del }, { "-  fg = '", 'fg', '', c.diff_del }, { '#16b10e', 'normal', '', c.diff_del_word },
-      { "',", 'fg', '', c.diff_del }, { ' -- old green', 'dim', 'i', c.diff_del } }, c.diff_del),
+      { "',", 'fg', '', c.diff_del }, { ' -- old green', 'comment', 'i', c.diff_del } }, c.diff_del),
     line(c, { { '  3 ', 'dim', '', c.diff_add }, { "+  fg = '", 'fg', '', c.diff_add }, { '#19e20e', 'normal', '', c.diff_add_word },
-      { "',", 'fg', '', c.diff_add }, { ' -- brighter', 'dim', 'i', c.diff_add } }, c.diff_add),
+      { "',", 'fg', '', c.diff_add }, { ' -- brighter', 'comment', 'i', c.diff_add } }, c.diff_add),
     line(c, {}),
-    line(c, { { (' contrast: text %s  comments %s  bright %s  error %s'):format(ratio('fg'), ratio('dim'), ratio('bright'), ratio('error')), 'dim' } }),
+    line(c, { { (' contrast: text %s  comments %s  bright %s  error %s'):format(ratio('fg'), ratio('comment'), ratio('bright'), ratio('error')), 'dim' } }),
   })
 end
 
@@ -596,7 +596,7 @@ local duos = candidates('duo', 'New dual themes', 'a second hue for removed, err
 local check = helper_check()
 
 -- What the second hue could do in more places, drawn for the dual themes only. These are options,
--- not what's set: the apps use the second hue only for removed lines, errors and links so far.
+-- not what's set: beyond the shimmer, the apps use it only for comments, removed lines, errors and links.
 local DUAL_SHOW = { 'cyan-pink', 'pink-cyan' }
 
 -- text in its base color with a band of shimmer swept across it, drawn at three positions.
@@ -695,8 +695,80 @@ local DUAL = {
   },
 }
 local dual = grids('dual', 'The second hue in more places', 'Claude Code’s shimmer, Starship and git',
-  'Mock-ups for the two dual themes only. Of these, only Claude Code’s shimmer uses the second hue; beyond that the apps use it for removed lines, errors and links. Drawn from palettes.lua by each app’s rules, not screenshots.',
+  'Mock-ups for the two dual themes only. Of these, only Claude Code’s shimmer uses the second hue; beyond that the apps use it for comments, removed lines, errors and links. Drawn from palettes.lua by each app’s rules, not screenshots.',
   DUAL)
+
+-- A small TypeScript file by the roles nvim and VS Code share, then what the second hue already
+-- marks, to see if it still stands out. o moves roles to other palette keys: { string = 'accent' }
+local SYNTAX_ROLES = { 'comment', 'string', 'func', 'const', 'keyword', 'type' }
+local function syntax_mock(c, o)
+  local r = { comment = 'dim', string = 'normal', func = 'normal', const = 'normal', keyword = 'bold', type = 'bright' }
+  for role, key in pairs(o) do r[role] = key end
+  local function code(n, parts, back)
+    table.insert(parts, 1, { n and ('%2d '):format(n) or '   ', 'dim', '', back })
+    for i = 2, #parts do parts[i][4] = parts[i][4] or back end
+    return line(c, parts, back)
+  end
+  local function kw(s) return { s, r.keyword, 'b' } end
+  local function fg(s) return { s, 'fg' } end
+  local function str(s) return { s, r.string } end
+  local function ty(s) return { s, r.type } end
+  local function fn(s) return { s, r.func } end
+  local function path_line(n, parts, back)
+    return code(n, { fg('  '), kw('const'), fg(' path = '), unpack(parts) }, back)
+  end
+  local added = { str('`themes/'), { '${', 'bright' }, fg('name'), { '}', 'bright' }, str('.json`'), fg(';') }
+  return table.concat({
+    code(1, { { '// load a theme by name', r.comment, 'i' } }),
+    code(2, { kw('import'), fg(' { read } '), kw('from'), fg(' '), str("'./files'"), fg(';') }),
+    code(3, {}),
+    code(4, { kw('const'), fg(' '), { 'RETRIES', r.const }, fg(' = '), { '3', r.const }, fg(';') }),
+    code(5, {}),
+    code(6, { kw('export async function'), fg(' '), fn('load'), fg('(') }),
+    code(7, { fg('  name: '), ty('ThemeName'), fg(',') }),
+    code(8, { fg('): '), ty('Promise'), fg('<'), ty('Theme'), fg('> {') }),
+    path_line(9, added),
+    code(10, { fg('  '), kw('const'), fg(' text = '), kw('await'), fg(' '), fn('read'), fg('(path);') }),
+    code(11, { fg('  '), kw('return'), fg(' '), { 'decode', r.func, '~', nil, 'error' }, fg('(text, '), { 'RETRIES', r.const }, fg(');') }),
+    code(12, { fg('}') }),
+    line(c, {}),
+    code(nil, { { "■ Cannot find name 'decode'.", 'error' } }),
+    code(nil, { fg('See '), { 'the docs', 'link', 'u' } }),
+    line(c, {}),
+    path_line(9, { str("'themes/old.json'"), fg(';') }, 'diff_del'),
+    path_line(9, added, 'diff_add'),
+  })
+end
+
+local function syntax_option(name, about, o)
+  return { name, about, function(c)
+    local caps = {}
+    for _, role in ipairs(SYNTAX_ROLES) do
+      if o[role] then
+        table.insert(caps, verdict(c, c[o[role]], { { 'bg', 'background' }, { 'error', 'errors' }, { 'link', 'links' } }))
+      end
+    end
+    return syntax_mock(c, o), table.concat(caps)
+  end }
+end
+
+local syntax = grids('syntax', 'Syntax colors', 'code in the second hue',
+  'Options for the two dual themes, in nvim and VS Code. Picked: Comments. The other rows are the ones considered, with comments as they were.',
+  { {
+    title = 'Code in nvim and VS Code',
+    note = ('Both editors share these roles: strings, functions and constants are normal, keywords bold, types bright and comments dim. Each option moves one or two of them to the second hue at a matching brightness. Below the code is what the second hue already marks: an error with its underline, a link, and VS Code’s removed and added lines, which keep their syntax colors. Under each option: the color, and its contrast against the background, errors and links, with ≈ on any pair under %.2f:1. Claude Code’s code blocks and terminal tools read ANSI colors, so with any of these they stay one color unless ANSI is remapped.'):format(SAME),
+    show = DUAL_SHOW,
+    options = {
+      syntax_option('Before', 'no code in the second hue', {}),
+      syntax_option('Strings', 'strings = accent', { string = 'accent' }),
+      syntax_option('Types', 'types = accent_bright', { type = 'accent_bright' }),
+      syntax_option('Strings and types', 'strings = accent, types = accent_bright', { string = 'accent', type = 'accent_bright' }),
+      syntax_option('Functions', 'functions = accent', { func = 'accent' }),
+      syntax_option('Constants', 'constants and numbers = accent', { const = 'accent' }),
+      syntax_option('Keywords', 'keywords = accent_bright', { keyword = 'accent_bright' }),
+      syntax_option('Now: comments', 'comments = accent_dim', { comment = 'accent_dim' }),
+    },
+  } })
 
 local choices = grids('choices', 'Hover and ignored', 'now, and the other options considered',
   ('VS Code’s hover background and ignored files, which read as gray in amber, each drawn as it’s set now and with the other options. These are mocks drawn from palettes.lua by each app’s rules, not screenshots. Under each one: the color, and its contrast against the colors it has to stand apart from, with ≈ on any pair under %.2f:1.'):format(SAME),
@@ -848,7 +920,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
 <main>
   <div class="intro">
     <h1>hax0r candidates</h1>
-    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, the new single-color and dual themes under consideration, built by <code>palettes.lua</code>’s derive helpers, mock-ups of what the second hue could do in Claude Code, Starship and git, and a check of those helpers against the themes set by hand. Then VS Code’s hover background and ignored files, now next to the other options considered, how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
+    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, the syntax color options for the dual themes. Then the new single-color and dual themes under consideration, built by <code>palettes.lua</code>’s derive helpers, mock-ups of what the second hue could do in Claude Code, Starship and git, and a check of those helpers against the themes set by hand. Then VS Code’s hover background and ignored files, now next to the other options considered, how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
     <p>“Same color as” lists the other colors in that spot that have to be told apart by color alone and are under %.2f:1 against this one. Colors that share a palette key on purpose, like Added and Untracked, aren’t listed.</p>
   </div>
   %s
@@ -856,7 +928,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
   %s
   <footer>Built by <code>~/.config/hax0r/page.lua</code>, which reads <code>palettes.lua</code> and redraws <code>preview.lua</code>’s panel as HTML.</footer>
 </main>
-]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
+]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
 
 local f = assert(io.open(out, 'w'))
 f:write(page)

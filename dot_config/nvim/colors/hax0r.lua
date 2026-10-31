@@ -44,7 +44,7 @@ hl('WinSeparator', { fg = c.border }) -- not dim: the faint outline VS Code draw
 hl('Directory', { fg = c.bright })
 
 -- Code
-hl('Comment', { fg = c.dim, italic = true })
+hl('Comment', { fg = c.comment, italic = true })
 hl('String', { fg = c.normal })
 hl('Function', { fg = c.normal })
 hl('Statement', { fg = c.bold, bold = true })

@@ -488,7 +488,7 @@
         {
             "name": "Comment",
             "scope": ["comment", "punctuation.definition.comment"],
-            "settings": { "foreground": "#008281", "fontStyle": "italic" }
+            "settings": { "foreground": "#de0084", "fontStyle": "italic" }
         },
         {
             "name": "String, Character",
@@ -599,7 +599,7 @@
         "number": "#10c8c8",
         "regexp": "#11d9d9",
         "keyword": { "foreground": "#12dada", "bold": true },
-        "comment": { "foreground": "#008281", "italic": true },
+        "comment": { "foreground": "#de0084", "italic": true },
         "operator": "#11aaaa",
         "parameter": "#11aaaa",
         "variable": "#11aaaa",
