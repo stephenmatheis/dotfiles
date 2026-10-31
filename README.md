@@ -24,11 +24,13 @@ Managed with [chezmoi](https://www.chezmoi.io). Shell config (`~/.zshenv`, `~/.z
   "statusLine": { "type": "command", "command": "~/.local/bin/claude-statusline", "refreshInterval": 60 }
   ```
 
-- For the animated `clear`, build [neoclear](https://codeberg.org/ftranschel/neoclear/). It's Linux only upstream and GPL, so its source isn't kept here, and it needs these edits to work on a Mac:
+- For the animated `clear`, build [neoclear](https://codeberg.org/ftranschel/neoclear/). It's Linux only upstream and GPL, so its source isn't kept here. The `macos` branch of a private GitHub copy has the edits it needs to work on a Mac:
 
   ```zsh
-  git clone https://codeberg.org/ftranschel/neoclear.git ~/.local/src/neoclear
+  git clone -b macos https://github.com/stephenmatheis/neoclear.git ~/.local/src/neoclear
   ```
+
+  The edits, in case they have to be redone on a newer upstream:
 
   - `src/main.rs`: change the `compile_error!`'s condition to `not(any(target_os = "linux", target_os = "macos"))`.
   - `src/term.rs`: add `target_os = "macos"` to both `target_arch` lists around `TIOCGWINSZ`, so macOS gets `0x4008_7468`.
@@ -38,6 +40,13 @@ Managed with [chezmoi](https://www.chezmoi.io). Shell config (`~/.zshenv`, `~/.z
 
   ```zsh
   cd ~/.local/src/neoclear && cargo build --release && cp target/release/neoclear ~/.local/bin/
+  ```
+
+  Upstream's repo uses SHA-256 hashes, which GitHub doesn't accept, so the GitHub repo is a SHA-1 export that can't fetch from Codeberg. To take upstream changes, work in the SHA-256 clone on `steve-mbp-16-m2-max`, which still has Codeberg as `origin`, then export it again. The rebase rewrites the patch commit, so the push has to force:
+
+  ```zsh
+  cd ~/.local/src/neoclear && git fetch origin && git rebase origin/main
+  T=$(mktemp -d) && git init -q -b macos --object-format=sha1 "$T" && git fast-export --signed-commits=strip macos | git -C "$T" fast-import --quiet && git -C "$T" push --force git@github.com:stephenmatheis/neoclear.git macos && rm -rf "$T"
   ```
 
   Then add these to `~/.zshrc`, the second one after `eval "$(starship init zsh)"`. Without neoclear, `hax0r clear` does a plain `clear`, but a neoclear without the edits above rejects `--hold-sync`:
