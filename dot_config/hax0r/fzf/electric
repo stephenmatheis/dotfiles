@@ -1,0 +1,8 @@
+# hax0r electric for fzf: Electric blue.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+--highlight-line --gutter=' '
+--color=dark,fg:-1,bg:-1,gutter:-1,query:-1:bold
+--color=hl:#9fc6fe:bold,hl+:#9fc6fe:bold,fg+:-1:regular,bg+:#304261
+--color=pointer:#9dc5fe,marker:#9dc5fe,prompt:#9dc5fe
+--color=info:#006feb,spinner:#006feb,header:#006feb,label:#006feb,ghost:#006feb
+--color=separator:#656a76,border:#656a76,scrollbar:#656a76

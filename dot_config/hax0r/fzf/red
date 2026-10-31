@@ -1,0 +1,8 @@
+# hax0r red for fzf: HaX0R R3D.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+--highlight-line --gutter=' '
+--color=dark,fg:-1,bg:-1,gutter:-1,query:-1:bold
+--color=hl:#ec6969:bold,hl+:#ec6969:bold,fg+:-1:regular,bg+:#630606
+--color=pointer:#ff1111,marker:#ff1111,prompt:#ff1111
+--color=info:#b00d0d,spinner:#b00d0d,header:#b00d0d,label:#b00d0d,ghost:#b00d0d
+--color=separator:#776565,border:#776565,scrollbar:#776565

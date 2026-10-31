@@ -18,6 +18,12 @@ Managed with [chezmoi](https://www.chezmoi.io). Shell config (`~/.zshenv`, `~/.z
 
 - `hax0r` needs `jq`, `nvim` and `tmux` (all via Homebrew). Then run `hax0r <theme>` once to create `~/.local/state/hax0r`.
 
+- To get hax0r colors in fzf, add this to `~/.zshenv`. Run `hax0r <theme>` first and open a new shell, since it only sets the variable once the file exists: fzf refuses to start if the variable points at a missing file.
+
+  ```zsh
+  [[ -r ~/.local/state/hax0r/fzf ]] && export FZF_DEFAULT_OPTS_FILE=~/.local/state/hax0r/fzf
+  ```
+
 - For the Claude Code status line (session, context, cost and plan limits), add this to `~/.claude/settings.json`, which isn't tracked. It also needs `jq`:
 
   ```json
@@ -65,6 +71,7 @@ Managed with [chezmoi](https://www.chezmoi.io). Shell config (`~/.zshenv`, `~/.z
   - VS Code and nvim: named colors for nearly everything. VS Code's come from `vscode/hax0r-theme/themes/color-theme.template.jsonc`.
   - Ghostty: the 16 ANSI colors, plus palette slots 22/28/52/88 (Claude Code's diff bands) and 196 (Starship's error prompt). VS Code's terminal sets those slots with escape codes (`terminal-palette.zsh`).
   - Claude Code: named keys, listed in `hax0r/generate.lua`. Its diff keys are backgrounds only. For example, its `subtle` key colors the `· summary` tag.
+  - fzf: `--color` options, in a file per theme that `hax0r <theme>` copies to `~/.local/state/hax0r/fzf`. fzf reads it each time it starts, so a switch reaches the next fzf but not one already open. Matches use `link`, so they take the second hue in the dual themes, and the text and background stay the terminal's. In nvim, fzf-lua sets its own colors from the colorscheme.
 - **macOS, opt-in per machine:** `hax0r macos on` makes themes also set Light/Dark and a solid wallpaper in the theme's background, and saves the current ones in `~/.local/state/hax0r/macos`. `hax0r macos off` restores them, including a dynamic wallpaper. Light/Dark uses System Events, which is official. **The wallpaper is an unofficial workaround:** to keep it the same on every Space and display, `hax0r` rewrites macOS's wallpaper store (`~/Library/Application Support/com.apple.wallpaper/Store/Index.plist`) and kills `WallpaperAgent` so macOS reads it, on every theme switch. Apple doesn't document that file, so a macOS update could break this, possibly with no warning: `hax0r` only checks that the file still holds the new value, not that macOS used it. No official route keeps every Space in sync after the first switch; the comment above `wallpaper_set` in `hax0r` lists what was tried. A wallpaper chosen by hand while it's on gets replaced at the next switch, and `off` goes back to the one from before `on`. macOS may ask once to let the terminal control System Events.
 - **Switch fade:** run in Ghostty outside tmux, `hax0r <theme>` fades that terminal's background and text to the new theme over about a quarter of a second, while every other app reloads. Other terminals and apps just change, each on its own reload time.
 - **CRT shader, opt-in per machine:** `hax0r shader on` makes Ghostty draw scanlines and a glow, from `~/.config/ghostty/shaders/crt.glsl`. It writes `~/.local/state/hax0r/ghostty-shader`, which `config.ghostty` includes if it's there, and `hax0r shader off` deletes it. Both apply to open terminals right away. One shader covers every theme, because it works from the text's own colors and Ghostty's current background. The strengths are constants at the top of the file. It doesn't animate, so `custom-shader-animation` is off and it only runs when the terminal redraws.
@@ -74,7 +81,7 @@ Managed with [chezmoi](https://www.chezmoi.io). Shell config (`~/.zshenv`, `~/.z
 
 - **Source and live copies:** `dot_config/` here becomes `~/.config` and `private_dot_local/bin/` becomes `~/.local/bin`. The `hax0r` scripts read and write the live copies, so a change made here has to reach them (`chezmoi apply`) before `hax0r build` can see it. Run `chezmoi diff` first if the live files might have changed, since apply overwrites them.
 - **After `hax0r build`:** it writes the generated files into `~/.config`, not into this repo. Run `chezmoi re-add` to bring them back, then commit them together with the `palettes.lua` or template change that caused them.
-- **Generated files:** the per-theme files for Ghostty, tmux, Claude Code and VS Code, plus `hax0r/themes`, `vscode/hax0r-theme/package.json` and `vscode/hax0r-theme/terminal-palette.zsh`. Edit `palettes.lua` or a template instead.
+- **Generated files:** the per-theme files for Ghostty, tmux, fzf, Claude Code and VS Code, plus `hax0r/themes`, `vscode/hax0r-theme/package.json` and `vscode/hax0r-theme/terminal-palette.zsh`. Edit `palettes.lua` or a template instead.
 - **Checking a change:** `hax0r build` only writes files whose contents changed, so a second run should print nothing. `hax0r preview` shows every theme in the terminal, and `page.lua` (above) shows exact colors in a browser.
 - **Not tracked, per machine:** the current theme (`~/.local/state/hax0r`), `~/.claude/themes/hax0r.json`, `~/.claude/settings.json` and the shell config.
 - **Commits:** one change per commit, with a one-line subject in lowercase after a `feat:`, `fix:`, `chore:` or `docs:` prefix.

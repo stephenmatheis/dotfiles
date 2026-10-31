@@ -1,0 +1,8 @@
+# hax0r green for fzf: HaX0R Gr33N.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+--highlight-line --gutter=' '
+--color=dark,fg:-1,bg:-1,gutter:-1,query:-1:bold
+--color=hl:#75d868:bold,hl+:#75d868:bold,fg+:-1:regular,bg+:#094e05
+--color=pointer:#19e20e,marker:#19e20e,prompt:#19e20e
+--color=info:#0b8700,spinner:#0b8700,header:#0b8700,label:#0b8700,ghost:#0b8700
+--color=separator:#656d65,border:#656d65,scrollbar:#656d65

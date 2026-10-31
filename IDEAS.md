@@ -70,7 +70,7 @@ Two hues that go together, with equal OKLCH lightness so neither dominates. The 
 
 Tools that use the ANSI palette already follow Ghostty. The ones that need hex colors:
 
-- `fzf` (installed): `FZF_DEFAULT_OPTS --color`, which needs a state file the shell reads
+- `fzf`: built (2026-10-31), picked from the page: matches in `link`, which is the second hue in the dual themes, on a `cursor_line` band. It uses `FZF_DEFAULT_OPTS_FILE`, so no shell has to re-read anything. Checked in Ghostty by eye in `black` and `pink-cyan` (2026-10-31). The README has the details. Shell key bindings (Ctrl-R and so on) aren't set up in `~/.zshrc`, so this shows only when `fzf` is run directly. The other Mac still needs the `~/.zshenv` line (README, new-machine checklist).
 - Xcode: an `.xccolortheme` in `~/Library/Developer/Xcode/UserData/FontAndColorThemes` (*unverified* path)
 - Chrome, Slack and Raycast: theme files or pasteable theme strings
 - `bat` and `delta` if installed (not yet; `delta` would help with diffs), also `eza`, `btop`, `lazygit`
@@ -96,4 +96,4 @@ Checked on one machine on 2026-10-30: macOS 27.0.1, light mode, default accent (
 2. ~~Pick the finalists and add them to `palettes.lua`.~~ Done for pink, purple, electric, cyan-pink and pink-cyan. The rename to `phosphor` is on hold (see Decided).
 3. ~~Dual-theme roles in the apps.~~ Done: the shimmer and comments use the second hue, and Starship and git stay as they are.
 4. ~~A shader~~, ~~macOS appearance~~ and the ~~switch fade~~ are done, and ~~neoclear~~ is done on one machine.
-5. More apps: `fzf`, then Xcode.
+5. More apps: ~~`fzf`~~ is done, then Xcode.

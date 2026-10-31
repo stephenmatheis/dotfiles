@@ -1,0 +1,8 @@
+# hax0r purple for fzf: Purple.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+--highlight-line --gutter=' '
+--color=dark,fg:-1,bg:-1,gutter:-1,query:-1:bold
+--color=hl:#d1b7fe:bold,hl+:#d1b7fe:bold,fg+:-1:regular,bg+:#493865
+--color=pointer:#cfb6fe,marker:#cfb6fe,prompt:#cfb6fe
+--color=info:#993bff,spinner:#993bff,header:#993bff,label:#993bff,ghost:#993bff
+--color=separator:#6e6579,border:#6e6579,scrollbar:#6e6579

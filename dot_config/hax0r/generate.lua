@@ -122,6 +122,24 @@ local function tmux(name, c)
   write(('%s/tmux/themes/hax0r-%s.conf'):format(config, name), table.concat(lines, '\n') .. '\n')
 end
 
+-- fzf: one options file per theme, copied to where FZF_DEFAULT_OPTS_FILE points. Its text and
+-- background stay the terminal's (-1), so the switch fade and the shader still apply.
+-- The band only reaches the end of the line with --highlight-line, and a blank --gutter drops the
+-- stripe fzf otherwise draws down the left, which gutter:-1 only recolors to the text color
+local function fzf(name, c)
+  local lines = {
+    ('# hax0r %s for fzf: %s.'):format(name, c.title),
+    generated_by('#', 'palettes.lua'),
+    "--highlight-line --gutter=' '",
+    ('--color=%s,fg:-1,bg:-1,gutter:-1,query:-1:bold'):format(c.light and 'light' or 'dark'),
+    ('--color=hl:%s:bold,hl+:%s:bold,fg+:-1:regular,bg+:%s'):format(c.link, c.link, c.cursor_line),
+    ('--color=pointer:%s,marker:%s,prompt:%s'):format(c.bright, c.bright, c.bright),
+    ('--color=info:%s,spinner:%s,header:%s,label:%s,ghost:%s'):format(c.dim, c.dim, c.dim, c.dim, c.dim),
+    ('--color=separator:%s,border:%s,scrollbar:%s'):format(c.faint, c.faint, c.faint),
+  }
+  write(('%s/hax0r/fzf/%s'):format(config, name), table.concat(lines, '\n') .. '\n')
+end
+
 -- Claude Code: every key the base theme has (72 in 2.1.312), so no base color leaks through.
 -- When Claude Code updates, check its base for new keys.
 -- The base is dark-ansi (light-ansi for black on white): markdown inline code, code-block syntax
@@ -350,6 +368,7 @@ for _, name in ipairs(P.order) do
   local c = P[name]
   ghostty(name, c)
   tmux(name, c)
+  fzf(name, c)
   claude_theme(name, c)
   vscode_themes(name, c)
 end

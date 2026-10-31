@@ -1,5 +1,5 @@
 #!/bin/zsh
-# hax0r: switch Ghostty, tmux, nvim, Claude Code and VS Code between the hax0r themes.
+# hax0r: switch Ghostty, tmux, nvim, fzf, Claude Code and VS Code between the hax0r themes.
 #
 #   hax0r            list the themes, marking the current one
 #   hax0r <theme>    switch every app to <theme>
@@ -120,6 +120,9 @@ switch() {
     # nvim: init.lua reloads the colorscheme on SIGUSR1, and colors/hax0r.lua reads $state/theme
     # (-a, like Ghostty's, for when this runs in nvim's terminal)
     pkill -USR1 -a -x nvim
+
+    # fzf: reads this file each time it starts, through FZF_DEFAULT_OPTS_FILE in ~/.zshenv
+    cp $config/hax0r/fzf/$name $state/fzf
 
     # Claude Code: a running session reads its theme setting only at startup, but reloads
     # ~/.claude/themes when a file there changes. So the setting stays custom:hax0r and the

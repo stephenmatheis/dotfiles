@@ -1,0 +1,8 @@
+# hax0r amber for fzf: Amber.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+--highlight-line --gutter=' '
+--color=dark,fg:-1,bg:-1,gutter:-1,query:-1:bold
+--color=hl:#e6bc61:bold,hl+:#e6bc61:bold,fg+:-1:regular,bg+:#5b3c00
+--color=pointer:#ffb000,marker:#ffb000,prompt:#ffb000
+--color=info:#9c6a00,spinner:#9c6a00,header:#9c6a00,label:#9c6a00,ghost:#9c6a00
+--color=separator:#706a64,border:#706a64,scrollbar:#706a64

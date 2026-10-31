@@ -877,6 +877,55 @@ local macos = grids('macos', 'macOS appearance', 'the desktop around the termina
     { html = mac_table() },
   })
 
+-- fzf in the shell: a list, its header and match count, then the prompt, as fzf lays them out. Before's
+-- colors were read from what fzf 0.74.5 draws, its 256-color dark scheme turned into hex
+local function fzf_mock(c, o)
+  return table.concat({
+    line(c, { { '  ', 'fg' }, { 'p', o.hl, 'b' }, { 'review.lu', 'fg' }, { 'a', o.hl, 'b' } }),
+    line(c, { { '  ', 'fg' }, { 'pa', o.hl, 'b' }, { 'lettes.lua', 'fg' } }),
+    line(c, { { '▌', o.pointer, 'b' }, { ' ', 'fg' }, { 'pa', o.current_hl, 'b' }, { 'ge.lua', o.current, o.current_attrs } }, o.band),
+    line(c, { { '  ', 'fg' }, { 'themes', o.header } }),
+    line(c, { { '  ', 'fg' }, { '3/5 (0) ', o.info }, { '────────────', o.separator } }),
+    line(c, { { '> ', o.prompt, 'b' }, { 'pa', 'fg', 'b' } }),
+  })
+end
+
+local function fzf_option(name, about, o)
+  return { name, about, function(c)
+    -- Before's colors are hex rather than roles, so let verdict look up either
+    local colors = setmetatable({}, { __index = function(_, key) return c[key] or key end })
+    return fzf_mock(c, o), verdict(colors, colors[o.hl], { { 'fg', 'text' }, { 'bg', 'background' } })
+      .. verdict(colors, colors[o.current_hl], { { o.current, 'its line’s text' }, { o.band, 'its line’s band' } })
+  end }
+end
+
+local FZF_BASE = { pointer = 'bright', prompt = 'bright', current = 'fg', band = 'cursor_line', header = 'dim', info = 'dim', separator = 'faint' }
+local function fzf_with(o)
+  local all = {}
+  for k, v in pairs(FZF_BASE) do all[k] = v end
+  for k, v in pairs(o) do all[k] = v end
+  return all
+end
+
+local FZF_OPTIONS = {
+  fzf_option('Before', 'fzf’s own dark scheme, the same in every theme', {
+    band = '#303030', pointer = '#d7005f', prompt = '#87afd7', current = '#e4e4e4', current_attrs = 'b', hl = '#87af87', current_hl = '#afd7af',
+    header = '#87afaf', info = '#afaf87', separator = '#5f5f5f',
+  }),
+  fzf_option('Matches in bright', 'matches = bright, current line = a cursor_line band', fzf_with({ hl = 'bright', current_hl = 'bright' })),
+  fzf_option('Now: matches in link', 'matches = link (second hue in dual), current line = a cursor_line band', fzf_with({ hl = 'link', current_hl = 'link' })),
+  fzf_option('Link, no band', 'matches = link, current line = bright text, its matches = error', fzf_with({ band = 'bg', current = 'bright', hl = 'link', current_hl = 'error' })),
+}
+
+local fzf_section = grids('fzf', 'fzf', 'in the shell',
+  'Picked: matches in link, built by hax0r build. Drawn from palettes.lua, with fzf’s background left to the terminal so the shader and switch fade still apply. In nvim, fzf-lua already takes its colors from the colorscheme. Matches are bold in every row. Under each one: the match color against the plain text and background, then the current line’s match color against its text and band, with ≈ on any pair under the same-color limit.',
+  { {
+    title = 'A search for “pa”',
+    note = 'Single-color, the light theme, then both dual themes.',
+    show = { 'green', 'amber', 'black', 'cyan-pink', 'pink-cyan' },
+    options = FZF_OPTIONS,
+  } })
+
 local choices = grids('choices', 'Hover and ignored', 'now, and the other options considered',
   ('VS Code’s hover background and ignored files, which read as gray in amber, each drawn as it’s set now and with the other options. These are mocks drawn from palettes.lua by each app’s rules, not screenshots. Under each one: the color, and its contrast against the colors it has to stand apart from, with ≈ on any pair under %.2f:1.'):format(SAME),
   CHOICES)
@@ -1027,7 +1076,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
 <main>
   <div class="intro">
     <h1>hax0r candidates</h1>
-    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, the macOS appearance options and the syntax color options for the dual themes. Then the new single-color and dual themes under consideration, built by <code>palettes.lua</code>’s derive helpers, mock-ups of what the second hue could do in Claude Code, Starship and git, and a check of those helpers against the themes set by hand. Then VS Code’s hover background and ignored files, now next to the other options considered, how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
+    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, the fzf options, then the macOS appearance options and the syntax color options for the dual themes. Then the new single-color and dual themes under consideration, built by <code>palettes.lua</code>’s derive helpers, mock-ups of what the second hue could do in Claude Code, Starship and git, and a check of those helpers against the themes set by hand. Then VS Code’s hover background and ignored files, now next to the other options considered, how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
     <p>“Same color as” lists the other colors in that spot that have to be told apart by color alone and are under %.2f:1 against this one. Colors that share a palette key on purpose, like Added and Untracked, aren’t listed.</p>
   </div>
   %s
@@ -1035,7 +1084,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
   %s
   <footer>Built by <code>~/.config/hax0r/page.lua</code>, which reads <code>palettes.lua</code> and redraws <code>preview.lua</code>’s panel as HTML.</footer>
 </main>
-]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ macos, syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
+]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ fzf_section, macos, syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
 
 local f = assert(io.open(out, 'w'))
 f:write(page)

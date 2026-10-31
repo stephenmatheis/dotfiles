@@ -1,0 +1,8 @@
+# hax0r pink-cyan for fzf: Pink + cyan.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+--highlight-line --gutter=' '
+--color=dark,fg:-1,bg:-1,gutter:-1,query:-1:bold
+--color=hl:#10c8c8:bold,hl+:#10c8c8:bold,fg+:-1:regular,bg+:#5e3446
+--color=pointer:#feaaca,marker:#feaaca,prompt:#feaaca
+--color=info:#de0084,spinner:#de0084,header:#de0084,label:#de0084,ghost:#de0084
+--color=separator:#74656c,border:#74656c,scrollbar:#74656c

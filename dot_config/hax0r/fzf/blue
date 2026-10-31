@@ -1,0 +1,8 @@
+# hax0r blue for fzf: HaX0R BLUE.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+--highlight-line --gutter=' '
+--color=dark,fg:-1,bg:-1,gutter:-1,query:-1:bold
+--color=hl:#69ceff:bold,hl+:#69ceff:bold,fg+:-1:regular,bg+:#013959
+--color=pointer:#00b3f7,marker:#00b3f7,prompt:#00b3f7
+--color=info:#0b79ad,spinner:#0b79ad,header:#0b79ad,label:#0b79ad,ghost:#0b79ad
+--color=separator:#656771,border:#656771,scrollbar:#656771

@@ -1,0 +1,8 @@
+# hax0r white for fzf: White on black.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+--highlight-line --gutter=' '
+--color=dark,fg:-1,bg:-1,gutter:-1,query:-1:bold
+--color=hl:#e4e4e4:bold,hl+:#e4e4e4:bold,fg+:-1:regular,bg+:#4d4d4d
+--color=pointer:#ffffff,marker:#ffffff,prompt:#ffffff
+--color=info:#999999,spinner:#999999,header:#999999,label:#999999,ghost:#999999
+--color=separator:#646464,border:#646464,scrollbar:#646464
