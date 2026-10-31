@@ -870,7 +870,7 @@ local function mac_table()
 end
 
 local macos = grids('macos', 'macOS appearance', 'the desktop around the terminal',
-  'Each row adds one thing to the row above. Picked: + wallpaper, set by <code>hax0r macos on</code> per machine with documented macOS features. The accent and highlight stayed out: they can only be set in System Settings by hand, or by writing undocumented defaults that running apps may not pick up until they restart. Window colors are close, not exact.',
+  'Each row adds one thing to the row above. Picked: + wallpaper, set by <code>hax0r macos on</code> per machine, the same on every Space and display. The accent and highlight stayed out: they can only be set in System Settings by hand, or by writing undocumented defaults that running apps may not pick up until they restart. Window colors are close, not exact.',
   {
     { title = 'Single-color themes', note = 'Amber is on now. Black is the one light theme.', show = { 'amber', 'green', 'black' }, options = MAC_OPTIONS },
     { title = 'Dual themes', note = 'The accent follows the theme’s first hue.', show = { 'cyan-pink', 'pink-cyan' }, options = MAC_OPTIONS },

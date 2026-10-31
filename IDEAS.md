@@ -62,7 +62,7 @@ Two hues that go together, with equal OKLCH lightness so neither dominates. The 
   - **Linux only upstream:** `src/main.rs` has a `compile_error!` for anything else, and `src/term.rs` uses Linux values. Read on 2026-10-30, it has no dependencies or build script, and it only prints escape codes and reads its config. The patch is small: allow macOS in the `compile_error!` check, use `TIOCGWINSZ` 0x40087468 on macOS, set `LFLAG_OFFSET` to 24 on macOS, clear `ICANON` along with `ECHO` so Ghostty doesn't show its password-prompt lock cursor, and add `--hold-sync` so the prompt closes the final synchronized update and appears in the same frame as the clear. It's backed up on the `macos` branch of the private repo `stephenmatheis/neoclear` (a SHA-1 export, since upstream's SHA-256 repo can't be pushed to GitHub; the README has the steps), and it's built and installed to `~/.local/bin` on `steve-mbp-16-m2-max` and passing checks in a simulated terminal. The other Mac still needs it (README, new-machine checklist). Don't copy its source into this repo (the license).
   - Wrapper: `hax0r clear` passes the current theme's foreground as `--color` and falls back to plain `clear` without neoclear. Fades go to black, not the theme's background, and the head glyph tints toward white, so check `black` (white background) by eye.
   - The alias (`alias clear="hax0r clear --hold-sync"`) and the `PROMPT+=` line that closes the update are in `~/.zshrc`, which isn't tracked, so they're on the README's new-machine checklist. `~/.config/neoclear/config.toml` sets `fade_ms = 0`.
-- **Theme-switch fade:** `hax0r <theme>` fades the terminal from the old colors to the new with OSC 10/11 escape codes. It only fades the terminal that ran it; the others get the normal reload.
+- **Theme-switch fade:** built (2026-10-30). `hax0r <theme>` holds the terminal at the old colors with OSC 10/11 escape codes, signals every app at once, fades, then resets with OSC 110/111. It only fades the Ghostty terminal that ran it, and not under tmux; the others get the normal reload. ANSI colors change at the reload, as the fade starts. Each app and wallpaper still starts on its own reload time: macOS is the slowest, about half a second in, because `WallpaperAgent` has to restart. Tried in Ghostty after the reorder (2026-10-30): a bit faster, and good enough for now. Holding everything back to match the wallpaper would slow every switch, so it wasn't done.
 - **Ghostty shader:** `custom-shader` and `custom-shader-animation` for CRT scanlines, glow and flicker, tinted per theme. Costs some GPU and battery. *Unverified* for Ghostty 1.4.0: check `ghostty +show-config --docs`.
 - **nvim:** a cursor-smear plugin would work (`vim.pack` is already in use). Low priority.
 
@@ -77,7 +77,7 @@ Tools that use the ANSI palette already follow Ghostty. The ones that need hex c
 
 ## macOS
 
-**Built (2026-10-30), picked from the page:** `hax0r macos on` sets Light/Dark and a solid wallpaper, opt-in per machine; the README has the details. The accent and highlight stayed out, as below. Both were tested on a single display, with one Space in use.
+**Built (2026-10-30), picked from the page:** `hax0r macos on` sets Light/Dark and a solid wallpaper, opt-in per machine; the README has the details. The accent and highlight stayed out, as below. The wallpaper goes on every Space and display by editing macOS's undocumented wallpaper store, since AppleScript only reaches each display's current Space. Replacing per-Space entries directly with an image doesn't stick, so `hax0r` goes through the saved store first. It was tested with two displays, and macOS reports the new image on both. *Unverified:* moving between several Spaces by eye.
 
 Checked on one machine on 2026-10-30: macOS 27.0.1, light mode, default accent (no appearance keys set). Confirm each remaining option on the machine before wiring it in.
 
@@ -95,5 +95,5 @@ Checked on one machine on 2026-10-30: macOS 27.0.1, light mode, default accent (
 1. ~~Prototype the monochrome themes and dual pairings in `page.lua`.~~ Done.
 2. ~~Pick the finalists and add them to `palettes.lua`.~~ Done for pink, purple, electric, cyan-pink and pink-cyan. The rename to `phosphor` is on hold (see Decided).
 3. ~~Dual-theme roles in the apps.~~ Done: the shimmer and comments use the second hue, and Starship and git stay as they are.
-4. The switch fade, then a shader. ~~macOS appearance~~ is done, and ~~neoclear~~ is done on one machine.
+4. A shader. ~~macOS appearance~~ and the ~~switch fade~~ are done, and ~~neoclear~~ is done on one machine.
 5. More apps: `fzf`, then Xcode.
