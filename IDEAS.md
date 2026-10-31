@@ -71,7 +71,7 @@ Two hues that go together, with equal OKLCH lightness so neither dominates. The 
 Tools that use the ANSI palette already follow Ghostty. The ones that need hex colors:
 
 - `fzf`: built (2026-10-31), picked from the page: matches in `link`, which is the second hue in the dual themes, on a `cursor_line` band. It uses `FZF_DEFAULT_OPTS_FILE`, so no shell has to re-read anything. Checked in Ghostty by eye in `black` and `pink-cyan` (2026-10-31). The README has the details. Shell key bindings (Ctrl-R and so on) aren't set up in `~/.zshrc`, so this shows only when `fzf` is run directly. The other Mac still needs the `~/.zshenv` line (README, new-machine checklist).
-- Xcode: an `.xccolortheme` in `~/Library/Developer/Xcode/UserData/FontAndColorThemes` (*unverified* path)
+- Xcode: built (2026-10-31), official route only so far: `hax0r build` writes a classic theme per theme and Xcode 27's Appearance settings import them by hand. The README has the details. Imported and read back for `green` and `pink-cyan`: of the 38 colors Xcode saves, none is more than 2 steps from the theme's. The other nine themes are predicted, including `red`'s bright (`#ff1111` to `#ff2600`) and `cyan-pink`'s comments (`#de0084` to `#de2884`) landing off. Xcode saves each import as JSON in `~/Library/Developer/Xcode/UserData/FontAndColorThemes/<name>.xcworkspacecolortheme` (OKLCH colors) and the choice in its `DVTWorkspaceThemeSettings` preference. Writing those directly could give exact colors and let `hax0r <theme>` switch Xcode, but both are undocumented and it's *unverified* whether a running Xcode would notice. Not built: ask first.
 - Chrome, Slack and Raycast: theme files or pasteable theme strings
 - `bat` and `delta` if installed (not yet; `delta` would help with diffs), also `eza`, `btop`, `lazygit`
 
@@ -96,4 +96,4 @@ Checked on one machine on 2026-10-30: macOS 27.0.1, light mode, default accent (
 2. ~~Pick the finalists and add them to `palettes.lua`.~~ Done for pink, purple, electric, cyan-pink and pink-cyan. The rename to `phosphor` is on hold (see Decided).
 3. ~~Dual-theme roles in the apps.~~ Done: the shimmer and comments use the second hue, and Starship and git stay as they are.
 4. ~~A shader~~, ~~macOS appearance~~ and the ~~switch fade~~ are done, and ~~neoclear~~ is done on one machine.
-5. More apps: ~~`fzf`~~ is done, then Xcode.
+5. More apps: ~~`fzf`~~ and ~~Xcode~~ (by hand) are done.

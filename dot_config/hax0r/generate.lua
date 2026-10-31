@@ -140,6 +140,151 @@ local function fzf(name, c)
   write(('%s/hax0r/fzf/%s'):format(config, name), table.concat(lines, '\n') .. '\n')
 end
 
+-- Xcode: a classic color theme per theme, for Xcode's settings to import. The syntax roles match
+-- nvim's and VS Code's, and the fonts stay Xcode's own SF Mono, apart from bold keywords and italic comments
+local function xcode(name, c)
+  -- Xcode reads a classic theme's numbers as Apple's old Generic RGB (gamma 1.8, its own primaries),
+  -- found by comparing a file with what its import saved. Written as plain sRGB, every color imports
+  -- lighter, so convert them. A color Generic RGB can't reach clamps at 0
+  local function color(hex)
+    local linear = {}
+    for i, part in ipairs({ hex:match('#(%x%x)(%x%x)(%x%x)') }) do
+      local v = tonumber(part, 16) / 255
+      linear[i] = v <= 0.04045 and v / 12.92 or ((v + 0.055) / 1.055) ^ 2.4
+    end
+    local out = {}
+    for i, row in ipairs({
+      { 0.975004, 0.027295, -0.002144 },
+      { -0.020003, 1.054185, -0.034201 },
+      { 0.001691, 0.001564, 0.996506 },
+    }) do
+      out[i] = math.max(row[1] * linear[1] + row[2] * linear[2] + row[3] * linear[3], 0) ^ (1 / 1.8)
+    end
+    return ('%.6f %.6f %.6f 1'):format(out[1], out[2], out[3])
+  end
+  local regular, bold, italic = 'SFMono-Medium - 12.0', 'SFMono-Bold - 12.0', 'SFMono-MediumItalic - 12.0'
+  local syntax = {
+    plain = { c.fg, regular },
+    comment = { c.comment, italic },
+    ['comment.doc'] = { c.comment, italic },
+    ['comment.doc.keyword'] = { c.comment, bold },
+    mark = { c.comment, bold },
+    string = { c.normal, regular },
+    character = { c.normal, regular },
+    number = { c.normal, regular },
+    keyword = { c.bold, bold },
+    preprocessor = { c.bright, regular },
+    attribute = { c.bright, regular },
+    url = { c.link, regular },
+    ['declaration.type'] = { c.bright, regular },
+    ['declaration.other'] = { c.normal, regular },
+    ['identifier.class'] = { c.bright, regular },
+    ['identifier.class.system'] = { c.bright, regular },
+    ['identifier.type'] = { c.bright, regular },
+    ['identifier.type.system'] = { c.bright, regular },
+    ['identifier.function'] = { c.normal, regular },
+    ['identifier.function.system'] = { c.normal, regular },
+    ['identifier.constant'] = { c.normal, regular },
+    ['identifier.constant.system'] = { c.normal, regular },
+    ['identifier.macro'] = { c.normal, regular },
+    ['identifier.macro.system'] = { c.normal, regular },
+    ['identifier.variable'] = { c.fg, regular },
+    ['identifier.variable.system'] = { c.fg, regular },
+    ['markup.code'] = { c.fg, regular },
+    ['markup.aside.kind'] = { c.dim, regular },
+  }
+  local colors = {
+    DVTSourceTextBackground = c.bg,
+    DVTSourceTextCurrentLineHighlightColor = c.cursor_line,
+    DVTSourceTextSelectionColor = c.selection_tint,
+    DVTSourceTextInsertionPointColor = c.cursor,
+    DVTSourceTextInvisiblesColor = c.faint,
+    DVTSourceTextBlockDimBackgroundColor = c.dark,
+    DVTDebuggerInstructionPointerColor = c.diff_add,
+    DVTConsoleTextBackgroundColor = c.bg,
+    DVTConsoleTextSelectionColor = c.selection_tint,
+    DVTConsoleTextInsertionPointColor = c.cursor,
+    DVTConsoleDebuggerPromptTextColor = c.bright,
+    DVTConsoleDebuggerInputTextColor = c.fg,
+    DVTConsoleDebuggerOutputTextColor = c.dim,
+    DVTConsoleExectuableInputTextColor = c.bright,
+    DVTConsoleExectuableOutputTextColor = c.fg,
+    DVTMarkupTextBackgroundColor = c.dark,
+    DVTMarkupTextBorderColor = c.border,
+    DVTMarkupTextNormalColor = c.fg,
+    DVTMarkupTextEmphasisColor = c.fg,
+    DVTMarkupTextStrongColor = c.bright,
+    DVTMarkupTextInlineCodeColor = c.normal,
+    DVTMarkupTextLinkColor = c.link,
+    DVTMarkupTextPrimaryHeadingColor = c.bright,
+    DVTMarkupTextSecondaryHeadingColor = c.bright,
+    DVTMarkupTextOtherHeadingColor = c.bright,
+    DVTScrollbarMarkerAnalyzerColor = c.link,
+    DVTScrollbarMarkerBreakpointColor = c.link,
+    DVTScrollbarMarkerDiffColor = c.dim,
+    DVTScrollbarMarkerDiffConflictColor = c.error,
+    DVTScrollbarMarkerErrorColor = c.error,
+    DVTScrollbarMarkerRuntimeIssueColor = c.warning,
+    DVTScrollbarMarkerWarningColor = c.warning,
+  }
+  local fonts = {
+    DVTConsoleDebuggerPromptTextFont = bold,
+    DVTConsoleDebuggerInputTextFont = bold,
+    DVTConsoleDebuggerOutputTextFont = regular,
+    DVTConsoleExectuableInputTextFont = regular,
+    DVTConsoleExectuableOutputTextFont = regular,
+    DVTMarkupTextCodeFont = 'SFMono-Regular - 10.0',
+    DVTMarkupTextNormalFont = '.AppleSystemUIFont - 10.0',
+    DVTMarkupTextEmphasisFont = '.AppleSystemUIFontItalic - 10.0',
+    DVTMarkupTextStrongFont = '.AppleSystemUIFontBold - 10.0',
+    DVTMarkupTextLinkFont = '.AppleSystemUIFont - 10.0',
+    DVTMarkupTextPrimaryHeadingFont = '.AppleSystemUIFont - 24.0',
+    DVTMarkupTextSecondaryHeadingFont = '.AppleSystemUIFont - 18.0',
+    DVTMarkupTextOtherHeadingFont = '.AppleSystemUIFont - 14.0',
+  }
+
+  local function entries(indent, map)
+    local keys = vim.tbl_keys(map)
+    table.sort(keys)
+    local out = {}
+    for _, key in ipairs(keys) do
+      table.insert(out, ('%s<key>%s</key>\n%s<string>%s</string>'):format(indent, key, indent, map[key]))
+    end
+    return table.concat(out, '\n')
+  end
+  local top, syntax_colors, syntax_fonts = {}, {}, {}
+  for key, hex in pairs(colors) do top[key] = color(hex) end
+  for key, font in pairs(fonts) do top[key] = font end
+  for key, role in pairs(syntax) do
+    syntax_colors['xcode.syntax.' .. key] = color(role[1])
+    syntax_fonts['xcode.syntax.' .. key] = role[2]
+  end
+  write(('%s/hax0r/xcode/hax0r-%s.xccolortheme'):format(config, name), table.concat({
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">',
+    ('<!-- hax0r %s for Xcode: %s. -->'):format(name, c.title),
+    generated_by('<!--', 'palettes.lua') .. ' -->',
+    '<plist version="1.0">',
+    '<dict>',
+    entries('\t', top),
+    '\t<key>DVTFontAndColorVersion</key>',
+    '\t<integer>1</integer>',
+    '\t<key>DVTLineSpacing</key>',
+    '\t<real>1.100000023841858</real>',
+    '\t<key>DVTSourceTextSyntaxColors</key>',
+    '\t<dict>',
+    entries('\t\t', syntax_colors),
+    '\t</dict>',
+    '\t<key>DVTSourceTextSyntaxFonts</key>',
+    '\t<dict>',
+    entries('\t\t', syntax_fonts),
+    '\t</dict>',
+    '</dict>',
+    '</plist>',
+    '',
+  }, '\n'))
+end
+
 -- Claude Code: every key the base theme has (72 in 2.1.312), so no base color leaks through.
 -- When Claude Code updates, check its base for new keys.
 -- The base is dark-ansi (light-ansi for black on white): markdown inline code, code-block syntax
@@ -369,6 +514,7 @@ for _, name in ipairs(P.order) do
   ghostty(name, c)
   tmux(name, c)
   fzf(name, c)
+  xcode(name, c)
   claude_theme(name, c)
   vscode_themes(name, c)
 end
