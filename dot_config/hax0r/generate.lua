@@ -172,6 +172,53 @@ local function lazygit(name, c)
   }, '\n') .. '\n')
 end
 
+-- Chrome: a theme extension's manifest per theme, that `hax0r <theme>` copies into the one folder
+-- Chrome has loaded, where `hax0r chrome on` was run. Chrome wants colors as [r, g, b], and the name
+-- stays hax0r whichever theme is on. Keys are from kOverwritableColorTable in Chromium's
+-- browser_theme_pack.cc. The active tab is always the toolbar's color, and the strip and tabs behind
+-- it don't change when the window loses focus, like the terminal
+local CHROME_ROLES = {
+  { 'frame', 'bg' },
+  { 'frame_inactive', 'bg' },
+  { 'background_tab', 'bg' },
+  { 'background_tab_inactive', 'bg' },
+  { 'toolbar', 'border' },
+  { 'tab_text', 'bright' },
+  { 'tab_background_text', 'dim' },
+  { 'tab_background_text_inactive', 'dim' },
+  { 'toolbar_button_icon', 'normal' },
+  { 'toolbar_text', 'fg' },
+  { 'bookmark_text', 'fg' },
+  { 'omnibox_background', 'bg' },
+  { 'omnibox_text', 'fg' },
+  { 'ntp_background', 'bg' },
+  { 'ntp_text', 'fg' },
+  { 'ntp_link', 'link' },
+}
+
+local function chrome(name, c)
+  local lines = {}
+  for _, role in ipairs(CHROME_ROLES) do
+    local hex = assert(c[role[2]], role[2])
+    table.insert(lines, ('      "%s": [%d, %d, %d]'):format(role[1],
+      tonumber(hex:sub(2, 3), 16), tonumber(hex:sub(4, 5), 16), tonumber(hex:sub(6, 7), 16)))
+  end
+  write(('%s/hax0r/chrome/%s.json'):format(config, name), table.concat({
+    '{',
+    '  "manifest_version": 3,',
+    '  "name": "hax0r",',
+    '  "version": "1.0",',
+    ('  "description": "hax0r %s. Built by hax0r build from palettes.lua: edit that, not this file.",'):format(name),
+    '  "theme": {',
+    '    "colors": {',
+    table.concat(lines, ',\n'),
+    '    }',
+    '  }',
+    '}',
+    '',
+  }, '\n'))
+end
+
 -- Xcode: its own theme format, one file per theme, that `hax0r <theme>` copies over the theme Xcode
 -- has selected (see the comment above xcode_apply in the hax0r script). Colors are OKLCH. The syntax
 -- roles match nvim's and VS Code's. Fonts aren't in here: Xcode keeps them separately
@@ -475,6 +522,7 @@ for _, name in ipairs(P.order) do
   tmux(name, c)
   fzf(name, c)
   lazygit(name, c)
+  chrome(name, c)
   xcode(name, c)
   claude_theme(name, c)
   vscode_themes(name, c)

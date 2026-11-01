@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "hax0r",
+  "version": "1.0",
+  "description": "hax0r pink. Built by hax0r build from palettes.lua: edit that, not this file.",
+  "theme": {
+    "colors": {
+      "frame": [26, 2, 13],
+      "frame_inactive": [26, 2, 13],
+      "background_tab": [26, 2, 13],
+      "background_tab_inactive": [26, 2, 13],
+      "toolbar": [60, 16, 36],
+      "tab_text": [254, 170, 202],
+      "tab_background_text": [222, 0, 132],
+      "tab_background_text_inactive": [222, 0, 132],
+      "toolbar_button_icon": [254, 145, 189],
+      "toolbar_text": [253, 92, 167],
+      "bookmark_text": [253, 92, 167],
+      "omnibox_background": [26, 2, 13],
+      "omnibox_text": [253, 92, 167],
+      "ntp_background": [26, 2, 13],
+      "ntp_text": [253, 92, 167],
+      "ntp_link": [254, 165, 206]
+    }
+  }
+}

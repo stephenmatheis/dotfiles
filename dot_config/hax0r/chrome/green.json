@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "hax0r",
+  "version": "1.0",
+  "description": "hax0r green. Built by hax0r build from palettes.lua: edit that, not this file.",
+  "theme": {
+    "colors": {
+      "frame": [2, 15, 1],
+      "frame_inactive": [2, 15, 1],
+      "background_tab": [2, 15, 1],
+      "background_tab_inactive": [2, 15, 1],
+      "toolbar": [5, 39, 3],
+      "tab_text": [25, 226, 14],
+      "tab_background_text": [11, 135, 0],
+      "tab_background_text_inactive": [11, 135, 0],
+      "toolbar_button_icon": [21, 208, 13],
+      "toolbar_text": [22, 177, 14],
+      "bookmark_text": [22, 177, 14],
+      "omnibox_background": [2, 15, 1],
+      "omnibox_text": [22, 177, 14],
+      "ntp_background": [2, 15, 1],
+      "ntp_text": [22, 177, 14],
+      "ntp_link": [117, 216, 104]
+    }
+  }
+}

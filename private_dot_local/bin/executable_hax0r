@@ -9,6 +9,7 @@
 #   hax0r macos      show or set (on, off) whether themes also set macOS's Light/Dark and wallpaper
 #   hax0r shader     show or set (on, off) whether Ghostty draws the CRT shader
 #   hax0r xcode      show or set (on, off) whether themes also switch Xcode
+#   hax0r chrome     show or set (on, off) whether themes also rewrite a Chrome theme
 #
 # The choice is per machine, kept in ~/.local/state/hax0r: dotfiles share the themes, not which one is on.
 
@@ -23,6 +24,7 @@ vscode_settings="$HOME/Library/Application Support/Code/User/settings.json"
 macos_state=$state/macos
 shader_state=$state/ghostty-shader
 xcode_theme="$HOME/Library/Developer/Xcode/UserData/FontAndColorThemes/hax0r.xcworkspacecolortheme"
+chrome_theme=$state/chrome-theme
 wallpaper_store="$HOME/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
 
 current() {
@@ -131,6 +133,7 @@ switch() {
     cp $config/hax0r/lazygit/$name.yml $state/lazygit.yml
 
     xcode_apply $name
+    chrome_apply $name
 
     # Claude Code: a running session reads its theme setting only at startup, but reloads
     # ~/.claude/themes when a file there changes. So the setting stays custom:hax0r and the
@@ -360,6 +363,38 @@ xcode() {
     esac
 }
 
+# Chrome has no command for switching or reloading a theme, so `hax0r chrome on` makes one folder that
+# Chrome loads, and each switch rewrites its manifest. chrome://extensions doesn't list themes, so it
+# has no Reload button for this: Chrome only shows the new colors after a restart or once the folder
+# is loaded again, and the switch says so. Chrome saves a built copy of the theme in the folder and
+# reads that when it starts, so that copy goes too, or a restart could bring back old colors.
+chrome_apply() {
+    [[ -d $chrome_theme ]] || return 0
+    cp $config/hax0r/chrome/$1.json $chrome_theme/manifest.json
+    rm -f "$chrome_theme/Cached Theme.pak"
+    print -r -- "hax0r: to update Chrome, restart it or use Load unpacked at chrome://extensions on $chrome_theme"
+}
+
+chrome() {
+    case $1 in
+        '') [[ -d $chrome_theme ]] && print on || print off ;;
+        on)
+            mkdir -p $chrome_theme
+            cp $config/hax0r/chrome/$(current).json $chrome_theme/manifest.json
+            print "Now load it once, at chrome://extensions: turn on Developer mode, click Load unpacked, press Cmd-Shift-G and paste:"
+            print -r -- "  $chrome_theme"
+            ;;
+        off)
+            rm -rf $chrome_theme
+            print "Now use Reset to default in Chrome's Customize Chrome panel, since chrome://extensions doesn't list themes"
+            ;;
+        *)
+            print -u2 "hax0r: use chrome on or chrome off"
+            return 1
+            ;;
+    esac
+}
+
 # neoclear isn't in the dotfiles (see the README), so a machine without it gets a plain clear
 clear_screen() {
     if (( ! $+commands[neoclear] )); then
@@ -372,8 +407,9 @@ clear_screen() {
 
 case $1 in
     '') list ;;
-    -h | --help | help) sed -n '2,13s/^# \{0,1\}//p' $0 ;;
+    -h | --help | help) sed -n '2,14s/^# \{0,1\}//p' $0 ;;
     build) nvim -l $config/hax0r/generate.lua && switch $(current) ;;
+    chrome) shift; chrome "$@" ;;
     clear) shift; clear_screen "$@" ;;
     macos) shift; macos "$@" ;;
     preview) HAX0R_COLUMNS=$COLUMNS nvim -l $config/hax0r/preview.lua ;;

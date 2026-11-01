@@ -1127,6 +1127,80 @@ local lazygit_section = grids('lazygit', 'lazygit', 'in the shell',
     },
   })
 
+-- Chrome: its tab strip, toolbar, bookmarks bar and New Tab page, from the keys a theme's manifest can
+-- set (kOverwritableColorTable in Chromium's browser_theme_pack.cc). The active tab is always the
+-- toolbar's color. Chrome works out hover states, dividers and menus itself, so they aren't drawn
+local function chrome_mock(c, o)
+  local function row(parts, back)
+    local width = 0
+    for _, p in ipairs(parts) do width = width + vim.api.nvim_strwidth(p[1]) end
+    table.insert(parts, { (' '):rep(42 - width), 'fg', '', back })
+    return line(c, parts, back)
+  end
+  return table.concat({
+    row({
+      { ' ●●● ', o.tab_bg_text, '', o.frame }, { ' hax0r lazygit ', o.tab_text, 'b', o.active_tab or o.toolbar },
+      { ' Inbox ', o.tab_bg_text, '', o.frame }, { ' + ', o.tab_bg_text, '', o.frame },
+    }, o.frame),
+    row({
+      { ' ← → ↻ ', o.icon, '', o.toolbar }, { ' github.com/dotfiles ', o.omnibox_text, '', o.omnibox }, { '  ⋮', o.icon, '', o.toolbar },
+    }, o.toolbar),
+    row({ { ' dotfiles  nvim  docs', o.bookmark, '', o.toolbar } }, o.toolbar),
+    row({ { '', 'fg', '', o.ntp } }, o.ntp),
+    row({ { '     New Tab', o.ntp_text, 'b', o.ntp } }, o.ntp),
+    row({ { '     ', 'fg', '', o.ntp }, { 'Customize Chrome', o.ntp_link, '', o.ntp } }, o.ntp),
+  })
+end
+
+-- Chrome's own colors, by eye and close rather than exact. It follows macOS's Light/Dark, which
+-- `hax0r macos on` sets, so black gets the light ones
+local function chrome_before(c)
+  local dark = { frame = '#1f1f1f', toolbar = '#282828', text = '#e3e3e3', muted = '#c7c7c7', omnibox = '#1f1f1f', link = '#a8c7fa' }
+  local light = { frame = '#e9eef6', toolbar = '#ffffff', text = '#1f1f1f', muted = '#444746', omnibox = '#e9eef6', link = '#0b57d0' }
+  local m = c.light and light or dark
+  return {
+    frame = m.frame, toolbar = m.toolbar, tab_text = m.text, tab_bg_text = m.muted, icon = m.muted,
+    omnibox = m.omnibox, omnibox_text = m.text, bookmark = m.text, ntp = m.toolbar, ntp_text = m.text, ntp_link = m.link,
+  }
+end
+
+local CHROME_BASE = { tab_text = 'bright', icon = 'normal', omnibox = 'selection_tint', omnibox_text = 'fg', bookmark = 'fg', ntp = 'bg', ntp_text = 'fg', ntp_link = 'link' }
+local function chrome_with(o)
+  local all = {}
+  for k, v in pairs(CHROME_BASE) do all[k] = v end
+  for k, v in pairs(o) do all[k] = v end
+  return all
+end
+
+local function chrome_option(name, about, make)
+  return { name, about, function(c)
+    local o = make(c)
+    local colors = lg_colors(c)
+    return chrome_mock(c, o), verdict(colors, colors[o.frame], { { o.toolbar, 'the toolbar' }, { o.tab_bg_text, 'inactive tab text' } })
+      .. (o.active_tab and verdict(colors, colors[o.active_tab], { { o.tab_text, 'active tab text' }, { o.frame, 'the tab strip and toolbar' } }) or '')
+      .. verdict(colors, colors[o.toolbar], { { o.active_tab and o.ntp_text or o.tab_text, o.active_tab and 'bookmark text' or 'active tab text' }, { o.icon, 'icons' } })
+      .. verdict(colors, colors[o.omnibox], { { o.omnibox_text, 'address text' }, { o.toolbar, 'the toolbar' } })
+  end }
+end
+
+local chrome_section = grids('chrome', 'Chrome', 'the window around the page',
+  'Picked: Faint toolbar, built by hax0r build. A theme colors Chrome’s window and its New Tab page, not the websites in it. Drawn from palettes.lua and the keys a Chrome theme can set. Chrome works out hover states, dividers and menus itself, so those are left out. Before is close, not exact. In real Chrome the address bar comes out about 10% toward white from the toolbar, whatever the theme sets, so it’s lighter than these mocks in most rows: #1d3b1b in green, #52201f in red. Under each one: the tab strip, then the toolbar, then the address bar, against what sits on them, with ≈ on any pair under the same-color limit.',
+  { {
+    title = 'Tab strip and toolbar',
+    note = 'Chrome always draws the active tab in the toolbar’s color, so these rows decide what sets the active tab apart.',
+    show = LG_SHOW,
+    options = {
+      chrome_option('Before', 'Chrome’s own colors, the same in every theme', chrome_before),
+      chrome_option('Band tab strip', 'tab strip = prompt_band, toolbar and active tab = bg', function() return chrome_with({ frame = 'prompt_band', toolbar = 'bg', tab_bg_text = 'fg' }) end),
+      chrome_option('Band toolbar', 'tab strip = bg, toolbar and active tab = prompt_band', function() return chrome_with({ frame = 'bg', toolbar = 'prompt_band', omnibox = 'bg', tab_bg_text = 'dim' }) end),
+      chrome_option('Now: Faint toolbar', 'tab strip = bg, toolbar and active tab = border, the color of tmux’s pane lines', function() return chrome_with({ frame = 'bg', toolbar = 'border', omnibox = 'bg', tab_bg_text = 'dim' }) end),
+      chrome_option('Flat', 'all bg, so only the text marks the active tab', function() return chrome_with({ frame = 'bg', toolbar = 'bg', tab_bg_text = 'dim' }) end),
+      chrome_option('Tinted active tab', 'all bg, active tab = prompt_band, from a theme image, since no color setting can do this. Tried in Chrome and dropped: the tab’s flares end in mid-air, and stopping the tint above them leaves a flat bottom', function() return chrome_with({ frame = 'bg', toolbar = 'bg', active_tab = 'prompt_band', tab_bg_text = 'dim' }) end),
+      chrome_option('Faint tab strip', 'tab strip = border, the color of tmux’s pane lines, toolbar and active tab = bg', function() return chrome_with({ frame = 'border', toolbar = 'bg', tab_bg_text = 'dim' }) end),
+      chrome_option('Soft tab strip', 'tab strip = selection_tint, the address bar’s color, toolbar and active tab = bg', function() return chrome_with({ frame = 'selection_tint', toolbar = 'bg', tab_bg_text = 'dim' }) end),
+    },
+  } })
+
 local choices = grids('choices', 'Hover and ignored', 'now, and the other options considered',
   ('VS Code’s hover background and ignored files, which read as gray in amber, each drawn as it’s set now and with the other options. These are mocks drawn from palettes.lua by each app’s rules, not screenshots. Under each one: the color, and its contrast against the colors it has to stand apart from, with ≈ on any pair under %.2f:1.'):format(SAME),
   CHOICES)
@@ -1280,7 +1354,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
 <main>
   <div class="intro">
     <h1>hax0r candidates</h1>
-    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, the lazygit options and the fzf options, then the macOS appearance options and the syntax color options for the dual themes. Then the new single-color and dual themes under consideration, built by <code>palettes.lua</code>’s derive helpers, mock-ups of what the second hue could do in Claude Code, Starship and git, and a check of those helpers against the themes set by hand. Then VS Code’s hover background and ignored files, now next to the other options considered, how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
+    <p>Drawn from <code>palettes.lua</code>%s, in exact colors. First, the Chrome options, the lazygit options and the fzf options, then the macOS appearance options and the syntax color options for the dual themes. Then the new single-color and dual themes under consideration, built by <code>palettes.lua</code>’s derive helpers, mock-ups of what the second hue could do in Claude Code, Starship and git, and a check of those helpers against the themes set by hand. Then VS Code’s hover background and ignored files, now next to the other options considered, how each app draws diffs, and amber, red and green as they are: the panel on the left is what <code>hax0r preview</code> shows, and the table lists every place an app shows a git, diff or problem color.</p>
     <p>“Same color as” lists the other colors in that spot that have to be told apart by color alone and are under %.2f:1 against this one. Colors that share a palette key on purpose, like Added and Untracked, aren’t listed.</p>
   </div>
   %s
@@ -1288,7 +1362,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
   %s
   <footer>Built by <code>~/.config/hax0r/page.lua</code>, which reads <code>palettes.lua</code> and redraws <code>preview.lua</code>’s panel as HTML.</footer>
 </main>
-]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ lazygit_section, fzf_section, macos, syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
+]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ chrome_section, lazygit_section, fzf_section, macos, syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
 
 local f = assert(io.open(out, 'w'))
 f:write(page)

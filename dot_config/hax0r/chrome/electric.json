@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "hax0r",
+  "version": "1.0",
+  "description": "hax0r electric. Built by hax0r build from palettes.lua: edit that, not this file.",
+  "theme": {
+    "colors": {
+      "frame": [1, 10, 30],
+      "frame_inactive": [1, 10, 30],
+      "background_tab": [1, 10, 30],
+      "background_tab_inactive": [1, 10, 30],
+      "toolbar": [13, 31, 63],
+      "tab_text": [157, 197, 254],
+      "tab_background_text": [0, 111, 235],
+      "tab_background_text_inactive": [0, 111, 235],
+      "toolbar_button_icon": [131, 181, 254],
+      "toolbar_text": [83, 152, 253],
+      "bookmark_text": [83, 152, 253],
+      "omnibox_background": [1, 10, 30],
+      "omnibox_text": [83, 152, 253],
+      "ntp_background": [1, 10, 30],
+      "ntp_text": [83, 152, 253],
+      "ntp_link": [159, 198, 254]
+    }
+  }
+}
