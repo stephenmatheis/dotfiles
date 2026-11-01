@@ -11,7 +11,7 @@ _hax0r_palette() {
     local theme
     read -r theme < ${XDG_STATE_HOME:-$HOME/.local/state}/hax0r/theme 2>/dev/null
     case $theme in
-        red) printf '\e]4;22;#4d0404\a\e]4;28;#6a0606\a\e]4;52;#2e0b0b\a\e]4;88;#441b1b\a\e]4;196;#fefefe\a' ;;
+        red) printf '\e]4;22;#410c0c\a\e]4;28;#601313\a\e]4;52;#220b0b\a\e]4;88;#3b1b1b\a\e]4;196;#fefefe\a' ;;
         blue) printf '\e]4;22;#012842\a\e]4;28;#013e60\a\e]4;52;#0b1324\a\e]4;88;#1b293b\a\e]4;196;#fefefe\a' ;;
         amber) printf '\e]4;22;#432b00\a\e]4;28;#624100\a\e]4;52;#23170a\a\e]4;88;#392c19\a\e]4;196;#fefefe\a' ;;
         white) printf '\e]4;22;#333333\a\e]4;28;#545454\a\e]4;52;#101010\a\e]4;88;#282828\a\e]4;196;#ffffff\a' ;;

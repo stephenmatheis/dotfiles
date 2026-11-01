@@ -92,7 +92,7 @@ Checked on one machine on 2026-10-30: macOS 27.0.1, light mode, default accent (
 
 - Switch themes by time of day (light by day, a dark one at night), paired with macOS's automatic appearance.
 - A theme per repo or tmux session, such as red for production.
-- Have `page.lua` flag low-contrast colors automatically.
+- ~~Have `page.lua` flag low-contrast colors automatically.~~ Built (2026-11-01): its Low contrast section checks 13 text pairs in all 11 themes and lists anything under 3:1. `red` had six, so it was changed, picked from the page: a darker background (`#110000`) and raised text (`#f01e1e`), which took text from 3.75:1 to 4.80:1 and dim from 2.73:1 to 3.68:1. Seven themes now miss on the removed word only, between 2.72 and 2.99, left as they are because that's old text being read past. *Unverified:* the new `red` by eye in real apps.
 
 ## Order of work
 

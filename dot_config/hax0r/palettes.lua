@@ -131,35 +131,37 @@ M.red = theme({
   title = 'HaX0R R3D',
   light = false,
   -- HaX0R R3D, values from the original .itermcolors
-  bg = '#200101',
-  fg = '#d81010',             -- not R3D's #b10e0e, which read at 2.76:1: lifted halfway to bright
-  dark = '#1f0000',
-  normal = '#d81010',         -- not R3D's ansi 1 #b00d0d: lifted with fg (R3D's fg and ansi 1 match)
-  bright = '#ff1111',         -- ansi 9 (10-14 are #ff1010)
-  bold = '#ff0000',
+  -- Picked from the page (2026-11-01) to read more easily: a darker background and raised text.
+  -- Before that: bg #200101, fg and normal #d81010, dim #b00d0d, bright #ff1111
+  bg = '#110000',
+  fg = '#f01e1e',             -- not R3D's #b10e0e, which read at 2.76:1
+  dark = '#100000',
+  normal = '#f01e1e',         -- not R3D's ansi 1 #b00d0d: raised with fg (R3D's fg and ansi 1 match)
+  bright = '#ff3a3a',         -- not ansi 9 #ff1111: raised with fg
+  bold = '#ff3a3a',
   white = '#fafafa',
   bright_white = '#fefefe',
-  black = '#150000',
-  cursor = '#b00d0d',
+  black = '#0a0000',
+  cursor = '#cf1414',
   cursor_text = '#ffffff',
   selection = '#ffc1c1',      -- not R3D's lavender #ebc1ff: red as pale as Gr33N's mint
-  dim = '#b00d0d',            -- not badge #ff2600 @ 50% (#901400, 2.14:1): R3D's ansi 1, lifted with fg
-  badge = '#b00d0d',          -- dim, like the other themes
+  dim = '#cf1414',            -- not badge #ff2600 @ 50% (#901400, 2.14:1): raised with fg
+  badge = '#cf1414',          -- dim, like the other themes
   gray = '#554040',           -- ansi 8 in ghostty's port
   -- Added
-  selection_tint = '#3b1818', -- selection @ 12%
-  border = '#3c0303',         -- fg @ 15%
-  float_border = '#3b0202',   -- fg @ 15% over dark
-  prompt_band = '#4e0505',    -- fg @ 25%
-  bash_band = '#432929',      -- white @ 16%
+  selection_tint = '#2e1717', -- selection @ 12%
+  border = '#320505',         -- fg @ 15%
+  float_border = '#320505',   -- fg @ 15% over dark
+  prompt_band = '#490808',    -- fg @ 25%
+  bash_band = '#362828',      -- white @ 16%
   ansi = {
-    [0] = '#1f0000',
-    '#d81010', '#d81010', '#d81010', '#d81010', '#d81010', '#d81010', -- lifted from #b00d0d with normal
-    '#d81010', -- 7: fg
-    '#b00d0d', -- 8: dim
-    '#ff1111', '#ff1010', '#ff1010',
+    [0] = '#100000',
+    '#f01e1e', '#f01e1e', '#f01e1e', '#f01e1e', '#f01e1e', '#f01e1e', -- raised from #b00d0d with normal
+    '#f01e1e', -- 7: fg
+    '#cf1414', -- 8: dim
+    '#ff3a3a', '#ff3a3a', '#ff3a3a',
     '#ffc1c1', -- 12: selection
-    '#ff1010', '#ff1010',
+    '#ff3a3a', '#ff3a3a',
     '#fefefe',
   },
 })
@@ -641,6 +643,7 @@ end
 
 M.derive = {
   hue = hue,
+  theme = theme,
   -- OKLCH: lightness, chroma, and hue in radians, 0 to 2 pi
   oklch = function(hex)
     local L, a, b = oklab(hex)

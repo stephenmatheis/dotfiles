@@ -595,6 +595,57 @@ local duos = candidates('duo', 'New dual themes', 'a second hue for removed, err
   DUO, true)
 local check = helper_check()
 
+-- Every theme's text colors against what they sit on, worked out here so nobody has to spot a weak
+-- pair by eye. Only pairs of text and background: bands against each other are meant to be close
+local LOW = 3 -- text under this contrast ratio is flagged
+local LOW_PAIRS = {
+  { 'fg', 'bg', 'text' },
+  { 'dim', 'bg', 'dim text' },
+  { 'normal', 'bg', 'normal' },
+  { 'bright', 'bg', 'bright' },
+  { 'link', 'bg', 'links' },
+  { 'warning', 'bg', 'warnings' },
+  { 'error', 'bg', 'errors' },
+  { 'fg', 'cursor_line', 'text on the cursor line' },
+  { 'fg', 'selection_tint', 'text on a selection' },
+  { 'removed', 'diff_del', 'removed line' },
+  { 'removed', 'diff_del_word', 'removed word' },
+  { 'fg', 'diff_add', 'added line' },
+  { 'fg', 'diff_add_word', 'added word' },
+}
+
+local function low_contrast()
+  local heads, rows, summary = { '<th>Theme</th>' }, {}, {}
+  for _, pair in ipairs(LOW_PAIRS) do
+    table.insert(heads, ('<th>%s<br><small>%s on %s</small></th>'):format(pair[3], pair[1], pair[2]))
+  end
+  for _, name in ipairs(P.order) do
+    local c, cells, weak = P[name], {}, {}
+    for _, pair in ipairs(LOW_PAIRS) do
+      local ratio = contrast(c[pair[1]], c[pair[2]])
+      local text = ('%.2f'):format(ratio)
+      if ratio < LOW then
+        text = '<b>≈ ' .. text .. '</b>'
+        table.insert(weak, ('%s %.2f'):format(pair[3], ratio))
+      end
+      table.insert(cells, ('<td class="hex"><span style="color:%s;background:%s;padding:0 4px">Aa</span> <small>%s</small></td>'):format(c[pair[1]], c[pair[2]], text))
+    end
+    table.insert(rows, ('<tr><th class="opt">%s</th>%s</tr>'):format(name, table.concat(cells)))
+    if #weak > 0 then
+      table.insert(summary, ('<b>%s</b> (%d): %s'):format(name, #weak, table.concat(weak, ', ')))
+    end
+  end
+  return ([[
+<section class="theme" id="low-contrast">
+  <header>
+    <h2>Low contrast <span>every theme’s text against what it sits on</span></h2>
+    <p class="meta">Worked out from palettes.lua each time this page is built. Pairs under %.0f:1 get ≈. Apps can shift these: Raycast, for one, draws its window much lighter than bg. Under %.0f:1: %s.</p>
+  </header>
+  <div class="table-wrap"><table class="grid"><thead><tr>%s</tr></thead><tbody>%s</tbody></table></div>
+</section>]]):format(LOW, LOW, #summary > 0 and table.concat(summary, '; ') or 'none', table.concat(heads), table.concat(rows))
+end
+local low = low_contrast()
+
 -- What the second hue could do in more places, drawn for the dual themes only. These are options,
 -- not what's set: beyond the shimmer, the apps use it only for comments, removed lines, errors and links.
 local DUAL_SHOW = { 'cyan-pink', 'pink-cyan' }
@@ -1267,7 +1318,74 @@ local delta_section = grids('delta', 'delta', 'git diff, git show and git log -p
     },
   } })
 
--- Raycast: its window, from the 12 colors a raycast://theme link carries.Raycast draws the background
+-- The ways considered to make red easier to read, drawn in full. Each is red's own colors with a few changed, run
+-- through theme() again so the diff, link and other worked-out colors follow. Only Now is in
+-- palettes.lua. border, prompt_band and the like are the same percentages palettes.lua's comments give
+local function red_with(o)
+  local t = {}
+  for k, v in pairs(P.red) do t[k] = v end
+  t.ansi = {}
+  for k, v in pairs(P.red.ansi) do t.ansi[k] = v end
+  for k, v in pairs(o) do t[k] = v end
+  t.normal = o.fg or t.normal
+  t.badge, t.cursor = t.dim, t.dim
+  t.selection_tint = mix(t.selection, t.bg, 0.12)
+  t.border = mix(t.fg, t.bg, 0.15)
+  t.float_border = mix(t.fg, t.dark, 0.15)
+  t.prompt_band = mix(t.fg, t.bg, 0.25)
+  t.bash_band = mix(t.white, t.bg, 0.16)
+  t.ansi[0] = t.dark
+  for i = 1, 7 do t.ansi[i] = t.normal end
+  t.ansi[8] = t.dim
+  for _, i in ipairs({ 9, 10, 11, 13, 14 }) do t.ansi[i] = t.bright end
+  return D.theme(t)
+end
+
+local RED_BEFORE = { bg = '#200101', dark = '#1f0000', black = '#150000', fg = '#d81010', dim = '#b00d0d', bright = '#ff1111', bold = '#ff0000' }
+local RED_DARK = { bg = P.red.bg, dark = P.red.dark, black = P.red.black }
+local RED_LIFT = { fg = P.red.fg, dim = P.red.dim, bright = P.red.bright, bold = P.red.bold }
+local function red_from_before(change)
+  local all = {}
+  for k, v in pairs(RED_BEFORE) do all[k] = v end
+  for k, v in pairs(change) do all[k] = v end
+  return red_with(all)
+end
+
+local function red_section()
+  local options = {
+    { 'Now: both', 'the darker background and the brighter text', P.red },
+    { 'Before', 'red until this change', red_from_before({}) },
+    { 'Darker background', 'the old reds, on a background closer to black', red_from_before(RED_DARK) },
+    { 'Brighter text', 'the old background, with text, dim and bright all raised', red_from_before(RED_LIFT) },
+    { 'Matched to Gr33N', 'built by the helper the newer themes use: as readable as green, but paler', D.mono('Red', D.hue(P.red.normal)) },
+  }
+  local rows = {}
+  for _, o in ipairs(options) do
+    local c, weak = o[3], {}
+    for _, pair in ipairs(LOW_PAIRS) do
+      local ratio = contrast(c[pair[1]], c[pair[2]])
+      if ratio < LOW then table.insert(weak, ('≈ %.2f %s'):format(ratio, pair[3])) end
+    end
+    local chips = {}
+    for _, k in ipairs({ 'bg', 'fg', 'dim', 'bright' }) do
+      table.insert(chips, k .. ' ' .. chip(c[k]))
+    end
+    table.insert(rows, ('<tr><th class="opt">%s<small>%s</small></th><td><div class="scroll"><div class="panel" style="background:%s">%s</div></div></td><td class="sample"><div class="swatch mock">%s</div></td><td class="hex"><small>%s<br><br>text %.2f<br>dim %.2f<br>bright %.2f<br><br><b>%d under %.0f:1</b><br>%s</small></td></tr>'):format(
+      o[1], o[2], c.bg, panel(o[1], c), delta_mock(c, delta_with()), table.concat(chips, '<br>'),
+      contrast(c.fg, c.bg), contrast(c.dim, c.bg), contrast(c.bright, c.bg), #weak, LOW, table.concat(weak, '<br>')))
+  end
+  return ([[
+<section class="theme" id="red-options">
+  <header>
+    <h2>Red <span>ways to make it easier to read</span></h2>
+    <p class="meta">Picked: both, built by hax0r build. Drawn in exact colors from red’s own values with a few changed. Each row shows the editor, prompts and Claude Code’s colors, then a delta diff, then the numbers. The more contrast a row gains, the further it moves from R3D’s deep red, so judge whether it still feels like red.</p>
+  </header>
+  <div class="table-wrap"><table class="grid cands"><thead><tr><th>Option</th><th>Editor and prompts</th><th>delta</th><th>Numbers</th></tr></thead><tbody>%s</tbody></table></div>
+</section>]]):format(table.concat(rows))
+end
+local red_options = red_section()
+
+-- Raycast: its window, from the 12 colors a raycast://theme link carries. Raycast draws the background
 -- as a gradient between background and backgroundSecondary, shown here top to bottom, and the selected
 -- row as a faint wash of the selection color. How strong that wash is was judged from Raycast's own
 -- themes, which set selection to pure white or black, so check it in Raycast
@@ -1525,7 +1643,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
   %s
   <footer>Built by <code>~/.config/hax0r/page.lua</code>, which reads <code>palettes.lua</code> and redraws <code>preview.lua</code>’s panel as HTML.</footer>
 </main>
-]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ delta_section, raycast_section, chrome_section, lazygit_section, fzf_section, macos, syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
+]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ red_options, low, delta_section, raycast_section, chrome_section, lazygit_section, fzf_section, macos, syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
 
 local f = assert(io.open(out, 'w'))
 f:write(page)

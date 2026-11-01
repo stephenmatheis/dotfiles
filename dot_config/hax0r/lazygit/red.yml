@@ -2,14 +2,14 @@
 # Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
 gui:
   theme:
-    activeBorderColor: ['#ff1111', bold]
-    inactiveBorderColor: ['#b00d0d']
-    searchingActiveBorderColor: ['#ec6969', bold]
-    optionsTextColor: ['#b00d0d']
-    selectedLineBgColor: ['#630606']
-    inactiveViewSelectedLineBgColor: ['#3b1818']
-    cherryPickedCommitFgColor: ['#ec6969']
-    cherryPickedCommitBgColor: ['#4e0505']
+    activeBorderColor: ['#ff3a3a', bold]
+    inactiveBorderColor: ['#cf1414']
+    searchingActiveBorderColor: ['#f87070', bold]
+    optionsTextColor: ['#cf1414']
+    selectedLineBgColor: ['#581111']
+    inactiveViewSelectedLineBgColor: ['#2e1717']
+    cherryPickedCommitFgColor: ['#f87070']
+    cherryPickedCommitBgColor: ['#490808']
     unstagedChangesColor: ['#fafafa']
     authorColors:
-      '*': '#b00d0d'
+      '*': '#cf1414'

@@ -2,7 +2,7 @@
 # Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
 --highlight-line --gutter=' '
 --color=dark,fg:-1,bg:-1,gutter:-1,query:-1:bold
---color=hl:#ec6969:bold,hl+:#ec6969:bold,fg+:-1:regular,bg+:#630606
---color=pointer:#ff1111,marker:#ff1111,prompt:#ff1111
---color=info:#b00d0d,spinner:#b00d0d,header:#b00d0d,label:#b00d0d,ghost:#b00d0d
---color=separator:#776565,border:#776565,scrollbar:#776565
+--color=hl:#f87070:bold,hl+:#f87070:bold,fg+:-1:regular,bg+:#581111
+--color=pointer:#ff3a3a,marker:#ff3a3a,prompt:#ff3a3a
+--color=info:#cf1414,spinner:#cf1414,header:#cf1414,label:#cf1414,ghost:#cf1414
+--color=separator:#6e6464,border:#6e6464,scrollbar:#6e6464
