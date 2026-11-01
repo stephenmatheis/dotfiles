@@ -1,0 +1,20 @@
+# hax0r amber for delta: Amber.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+[core]
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	syntax-theme = none
+	true-color = always
+	dark = true
+	minus-style = "#9c6a00 #23170a"
+	minus-emph-style = "#9c6a00 #392c19"
+	plus-style = "#cc8c00 #432b00"
+	plus-emph-style = "#cc8c00 #624100"
+	zero-style = "#cc8c00"
+	file-style = "#cc8c00 bold"
+	file-decoration-style = "#301e00 ul"
+	hunk-header-style = "line-number #9c6a00"
+	hunk-header-line-number-style = "#9c6a00"
+	hunk-header-decoration-style = none

@@ -1201,7 +1201,73 @@ local chrome_section = grids('chrome', 'Chrome', 'the window around the page',
     },
   } })
 
--- Raycast: its window, from the 12 colors a raycast://theme link carries. Raycast draws the background
+-- delta: the same change as git_diff above, as delta draws it. o.old and o.new
+-- are the line bands and o.old_word and o.new_word the changed words' backgrounds, all optional
+local function delta_mock(c, o)
+  local width = 42
+  local function row(parts, back)
+    local used = 0
+    for _, p in ipairs(parts) do
+      used = used + vim.api.nvim_strwidth(p[1])
+      p[4] = p[4] or back
+    end
+    table.insert(parts, { (' '):rep(math.max(0, width - used)), 'fg', '', back })
+    return line(c, parts, back)
+  end
+  local function code(number, before, word, after, color, back, word_back, attrs)
+    local parts = {}
+    if o.numbers then table.insert(parts, { (' %2s │ '):format(number), 'dim' }) end
+    table.insert(parts, { before, color, attrs })
+    table.insert(parts, { word, color, attrs, word_back })
+    table.insert(parts, { after, color, attrs })
+    return row(parts, back)
+  end
+  return table.concat({
+    row({ { 'palettes.lua', 'fg', 'b' } }),
+    row({ { ('─'):rep(width), 'border' } }),
+    row({ { '10: local M = {}', 'dim' } }),
+    code('10', 'local M = {}', '', '', 'fg'),
+    code('11', "M.fg = '", '#16b10e', "'", o.old_text, o.old, o.old_word, o.old_attrs),
+    code('11', "M.fg = '", '#19e20e', "'", o.new_text, o.new, o.new_word, o.new_attrs),
+    code('12', "M.dim = '#0b8700'", '', '', o.new_text, o.new, nil, o.new_attrs),
+    code('13', 'return M', '', '', 'fg'),
+  })
+end
+
+local function delta_option(name, about, o)
+  return { name, about, function(c)
+    local colors = lg_colors(c)
+    local old = o.old and colors[o.old] or c.bg
+    local new = o.new and colors[o.new] or c.bg
+    return delta_mock(c, o), verdict(colors, old, { { o.old_text, 'removed text' } })
+      .. verdict(colors, new, { { o.new_text, 'added text' } })
+      .. (o.new_word and verdict(colors, colors[o.new_word], { { o.new_text, 'changed word' }, { o.new or 'bg', 'its line' } }) or '')
+  end }
+end
+
+local DELTA_BANDS = { old = 'diff_del', old_word = 'diff_del_word', old_text = 'removed', new = 'diff_add', new_word = 'diff_add_word', new_text = 'fg' }
+local function delta_with(o)
+  local all = {}
+  for k, v in pairs(DELTA_BANDS) do all[k] = v end
+  for k, v in pairs(o or {}) do all[k] = v end
+  return all
+end
+
+local delta_section = grids('delta', 'delta', 'git diff, git show and git log -p',
+  'Picked: Bands and words, built by hax0r build, on with hax0r delta on per machine. Mock-ups of delta 0.20.1’s output, using the diff bands every other app here already uses. Under each one: the bands against what sits on them, with ≈ on any pair under the same-color limit.',
+  { {
+    title = 'Bands and words',
+    note = 'git can only change the text’s color, so hax0r tells removed from added with dim and bold. delta adds backgrounds and marks the changed word, like Claude Code and VS Code. Syntax colors are left out here: every theme’s ANSI colors are nearly one hue, so they’d add little.',
+    show = LG_SHOW,
+    options = {
+      { 'Plain git', 'color.diff.old = red dim, color.diff.new = green bold, no delta', function(c) return git_diff(c, { faint(c.ansi[1], c.bg), '' }, { c.ansi[2], 'b' }) end },
+      delta_option('Now: Bands and words', 'the same line and word bands as Claude Code', delta_with()),
+      delta_option('Bands, words, line numbers', 'as above, with a dim line number column', delta_with({ numbers = true })),
+      delta_option('Words only', 'no line bands, so it stays quiet: dim and bold tell the lines apart, and only changed words get a background', delta_with({ old = false, new = false, old_attrs = '', new_attrs = 'b', new_text = 'bright' })),
+    },
+  } })
+
+-- Raycast: its window, from the 12 colors a raycast://theme link carries.Raycast draws the background
 -- as a gradient between background and backgroundSecondary, shown here top to bottom, and the selected
 -- row as a faint wash of the selection color. How strong that wash is was judged from Raycast's own
 -- themes, which set selection to pure white or black, so check it in Raycast
@@ -1459,7 +1525,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
   %s
   <footer>Built by <code>~/.config/hax0r/page.lua</code>, which reads <code>palettes.lua</code> and redraws <code>preview.lua</code>’s panel as HTML.</footer>
 </main>
-]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ raycast_section, chrome_section, lazygit_section, fzf_section, macos, syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
+]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ delta_section, raycast_section, chrome_section, lazygit_section, fzf_section, macos, syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
 
 local f = assert(io.open(out, 'w'))
 f:write(page)

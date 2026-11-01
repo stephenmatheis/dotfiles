@@ -1,0 +1,20 @@
+# hax0r pink for delta: Pink.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+[core]
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	syntax-theme = none
+	true-color = always
+	dark = true
+	minus-style = "#de0084 #2b0c1b"
+	minus-emph-style = "#de0084 #441b31"
+	plus-style = "#fd5ca7 #482433"
+	plus-emph-style = "#fd5ca7 #65394b"
+	zero-style = "#fd5ca7"
+	file-style = "#fd5ca7 bold"
+	file-decoration-style = "#3c1024 ul"
+	hunk-header-style = "line-number #de0084"
+	hunk-header-line-number-style = "#de0084"
+	hunk-header-decoration-style = none

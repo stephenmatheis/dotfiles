@@ -10,6 +10,7 @@
 #   hax0r shader     show or set (on, off) whether Ghostty draws the CRT shader
 #   hax0r xcode      show or set (on, off) whether themes also switch Xcode
 #   hax0r chrome     show or set (on, off) whether themes also rewrite a Chrome theme
+#   hax0r delta      show or set (on, off) whether git shows diffs through delta
 #   hax0r raycast    install every theme in Raycast, or one with raycast <theme>; off stops the reminder
 #
 # The choice is per machine, kept in ~/.local/state/hax0r: dotfiles share the themes, not which one is on.
@@ -27,6 +28,7 @@ shader_state=$state/ghostty-shader
 xcode_theme="$HOME/Library/Developer/Xcode/UserData/FontAndColorThemes/hax0r.xcworkspacecolortheme"
 chrome_theme=$state/chrome-theme
 raycast_state=$state/raycast
+delta_state=$state/delta.gitconfig
 wallpaper_store="$HOME/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
 
 current() {
@@ -136,6 +138,7 @@ switch() {
 
     xcode_apply $name
     chrome_apply $name
+    [[ -f $delta_state ]] && cp $config/hax0r/delta/$name.gitconfig $delta_state
     [[ -f $raycast_state ]] && print -r -- "hax0r: to update Raycast, use Switch Theme and pick hax0r $name"
 
     # Claude Code: a running session reads its theme setting only at startup, but reloads
@@ -398,6 +401,28 @@ chrome() {
     esac
 }
 
+# git includes $delta_state from ~/.config/git/config if it's there, and that file holds both the
+# colors and the setting that makes delta git's pager, so a machine that hasn't opted in is untouched.
+# git reads it each time it runs, so a switch reaches the next diff.
+delta_cmd() {
+    case $1 in
+        '') [[ -f $delta_state ]] && print on || print off ;;
+        on)
+            if (( ! $+commands[delta] )); then
+                print -u2 "hax0r: delta isn't installed. brew install git-delta"
+                return 1
+            fi
+            mkdir -p $state
+            cp $config/hax0r/delta/$(current).gitconfig $delta_state
+            ;;
+        off) rm -f $delta_state ;;
+        *)
+            print -u2 "hax0r: use delta on or delta off"
+            return 1
+            ;;
+    esac
+}
+
 # Raycast has no official way for a script to switch themes, so a switch leaves Raycast alone: you
 # install the themes here once and use its Switch Theme command. Each link opens Theme Studio with a
 # confirm dialog, and a newer link replaces one still waiting, so they go one at a time. Installing
@@ -447,10 +472,11 @@ clear_screen() {
 
 case $1 in
     '') list ;;
-    -h | --help | help) sed -n '2,15s/^# \{0,1\}//p' $0 ;;
+    -h | --help | help) sed -n '2,16s/^# \{0,1\}//p' $0 ;;
     build) nvim -l $config/hax0r/generate.lua && switch $(current) ;;
     chrome) shift; chrome "$@" ;;
     clear) shift; clear_screen "$@" ;;
+    delta) shift; delta_cmd "$@" ;;
     macos) shift; macos "$@" ;;
     preview) HAX0R_COLUMNS=$COLUMNS nvim -l $config/hax0r/preview.lua ;;
     raycast) shift; raycast "$@" ;;

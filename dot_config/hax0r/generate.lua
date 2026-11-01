@@ -219,6 +219,45 @@ local function chrome(name, c)
   }, '\n'))
 end
 
+-- delta: a git config per theme that `hax0r <theme>` copies to ~/.local/state/hax0r/delta.gitconfig on
+-- a machine with `hax0r delta on`, which ~/.config/git/config includes if it's there. The pager setting
+-- lives here too, so git on a machine without delta never asks for it. Syntax highlighting is off:
+-- every theme's ANSI colors are nearly one hue
+local function delta(name, c)
+  local function style(...)
+    return '"' .. table.concat({ ... }, ' ') .. '"'
+  end
+  local settings = {
+    { 'syntax-theme', 'none' },
+    { 'true-color', 'always' },
+    { c.light and 'light' or 'dark', 'true' },
+    { 'minus-style', style(c.removed, c.diff_del) },
+    { 'minus-emph-style', style(c.removed, c.diff_del_word) },
+    { 'plus-style', style(c.fg, c.diff_add) },
+    { 'plus-emph-style', style(c.fg, c.diff_add_word) },
+    { 'zero-style', style(c.fg) },
+    { 'file-style', style(c.fg, 'bold') },
+    { 'file-decoration-style', style(c.border, 'ul') },
+    { 'hunk-header-style', style('line-number', c.dim) },
+    { 'hunk-header-line-number-style', style(c.dim) },
+    { 'hunk-header-decoration-style', 'none' },
+  }
+  local lines = {
+    ('# hax0r %s for delta: %s.'):format(name, c.title),
+    '# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.',
+    '[core]',
+    '\tpager = delta',
+    '[interactive]',
+    '\tdiffFilter = delta --color-only',
+    '[delta]',
+  }
+  for _, s in ipairs(settings) do
+    table.insert(lines, ('\t%s = %s'):format(s[1], s[2]))
+  end
+  table.insert(lines, '')
+  write(('%s/hax0r/delta/%s.gitconfig'):format(config, name), table.concat(lines, '\n'))
+end
+
 -- Raycast: a link per theme that `hax0r raycast` opens, and Raycast asks before installing it. The
 -- link holds 12 colors in this order, read from Raycast 2.10's code: background, backgroundSecondary,
 -- foreground, selection, loader, red, orange, yellow, green, blue, purple, magenta. It can't set the
@@ -543,6 +582,7 @@ for _, name in ipairs(P.order) do
   lazygit(name, c)
   chrome(name, c)
   raycast(name, c)
+  delta(name, c)
   xcode(name, c)
   claude_theme(name, c)
   vscode_themes(name, c)

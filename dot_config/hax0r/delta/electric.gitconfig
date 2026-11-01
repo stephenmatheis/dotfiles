@@ -1,0 +1,20 @@
+# hax0r electric for delta: Electric blue.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+[core]
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	syntax-theme = none
+	true-color = always
+	dark = true
+	minus-style = "#006feb #0b182f"
+	minus-emph-style = "#006feb #1a2c49"
+	plus-style = "#5398fd #202f4b"
+	plus-emph-style = "#5398fd #344868"
+	zero-style = "#5398fd"
+	file-style = "#5398fd bold"
+	file-decoration-style = "#0d1f3f ul"
+	hunk-header-style = "line-number #006feb"
+	hunk-header-line-number-style = "#006feb"
+	hunk-header-decoration-style = none

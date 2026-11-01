@@ -5,3 +5,7 @@
 [color "diff"]
 	old = red dim
 	new = green bold
+
+# delta, on machines with `hax0r delta on`. git skips this if the file isn't there
+[include]
+	path = ~/.local/state/hax0r/delta.gitconfig

@@ -1,0 +1,20 @@
+# hax0r blue for delta: HaX0R BLUE.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+[core]
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	syntax-theme = none
+	true-color = always
+	dark = true
+	minus-style = "#0b79ad #0b1324"
+	minus-emph-style = "#0b79ad #1b293b"
+	plus-style = "#11b7ff #012842"
+	plus-emph-style = "#11b7ff #013e60"
+	zero-style = "#11b7ff"
+	file-style = "#11b7ff bold"
+	file-decoration-style = "#032038 ul"
+	hunk-header-style = "line-number #0b79ad"
+	hunk-header-line-number-style = "#0b79ad"
+	hunk-header-decoration-style = none

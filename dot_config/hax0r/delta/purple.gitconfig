@@ -1,0 +1,20 @@
+# hax0r purple for delta: Purple.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+[core]
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	syntax-theme = none
+	true-color = always
+	dark = true
+	minus-style = "#993bff #1f0e34"
+	minus-emph-style = "#993bff #35214f"
+	plus-style = "#b07efd #36264f"
+	plus-emph-style = "#b07efd #4f3d6b"
+	zero-style = "#b07efd"
+	file-style = "#b07efd bold"
+	file-decoration-style = "#281544 ul"
+	hunk-header-style = "line-number #993bff"
+	hunk-header-line-number-style = "#993bff"
+	hunk-header-decoration-style = none
