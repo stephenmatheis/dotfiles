@@ -10,7 +10,7 @@
 #   hax0r shader     show or set (on, off) whether Ghostty draws the CRT shader
 #   hax0r xcode      show or set (on, off) whether themes also switch Xcode
 #   hax0r chrome     show or set (on, off) whether themes also rewrite a Chrome theme
-#   hax0r raycast    install every theme in Raycast, or just one with raycast <theme>
+#   hax0r raycast    install every theme in Raycast, or one with raycast <theme>; off stops the reminder
 #
 # The choice is per machine, kept in ~/.local/state/hax0r: dotfiles share the themes, not which one is on.
 
@@ -26,6 +26,7 @@ macos_state=$state/macos
 shader_state=$state/ghostty-shader
 xcode_theme="$HOME/Library/Developer/Xcode/UserData/FontAndColorThemes/hax0r.xcworkspacecolortheme"
 chrome_theme=$state/chrome-theme
+raycast_state=$state/raycast
 wallpaper_store="$HOME/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
 
 current() {
@@ -135,6 +136,7 @@ switch() {
 
     xcode_apply $name
     chrome_apply $name
+    [[ -f $raycast_state ]] && print -r -- "hax0r: to update Raycast, use Switch Theme and pick hax0r $name"
 
     # Claude Code: a running session reads its theme setting only at startup, but reloads
     # ~/.claude/themes when a file there changes. So the setting stays custom:hax0r and the
@@ -399,10 +401,16 @@ chrome() {
 # Raycast has no official way for a script to switch themes, so a switch leaves Raycast alone: you
 # install the themes here once and use its Switch Theme command. Each link opens Theme Studio with a
 # confirm dialog, and a newer link replaces one still waiting, so they go one at a time. Installing
-# a theme again adds a duplicate, which you delete in Theme Studio.
+# a theme again adds a duplicate, which you delete in Theme Studio. Installing also turns on a reminder
+# at each switch, kept in $raycast_state so a machine without the themes doesn't see it.
 raycast() {
     local name last
     local -a names
+    if [[ $1 == off ]]; then
+        rm -f $raycast_state
+        print "Switches won't mention Raycast now. Its themes stay installed: delete them in Theme Studio"
+        return
+    fi
     if [[ -n $1 ]]; then
         if [[ ! -f $config/hax0r/raycast/$1 ]]; then
             print -u2 "hax0r: no Raycast theme called $1"
@@ -422,6 +430,8 @@ raycast() {
         print -r -- "hax0r: confirm hax0r $name in Raycast"
         [[ $name == $last ]] || read -r '?Press Enter for the next theme...' || return 1
     done
+    mkdir -p $state
+    : > $raycast_state
     print "Now use Switch Theme in Raycast to pick one"
 }
 
