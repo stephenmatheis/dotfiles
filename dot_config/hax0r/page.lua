@@ -1201,6 +1201,103 @@ local chrome_section = grids('chrome', 'Chrome', 'the window around the page',
     },
   } })
 
+-- Raycast: its window, from the 12 colors a raycast://theme link carries. Raycast draws the background
+-- as a gradient between background and backgroundSecondary, shown here top to bottom, and the selected
+-- row as a faint wash of the selection color. How strong that wash is was judged from Raycast's own
+-- themes, which set selection to pure white or black, so check it in Raycast
+local function raycast_mock(c, o)
+  local colors = lg_colors(c)
+  local rows = 8
+  local function back(i)
+    return mix(colors[o.background2], colors[o.background], (i - 1) / (rows - 1))
+  end
+  local function row(i, parts, fill)
+    local width = 0
+    for _, p in ipairs(parts) do width = width + vim.api.nvim_strwidth(p[1]) end
+    local b = fill or back(i)
+    for _, p in ipairs(parts) do p[4] = b end
+    table.insert(parts, { (' '):rep(42 - width), 'fg', '', b })
+    return line(c, parts, b)
+  end
+  local muted = mix(colors[o.text], back(4), 0.6)
+  local function item(i, icon, label, kind, fill)
+    return row(i, { { ' ■ ', o[icon] }, { label .. (' '):rep(28 - #label), o.text }, { kind, muted } }, fill)
+  end
+  return table.concat({
+    row(1, { { ' Search for apps and commands…', muted } }),
+    item(2, 'red', 'Kill Process', 'Command', mix(colors[o.selection], back(2), o.wash)),
+    item(3, 'orange', 'Window Management', 'Command'),
+    item(4, 'yellow', 'Snippets', 'Command'),
+    item(5, 'green', 'Calculator', 'Command'),
+    item(6, 'blue', 'Clipboard History', 'Command'),
+    item(7, 'magenta', 'Theme Studio', 'Command'),
+    row(8, { { ' ━━ ', o.loader }, { (' '):rep(19), o.text }, { 'Open ↵  Actions ⌘K', muted } }),
+  })
+end
+
+local RAYCAST_HUES = {
+  dark = { red = '#FF6363', orange = '#FF9217', yellow = '#FFC531', green = '#59D499', blue = '#56C2FF', magenta = '#CF2F98' },
+  light = { red = '#B12424', orange = '#C75D07', yellow = '#F8A300', green = '#006B4F', blue = '#138AF2', magenta = '#9A1B6E' },
+}
+local function raycast_with(c, o)
+  local all = {
+    background = 'bg', background2 = 'bg', text = 'fg', selection = 'bright', loader = 'bright', wash = 0.12,
+    red = 'error', orange = 'warning', yellow = 'warning', green = 'bright', blue = 'link', magenta = 'link',
+  }
+  if o.hues then
+    for k, v in pairs(RAYCAST_HUES[c.light and 'light' or 'dark']) do all[k] = v end
+  end
+  for k, v in pairs(o) do all[k] = v end
+  -- Raycast draws its window much lighter than the theme sets. This 75% over white matches one
+  -- screenshot in green, #424742, and isn't a measure of transparency: see the note on these rows
+  if o.wall then
+    local base = mix(c[all.background] or all.background, o.wall, 0.75)
+    all.background, all.background2 = base, base
+  end
+  return all
+end
+
+local function raycast_option(name, about, make)
+  return { name, about, function(c)
+    local o = make(c)
+    local colors = lg_colors(c)
+    local base = colors[o.background]
+    local against = {}
+    for _, key in ipairs({ { 'text', 'text' }, { 'red', 'red icons' }, { 'orange', 'orange icons' }, { 'green', 'green icons' }, { 'blue', 'blue icons' }, { 'magenta', 'magenta icons' } }) do
+      table.insert(against, { o[key[1]], key[2] })
+    end
+    return raycast_mock(c, o), verdict(colors, base, against)
+  end }
+end
+
+local raycast_section = grids('raycast', 'Raycast', 'the launcher window',
+  'Picked: Flat, one color, with text = fg, built by hax0r build. Drawn from palettes.lua and the 12 colors a raycast://theme link carries, read from Raycast 2.10’s code. Only Flat, one color has been seen in Raycast, in green, so the layout and where each icon color lands are approximate. Raycast also draws its window much lighter than these first rows show: #3a3f39 in green, not #020f01, so real contrast is about half the numbers here. The link can’t set the accent color, so that stays Raycast’s blue unless it’s changed by hand in Theme Studio. Under each one: contrast against the background, with ≈ on any pair under the same-color limit.',
+  { {
+    title = 'Background and icons',
+    note = 'Seen in Raycast: the theme colors its symbols and tags, and extension icons keep their own artwork.',
+    show = LG_SHOW,
+    options = {
+      raycast_option('Before', 'Raycast’s own Dark or Light, not necessarily the theme you use now', function(c)
+        return raycast_with(c, c.light
+          and { background = '#FFFFFF', background2 = '#FFFFFF', text = '#000000', selection = '#000000', loader = '#000000', hues = true }
+          or { background = '#000000', background2 = '#000000', text = '#FFFFFF', selection = '#FFFFFF', loader = '#FFFFFF', hues = true })
+      end),
+      raycast_option('Now: Flat, one color', 'background = bg, text = fg, icons from the theme’s own roles, so a dual theme’s second hue shows', function(c) return raycast_with(c, {}) end),
+      raycast_option('Band gradient, one color', 'as above, with the background fading from bg to prompt_band', function(c) return raycast_with(c, { background2 = 'prompt_band' }) end),
+      raycast_option('Flat, Raycast’s hues', 'background = bg, text = fg, icons keep Raycast’s own red, orange, green and so on, so status colors stay readable at a glance', function(c) return raycast_with(c, { hues = true }) end),
+    },
+  }, {
+    title = 'Text in the real window',
+    note = 'Drawn with the window lightened to match a green screenshot over a white wallpaper, #424742. Over green’s own wallpaper it measured #3a3f39, only a little darker, so these rows are close either way: about 3% of the wallpaper shows through, and the rest of the lightening has no known cause. Other themes’ windows haven’t been measured. fg was picked after seeing it in Raycast.',
+    show = LG_SHOW,
+    options = {
+      raycast_option('Now: text = fg', 'picked: reads well in Raycast', function(c) return raycast_with(c, { wall = '#ffffff' }) end),
+      raycast_option('Text = normal', 'one step brighter', function(c) return raycast_with(c, { wall = '#ffffff', text = 'normal' }) end),
+      raycast_option('Text = bright', 'the brightest of the theme’s own color', function(c) return raycast_with(c, { wall = '#ffffff', text = 'bright' }) end),
+      raycast_option('Text = warning', 'bright mixed halfway to white, the palest that still reads as the theme’s color', function(c) return raycast_with(c, { wall = '#ffffff', text = 'warning' }) end),
+    },
+  } })
+
 local choices = grids('choices', 'Hover and ignored', 'now, and the other options considered',
   ('VS Code’s hover background and ignored files, which read as gray in amber, each drawn as it’s set now and with the other options. These are mocks drawn from palettes.lua by each app’s rules, not screenshots. Under each one: the color, and its contrast against the colors it has to stand apart from, with ≈ on any pair under %.2f:1.'):format(SAME),
   CHOICES)
@@ -1362,7 +1459,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 70ch }
   %s
   <footer>Built by <code>~/.config/hax0r/page.lua</code>, which reads <code>palettes.lua</code> and redraws <code>preview.lua</code>’s panel as HTML.</footer>
 </main>
-]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ chrome_section, lazygit_section, fzf_section, macos, syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
+]]):format(label and (' at <code>' .. esc(label) .. '</code>') or '', SAME, table.concat({ raycast_section, chrome_section, lazygit_section, fzf_section, macos, syntax, monos, duos, dual, check, choices }, '\n'), diffs, table.concat(sections, '\n'))
 
 local f = assert(io.open(out, 'w'))
 f:write(page)

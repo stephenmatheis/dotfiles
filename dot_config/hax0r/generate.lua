@@ -219,6 +219,25 @@ local function chrome(name, c)
   }, '\n'))
 end
 
+-- Raycast: a link per theme that `hax0r raycast` opens, and Raycast asks before installing it. The
+-- link holds 12 colors in this order, read from Raycast 2.10's code: background, backgroundSecondary,
+-- foreground, selection, loader, red, orange, yellow, green, blue, purple, magenta. It can't set the
+-- accent color. Using link for the last three lets a dual theme's second hue show
+local RAYCAST_ROLES = { 'bg', 'bg', 'fg', 'bright', 'bright', 'error', 'warning', 'warning', 'bright', 'link', 'link', 'link' }
+
+local function raycast(name, c)
+  local colors = {}
+  for _, role in ipairs(RAYCAST_ROLES) do
+    table.insert(colors, '%23' .. assert(c[role], role):sub(2))
+  end
+  write(('%s/hax0r/raycast/%s'):format(config, name), table.concat({
+    ('# hax0r %s for Raycast: %s.'):format(name, c.title),
+    '# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.',
+    ('raycast://theme?version=1&name=hax0r%%20%s&appearance=%s&colors=%s'):format(name, c.light and 'light' or 'dark', table.concat(colors, ',')),
+    '',
+  }, '\n'))
+end
+
 -- Xcode: its own theme format, one file per theme, that `hax0r <theme>` copies over the theme Xcode
 -- has selected (see the comment above xcode_apply in the hax0r script). Colors are OKLCH. The syntax
 -- roles match nvim's and VS Code's. Fonts aren't in here: Xcode keeps them separately
@@ -523,6 +542,7 @@ for _, name in ipairs(P.order) do
   fzf(name, c)
   lazygit(name, c)
   chrome(name, c)
+  raycast(name, c)
   xcode(name, c)
   claude_theme(name, c)
   vscode_themes(name, c)

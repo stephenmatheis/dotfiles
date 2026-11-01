@@ -10,6 +10,7 @@
 #   hax0r shader     show or set (on, off) whether Ghostty draws the CRT shader
 #   hax0r xcode      show or set (on, off) whether themes also switch Xcode
 #   hax0r chrome     show or set (on, off) whether themes also rewrite a Chrome theme
+#   hax0r raycast    install every theme in Raycast, or just one with raycast <theme>
 #
 # The choice is per machine, kept in ~/.local/state/hax0r: dotfiles share the themes, not which one is on.
 
@@ -395,6 +396,35 @@ chrome() {
     esac
 }
 
+# Raycast has no official way for a script to switch themes, so a switch leaves Raycast alone: you
+# install the themes here once and use its Switch Theme command. Each link opens Theme Studio with a
+# confirm dialog, and a newer link replaces one still waiting, so they go one at a time. Installing
+# a theme again adds a duplicate, which you delete in Theme Studio.
+raycast() {
+    local name last
+    local -a names
+    if [[ -n $1 ]]; then
+        if [[ ! -f $config/hax0r/raycast/$1 ]]; then
+            print -u2 "hax0r: no Raycast theme called $1"
+            return 1
+        fi
+        names=($1)
+    else
+        names=(${(f)"$(cut -f1 $themes)"})
+        if [[ ! -t 0 ]]; then
+            print -u2 "hax0r: raycast waits for Enter between themes, so run it in a terminal, or use raycast <theme>"
+            return 1
+        fi
+    fi
+    last=$names[-1]
+    for name in $names; do
+        open "$(tail -n 1 $config/hax0r/raycast/$name)" || return 1
+        print -r -- "hax0r: confirm hax0r $name in Raycast"
+        [[ $name == $last ]] || read -r '?Press Enter for the next theme...' || return 1
+    done
+    print "Now use Switch Theme in Raycast to pick one"
+}
+
 # neoclear isn't in the dotfiles (see the README), so a machine without it gets a plain clear
 clear_screen() {
     if (( ! $+commands[neoclear] )); then
@@ -407,12 +437,13 @@ clear_screen() {
 
 case $1 in
     '') list ;;
-    -h | --help | help) sed -n '2,14s/^# \{0,1\}//p' $0 ;;
+    -h | --help | help) sed -n '2,15s/^# \{0,1\}//p' $0 ;;
     build) nvim -l $config/hax0r/generate.lua && switch $(current) ;;
     chrome) shift; chrome "$@" ;;
     clear) shift; clear_screen "$@" ;;
     macos) shift; macos "$@" ;;
     preview) HAX0R_COLUMNS=$COLUMNS nvim -l $config/hax0r/preview.lua ;;
+    raycast) shift; raycast "$@" ;;
     shader) shift; shader "$@" ;;
     xcode) shift; xcode "$@" ;;
     *) switch $1 ;;
