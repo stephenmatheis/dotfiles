@@ -665,4 +665,36 @@ M.derive = {
   end,
 }
 
+-- Chrome's inactive tab text: dim, pulled toward the background if it stands further from it than
+-- this. Chrome's Flat theme marks the active tab with text alone, and black and white's dim, at
+-- about 7.3, sat too close to their bright text. Every other theme's dim is already at 4.2 or under
+--
+-- Chrome's active tab text: bright, moved toward the theme's pale selection color if it doesn't have
+-- this many times the inactive text's contrast. Red's bright, at 5.8, couldn't be told from its
+-- inactive tabs, and dimming those any further would make them too hard to read
+local TAB_TEXT_CONTRAST = 4.2
+local TAB_ACTIVE_GAP = 3
+for _, name in ipairs(M.order) do
+  local t = M[name]
+  t.tab_dim = t.dim
+  if contrast(t.dim, t.bg) > TAB_TEXT_CONTRAST then
+    local lo, hi = 0, 1
+    for _ = 1, 30 do
+      local p = (lo + hi) / 2
+      if contrast(mix(t.dim, t.bg, p), t.bg) < TAB_TEXT_CONTRAST then lo = p else hi = p end
+    end
+    t.tab_dim = mix(t.dim, t.bg, lo)
+  end
+  t.tab_bright = t.bright
+  local want = TAB_ACTIVE_GAP * contrast(t.tab_dim, t.bg)
+  if contrast(t.bright, t.bg) < want then
+    local lo, hi = 0, 1
+    for _ = 1, 30 do
+      local p = (lo + hi) / 2
+      if contrast(mix(t.selection, t.bright, p), t.bg) < want then lo = p else hi = p end
+    end
+    t.tab_bright = mix(t.selection, t.bright, hi)
+  end
+end
+
 return M
