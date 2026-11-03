@@ -1,6 +1,6 @@
 #!/bin/zsh
-# hax0r: switch Ghostty, tmux, nvim, fzf, lazygit, Claude Code and VS Code between the hax0r themes,
-# along with the apps each machine opts into.
+# hax0r: switch Ghostty, tmux, nvim, fzf, lazygit and Claude Code between the hax0r themes, along
+# with the apps each machine opts into.
 #
 # `hax0r --help` lists the commands, `hax0r help <command>` explains one, and `hax0r status` shows
 # the settings. The manual, `man hax0r`, is ~/.local/share/man/man1/hax0r.1. When a command
@@ -17,6 +17,8 @@ themes=$config/hax0r/themes
 claude_dir=${CLAUDE_CONFIG_DIR:-$HOME/.claude}
 claude_settings=$claude_dir/settings.json
 vscode_settings="$HOME/Library/Application Support/Code/User/settings.json"
+vscode_extensions=$HOME/.vscode/extensions/extensions.json
+vscode_state=$state/vscode
 macos_state=$state/macos
 shader_state=$state/ghostty-shader
 xcode_theme="$HOME/Library/Developer/Xcode/UserData/FontAndColorThemes/hax0r.xcworkspacecolortheme"
@@ -131,6 +133,7 @@ switch() {
     # gets focus back
     cp $config/hax0r/lazygit/$name.yml $state/lazygit.yml
 
+    vscode_apply $name
     xcode_apply $name
     chrome_apply $name
     [[ -f $delta_state ]] && cp $config/hax0r/delta/$name.gitconfig $delta_state
@@ -149,21 +152,6 @@ switch() {
         else
             rm -f $tmp
             print -u2 "hax0r: couldn't update $claude_settings"
-        fi
-    fi
-
-    # VS Code: it applies a changed theme setting right away. Its terminals pick up the
-    # theme's extra colors at their next prompt (see vscode/hax0r-theme/terminal-palette.zsh)
-    if [[ -f $vscode_settings ]]; then
-        if grep -q '"workbench\.colorTheme"' $vscode_settings; then
-            sed -i '' -E \
-                -e "s/(\"workbench\.colorTheme\"[[:space:]]*:[[:space:]]*)\"[^\"]*\"/\1\"hax0r $name\"/" \
-                -e "s/(\"workbench\.iconTheme\"[[:space:]]*:[[:space:]]*)\"[^\"]*\"/\1\"hax0r-$name\"/" \
-                $vscode_settings
-        else
-            sed -i '' -e "1s/{/{\\
-    \"workbench.colorTheme\": \"hax0r $name\",\\
-    \"workbench.iconTheme\": \"hax0r-$name\",/" $vscode_settings
         fi
     fi
 
@@ -316,6 +304,60 @@ shader() {
             pkill -USR2 -a -x ghostty
             ;;
         *) bad_arg shader $1 ;;
+    esac
+}
+
+# VS Code follows the theme only where `hax0r vscode on` was run, through the color and icon themes
+# of the extension in ~/.config/vscode/hax0r-theme. It applies a changed theme setting right away.
+# Its terminals pick up the theme's extra colors at their next prompt, and only while this is on
+# (see vscode/hax0r-theme/terminal-palette.zsh)
+# Each setting is replaced where it's a key at the start of a line, the way `off` finds it, so the
+# settingsSync.ignoredSettings line that names them doesn't count. One that's missing goes in after
+# the opening brace: iconTheme first, so colorTheme ends up above it
+vscode_apply() {
+    [[ -f $vscode_state && -f $vscode_settings ]] || return 0
+    local key value
+    for key value in iconTheme "hax0r-$1" colorTheme "hax0r $1"; do
+        if grep -qE "^[[:space:]]*\"workbench\.$key\"[[:space:]]*:" $vscode_settings; then
+            sed -i '' -E "s/^([[:space:]]*\"workbench\.$key\"[[:space:]]*:[[:space:]]*)\"[^\"]*\"/\1\"$value\"/" $vscode_settings
+        else
+            sed -i '' -e "1s/{/{\\
+    \"workbench.$key\": \"$value\",/" $vscode_settings
+        fi
+    done
+}
+
+vscode() {
+    case $1 in
+        '') on_off vscode ;;
+        on)
+            if [[ ! -d "/Applications/Visual Studio Code.app" ]]; then
+                print -u2 "hax0r: VS Code isn't in /Applications, so nothing changed"
+                return 1
+            fi
+            if ! grep -q '"stephenmatheis\.hax0r-theme"' $vscode_extensions 2> /dev/null; then
+                print -u2 -r -- "hax0r: VS Code doesn't have the hax0r extension, so nothing changed. In VS Code, run Developer: Install Extension from Location… and pick ${config/#$HOME/~}/vscode/hax0r-theme"
+                return 1
+            fi
+            mkdir -p $state ${vscode_settings:h}
+            [[ -f $vscode_settings ]] || print '{\n}' > $vscode_settings
+            : > $vscode_state
+            vscode_apply $(current)
+            ;;
+        off)
+            # Deletes the two settings only where they hold a hax0r theme, so VS Code goes back to its
+            # defaults. The pattern needs the key at the start of the line, which leaves alone the
+            # settingsSync.ignoredSettings line that names them
+            local hax0r_line='^[[:space:]]*"workbench\.(colorTheme|iconTheme)"[[:space:]]*:[[:space:]]*"hax0r[ -]'
+            rm -f $vscode_state
+            [[ -f $vscode_settings ]] && sed -i '' -E "/$hax0r_line/d" $vscode_settings
+            if grep -qE "$hax0r_line" $vscode_settings 2> /dev/null; then
+                print -u2 "hax0r: couldn't take the hax0r theme out of VS Code's settings, so pick another with Preferences: Color Theme"
+                return 1
+            fi
+            print "VS Code is back on its default theme and icons, and switches leave it alone now"
+            ;;
+        *) bad_arg vscode $1 ;;
     esac
 }
 
@@ -473,10 +515,11 @@ clear_screen() {
 }
 
 # The per-machine settings, in the order help and status show them, and what each one being on means
-settings=(macos shader xcode chrome delta raycast)
+settings=(macos shader vscode xcode chrome delta raycast)
 typeset -A setting_about=(
     macos   "themes also set macOS's Light/Dark and wallpaper"
     shader  "Ghostty draws the CRT shader"
+    vscode  "themes also switch VS Code"
     xcode   "themes also switch Xcode"
     chrome  "themes also rewrite a Chrome theme"
     delta   "git shows diffs through delta"
@@ -488,6 +531,7 @@ is_on() {
     case $1 in
         macos) [[ -d $macos_state ]] ;;
         shader) [[ -f $shader_state ]] ;;
+        vscode) [[ -f $vscode_state ]] ;;
         xcode) [[ -f $xcode_theme ]] ;;
         chrome) [[ -d $chrome_theme ]] ;;
         delta) [[ -f $delta_state ]] ;;
@@ -502,6 +546,13 @@ on_off() {
 # What would stop `on` here, for the settings that check
 missing() {
     case $1 in
+        vscode)
+            if [[ ! -d "/Applications/Visual Studio Code.app" ]]; then
+                print "needs VS Code in /Applications"
+            elif ! grep -q '"stephenmatheis\.hax0r-theme"' $vscode_extensions 2> /dev/null; then
+                print "needs the hax0r extension: hax0r help vscode"
+            fi
+            ;;
         xcode) [[ -d /Applications/Xcode.app ]] || print "needs Xcode in /Applications" ;;
         delta) (( $+commands[delta] )) || print "needs delta: brew install git-delta" ;;
         raycast) [[ -d /Applications/Raycast.app ]] || print "needs Raycast in /Applications" ;;
@@ -515,7 +566,7 @@ show_status() {
     IFS=$'\t' read -r name title bg fg mode < <(awk -F'\t' -v name=$cur '$1 == name' $themes)
     [[ -t 1 ]] && title=$(swatch " $title " $bg $fg)
     print -r -- "Theme: $title ($cur)"
-    print -r -- "Every switch reaches Ghostty, tmux, nvim, fzf, lazygit, Claude Code and VS Code."
+    print -r -- "Every switch reaches Ghostty, tmux, nvim, fzf, lazygit and Claude Code."
     print; print -r -- "Settings on ${HOST%%.*}:"
     for name in $settings; do
         if is_on $name; then
@@ -537,8 +588,8 @@ help_all() {
     local name
     print -r -- "Usage: hax0r [<theme> | <command> [<argument>]]
 
-Switches Ghostty, tmux, nvim, fzf, lazygit, Claude Code and VS Code between the hax0r themes,
-along with the apps this machine opts into under Settings.
+Switches Ghostty, tmux, nvim, fzf, lazygit and Claude Code between the hax0r themes, along with
+the apps this machine opts into under Settings.
 
 Themes"
     help_row 'hax0r' 'list the themes, marking the current one'
@@ -567,8 +618,8 @@ help_topic() {
             cat <<EOF
 Usage: hax0r <theme>
 
-Switches Ghostty, tmux, nvim, fzf, lazygit, Claude Code and VS Code to <theme>, along with each
-setting that's on here (see hax0r status). Run in Ghostty outside tmux, the terminal fades to the
+Switches Ghostty, tmux, nvim, fzf, lazygit and Claude Code to <theme>, along with each setting
+that's on here (see hax0r status). Run in Ghostty outside tmux, the terminal fades to the
 new colors over about a quarter of a second. hax0r with no argument lists the themes.
 
 Most apps change at once. fzf changes the next time it starts, lazygit when its terminal gets
@@ -645,6 +696,22 @@ on and off reach open terminals at once. The strengths are constants at the top 
   hax0r shader       print on or off
   hax0r shader on    write $st/ghostty-shader, which config.ghostty includes
   hax0r shader off   delete it
+EOF
+            ;;
+        vscode)
+            cat <<EOF
+Usage: hax0r vscode [on | off]
+
+Themes also switch VS Code's color and file icon themes, which come from the hax0r extension in
+$cf/vscode/hax0r-theme. VS Code changes at once, and its terminals pick up the colors
+Claude Code's diffs use at their next prompt.
+
+  hax0r vscode       print on or off
+  hax0r vscode on    write $st/vscode, then switch VS Code to the current theme.
+                     Needs VS Code in /Applications and the extension: in VS Code, run
+                     Developer: Install Extension from Location… and pick its folder
+  hax0r vscode off   delete it, and take the hax0r theme and icons out of VS Code's
+                     settings, so it goes back to its defaults
 EOF
             ;;
         xcode)
@@ -748,6 +815,7 @@ case $1 in
     raycast) shift; raycast "$@" ;;
     shader) shift; shader "$@" ;;
     status) show_status ;;
+    vscode) shift; vscode "$@" ;;
     xcode) shift; xcode "$@" ;;
     *) switch $1 ;;
 esac

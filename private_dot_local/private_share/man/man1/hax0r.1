@@ -1,5 +1,5 @@
 .\" The manual for ~/.local/bin/hax0r. Change it with the help text in that script.
-.Dd November 2, 2026
+.Dd November 3, 2026
 .Dt HAX0R 1
 .Os
 .Sh NAME
@@ -14,7 +14,7 @@
 .Cm clear
 .Op Ar option ...
 .Nm
-.Brq Cm macos | shader | xcode | chrome | delta | raycast
+.Brq Cm macos | shader | vscode | xcode | chrome | delta | raycast
 .Op Cm on | off
 .Nm
 .Cm raycast install
@@ -24,11 +24,11 @@
 .Op Ar command
 .Sh DESCRIPTION
 .Nm
-switches Ghostty, tmux, nvim, fzf, lazygit, Claude Code and VS Code between the hax0r themes,
-which are all built from one file,
+switches Ghostty, tmux, nvim, fzf, lazygit and Claude Code between the hax0r themes, which are
+all built from one file,
 .Pa ~/.config/hax0r/palettes.lua .
-Each machine can also opt into more: macOS's Light/Dark and wallpaper, Xcode, Chrome, delta,
-Raycast and Ghostty's CRT shader.
+Each machine can also opt into more: VS Code, macOS's Light/Dark and wallpaper, Xcode, Chrome,
+delta, Raycast and Ghostty's CRT shader.
 See
 .Sx SETTINGS .
 .Pp
@@ -112,6 +112,22 @@ which Ghostty's config includes, and
 deletes it.
 Both reach open terminals at once.
 The strengths are constants at the top of the shader.
+.It Nm Cm vscode Op Cm on | off
+Themes also switch VS Code's color and file icon themes, which come from the hax0r extension in
+.Pa ~/.config/vscode/hax0r-theme .
+VS Code changes at once, and its terminals pick up the colors Claude Code's diffs use at their
+next prompt.
+.Cm on
+writes
+.Pa ~/.local/state/hax0r/vscode ,
+then switches VS Code to the current theme.
+.Cm off
+deletes it and takes the hax0r theme and icons out of VS Code's settings, so it goes back to its
+defaults.
+Needs VS Code in
+.Pa /Applications
+and the extension: in VS Code, run Developer: Install Extension from Location\[u2026] and pick its
+folder.
 .It Nm Cm xcode Op Cm on | off
 Themes also switch Xcode, through one saved theme called hax0r that each switch overwrites.
 A running Xcode picks it up within a few seconds.
