@@ -6,7 +6,7 @@
 //   bg #020f01, fg #16b10e, dark #001f0b (ansi 0), normal #15d00d (ansi 1-6),
 //   bright #19e20e (ansi 9-14), bold #19e30f, white #fafafa, bright_white #fefefe,
 //   cursor_text #ffffff, selection #d4ffc1, link #75d868, selection_tint #1b2c18,
-//   dim #0b8700 (badge #14ff00 @ 50% over bg), cursor_line #094e05, ignored #0e7009, error #fefefe,
+//   dim #0b8700 (badge #14ff00 @ 50% over bg), cursor_line #094e05, hover #052f03, ignored #0e7009, error #fefefe,
 //   warning #8aee84, diff_add #073904, diff_add_word #0a5505, diff_del #0c1d0b, diff_del_word #1c331a.
 // Hue mapping for VS Code's own colors: red is error (or removed, for git and diffs), yellow and
 // orange are warning, green is bright (or added, for git and diffs), blue is link, purple is selection.
@@ -27,6 +27,7 @@
         "focusBorder": "{{dim}}",
         "selection.background": "{{selection}}1f",
         "widget.shadow": "{{black}}33",
+        "widget.border": "{{fg}}26", // Quick Open's and find's outline, like the other popups'; Quick Open's own shadow is fixed and vanishes on black
         "scrollbar.shadow": "{{black}}33",
         "sash.hoverBorder": "{{dim}}",
         "titleBar.activeBackground": "{{bg}}",
@@ -65,7 +66,7 @@
         "statusBar.debuggingForeground": "{{bg}}",
         "statusBarItem.remoteBackground": "{{dark}}",
         "statusBarItem.remoteForeground": "{{bright}}",
-        "statusBarItem.hoverBackground": "{{cursor_line}}",
+        "statusBarItem.hoverBackground": "{{hover}}",
         "statusBarItem.activeBackground": "{{dim}}",
         "statusBarItem.errorBackground": "{{error}}",
         "statusBarItem.errorForeground": "{{bg}}",
@@ -117,7 +118,7 @@
         "editorLightBulbAutoFix.foreground": "{{bright}}",
         "editorStickyScroll.background": "{{dark}}", // like nvim's floats (NormalFloat), where treesitter-context draws the same thing, so stuck lines read as a header
         "editorStickyScrollGutter.background": "{{dark}}",
-        "editorStickyScrollHover.background": "{{cursor_line}}",
+        "editorStickyScrollHover.background": "{{hover}}",
         "editorStickyScroll.shadow": "{{black}}33",
         "editorOverviewRuler.border": "#00000000",
 
@@ -142,17 +143,22 @@
         "editorBracketHighlight.foreground5": "{{bright}}",
         "editorBracketHighlight.foreground6": "{{fg}}",
         "editorBracketHighlight.unexpectedBracket.foreground": "{{error}}",
-        "list.activeSelectionBackground": "{{fg}}",
-        "list.activeSelectionForeground": "{{bg}}",
-        "list.activeSelectionIconForeground": "{{bg}}",
+        // The selected row is selected_row with bright text, not an fg band: file icons keep their
+        // own color (the icon theme's fontColor) and faded into fg. selected_row is cursor_line, like
+        // nvim's cursor line, with hover half as strong; black and white set both from their step
+        // (see palettes.lua). Menus and the suggest list keep the fg band, since their icons are
+        // codicons, which take the row's icon color.
+        "list.activeSelectionBackground": "{{selected_row}}",
+        "list.activeSelectionForeground": "{{bright}}",
+        "list.activeSelectionIconForeground": "{{bright}}",
         "list.inactiveSelectionBackground": "{{dark}}",
         "list.inactiveSelectionForeground": "{{fg}}",
         "list.focusBackground": "{{dark}}",
         "list.focusOutline": "{{dim}}",
-        "list.hoverBackground": "{{cursor_line}}",
+        "list.hoverBackground": "{{hover}}",
         "list.hoverForeground": "{{bright}}",
         "list.highlightForeground": "{{bright}}",
-        "list.focusHighlightForeground": "{{bg}}",
+        "list.focusHighlightForeground": "{{bright}}", // the same as the row's text; matches still show in bold
         "list.errorForeground": "{{error}}",
         "list.warningForeground": "{{warning}}",
         "list.dropBackground": "{{cursor_line}}",
@@ -209,16 +215,18 @@
         "merge.incomingContentBackground": "{{link}}26",
 
         // Git: added is bright, modified white, deleted dim, conflicts warning, ignored fg @ 60% (not
-        // dim, which is deleted's color)
+        // dim, which is deleted's color). The change marks use mark_changed and mark_removed, which
+        // are white and dim too, except in black and white: there they're bright @ 6 and 3 of the
+        // theme's steps (see palettes.lua), since white is bright and dim reads close to it
         "editorGutter.addedBackground": "{{added}}",
-        "editorGutter.modifiedBackground": "{{white}}",
-        "editorGutter.deletedBackground": "{{removed}}",
+        "editorGutter.modifiedBackground": "{{mark_changed}}",
+        "editorGutter.deletedBackground": "{{mark_removed}}",
         "editorOverviewRuler.addedForeground": "{{added}}",
-        "editorOverviewRuler.modifiedForeground": "{{white}}",
-        "editorOverviewRuler.deletedForeground": "{{removed}}",
+        "editorOverviewRuler.modifiedForeground": "{{mark_changed}}",
+        "editorOverviewRuler.deletedForeground": "{{mark_removed}}",
         "minimapGutter.addedBackground": "{{added}}",
-        "minimapGutter.modifiedBackground": "{{white}}",
-        "minimapGutter.deletedBackground": "{{removed}}",
+        "minimapGutter.modifiedBackground": "{{mark_changed}}",
+        "minimapGutter.deletedBackground": "{{mark_removed}}",
         "gitDecoration.addedResourceForeground": "{{added}}",
         "gitDecoration.untrackedResourceForeground": "{{added}}",
         "gitDecoration.modifiedResourceForeground": "{{white}}",
@@ -425,12 +433,12 @@
         "editorSuggestWidget.highlightForeground": "{{bright}}",
         "editorSuggestWidget.focusHighlightForeground": "{{bg}}",
         "editorSuggestWidgetStatus.foreground": "{{dim}}",
-        "quickInput.background": "{{dark}}",
+        "quickInput.background": "{{bg}}", // the editor's background, set apart by widget.border
         "quickInput.foreground": "{{fg}}",
         "quickInputTitle.background": "{{dark}}",
-        "quickInputList.focusBackground": "{{fg}}",
-        "quickInputList.focusForeground": "{{bg}}",
-        "quickInputList.focusIconForeground": "{{bg}}",
+        "quickInputList.focusBackground": "{{selected_row}}", // see list.activeSelectionBackground
+        "quickInputList.focusForeground": "{{bright}}",
+        "quickInputList.focusIconForeground": "{{bright}}",
         "pickerGroup.foreground": "{{bright}}",
         "pickerGroup.border": "{{fg}}26",
         "menu.background": "{{dark}}",
@@ -439,7 +447,7 @@
         "menu.selectionBackground": "{{fg}}",
         "menu.selectionForeground": "{{bg}}",
         "menu.separatorBackground": "{{fg}}26",
-        "menubar.selectionBackground": "{{cursor_line}}",
+        "menubar.selectionBackground": "{{hover}}",
         "menubar.selectionForeground": "{{bright}}",
         "peekView.border": "{{fg}}26",
         "peekViewTitle.background": "{{dark}}",
@@ -451,8 +459,8 @@
         "peekViewResult.background": "{{dark}}",
         "peekViewResult.fileForeground": "{{bright}}",
         "peekViewResult.lineForeground": "{{fg}}",
-        "peekViewResult.selectionBackground": "{{fg}}",
-        "peekViewResult.selectionForeground": "{{bg}}",
+        "peekViewResult.selectionBackground": "{{selected_row}}",
+        "peekViewResult.selectionForeground": "{{bright}}",
         "peekViewResult.matchHighlightBackground": "{{fg}}66",
         "debugToolBar.background": "{{dark}}",
         "debugToolBar.border": "{{fg}}26",
@@ -481,7 +489,7 @@
         "button.hoverBackground": "{{normal}}",
         "button.secondaryBackground": "{{dark}}",
         "button.secondaryForeground": "{{fg}}",
-        "button.secondaryHoverBackground": "{{cursor_line}}",
+        "button.secondaryHoverBackground": "{{hover}}",
         "keybindingLabel.background": "{{dark}}",
         "keybindingLabel.foreground": "{{fg}}",
         "keybindingLabel.border": "{{fg}}26",
@@ -547,6 +555,19 @@
             "name": "Operator, Delimiter",
             "scope": ["keyword.operator", "punctuation", "storage.type.function.arrow"],
             "settings": { "foreground": "{{fg}}", "fontStyle": "" }
+        },
+        {
+            // Like nvim, where @media is one token and 12px one number: a keyword's sigil (CSS's @)
+            // is bold with its word, and units (CSS's px and %, C's, Go's and Lua's 0x and u) take
+            // their number's style instead of a keyword's
+            "name": "Keyword sigil",
+            "scope": ["punctuation.definition.keyword"],
+            "settings": { "foreground": "{{bold}}", "fontStyle": "bold" }
+        },
+        {
+            "name": "Number unit",
+            "scope": ["keyword.other.unit"],
+            "settings": { "foreground": "{{normal}}", "fontStyle": "" }
         },
         {
             "name": "Variable, Property",

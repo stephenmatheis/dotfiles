@@ -45,7 +45,16 @@ end
 --   link                   fg halfway to selection, so it stands apart from both the prose and
 --                          the inline code it sits next to (also Claude Code's plan mode and skills)
 --   cursor_line            bright @ 30%: the theme's own color, where Gr33N's cyan cursor guide
---                          read as gray over amber (VS Code's hovers, nvim's cursor line)
+--                          read as gray over amber (nvim's cursor line, VS Code's selected rows)
+--   hover                  bright @ 15%, half of cursor_line, so the row under the mouse stays
+--                          apart from the selected one (VS Code's hovers)
+--   change marks           VS Code's gutter, overview ruler and minimap bars: added, white and
+--                          removed (mark_changed, mark_removed)
+--
+-- Black and white have no hue to tell VS Code's grays apart, and their white is their bright, so
+-- each sets step, a percentage, and those grays are bright @ a multiple of it: the selected row
+-- (selected_row) 2 steps, hover and removed marks 3, changed marks 6. All picked by eye, and white
+-- on black needed twice black's mix every time: step is 5 in black and 10 in white.
 --
 -- A dual theme also sets accent, accent_bright and accent_dim: a second hue. It takes the jobs one
 -- hue can only do with brightness: removed is accent_dim and error accent_bright, links are accent,
@@ -71,6 +80,7 @@ local function theme(t)
   t.diff_del_word = mix(removed_tint, t.bg, 0.20)
   t.link = mix(t.selection, t.fg, 0.5)
   t.cursor_line = mix(t.bright, t.bg, 0.30)
+  t.hover = mix(t.bright, t.bg, 0.15)
   t.claude_shimmer = t.selection
   t.border_shimmer = t.normal
   t.permission_shimmer = t.bright_white
@@ -85,6 +95,16 @@ local function theme(t)
     t.claude_shimmer = t.accent_bright
     t.border_shimmer = t.accent
     t.permission_shimmer = t.accent_bright
+  end
+  t.selected_row = t.cursor_line
+  t.mark_changed = t.white
+  t.mark_removed = t.removed
+  if t.step then
+    local function steps(n) return mix(t.bright, t.bg, n * t.step / 100) end
+    t.selected_row = steps(2)
+    t.hover = steps(3)
+    t.mark_removed = steps(3)
+    t.mark_changed = steps(6)
   end
   return t
 end
@@ -264,6 +284,7 @@ M.white = theme({
   float_border = '#343434',   -- fg @ 15% over dark
   prompt_band = '#323232',    -- fg @ 25%
   bash_band = '#282828',      -- white @ 16%
+  step = 10,                  -- VS Code's grays, in 10% steps of bright (see theme())
   ansi = {
     [0] = '#1a1a1a',
     '#ebebeb', '#ebebeb', '#ebebeb', '#ebebeb', '#ebebeb', '#ebebeb',
@@ -300,6 +321,7 @@ M.black = theme({
   float_border = '#cfcfcf',   -- fg @ 15% over dark
   prompt_band = '#cccccc',    -- fg @ 25%
   bash_band = '#e6e6e6',      -- black @ 10%
+  step = 5,                   -- VS Code's grays, in 5% steps of bright (see theme())
   ansi = {
     [0] = '#333333', -- 0, not dark: fg, since Claude Code's light base draws code text in slot 0
     '#191919', '#191919', '#191919',
