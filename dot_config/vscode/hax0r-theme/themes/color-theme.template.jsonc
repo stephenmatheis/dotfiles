@@ -81,7 +81,7 @@
         "breadcrumb.foreground": "{{dim}}",
         "breadcrumb.focusForeground": "{{bright}}",
         "breadcrumb.activeSelectionForeground": "{{bright}}",
-        "breadcrumbPicker.background": "{{dark}}",
+        "breadcrumbPicker.background": "{{bg}}",
         "textLink.foreground": "{{link}}",
         "textLink.activeForeground": "{{link}}",
         "textPreformat.foreground": "{{bright}}",
@@ -145,13 +145,14 @@
         "editorBracketHighlight.unexpectedBracket.foreground": "{{error}}",
         // The selected row is selected_row with bright text, not an fg band: file icons keep their
         // own color (the icon theme's fontColor) and faded into fg. selected_row is cursor_line, like
-        // nvim's cursor line, with hover half as strong; black and white set both from their step
-        // (see palettes.lua). Menus and the suggest list keep the fg band, since their icons are
-        // codicons, which take the row's icon color.
+        // nvim's cursor line, with hover half as strong. While the list doesn't have focus the row is
+        // unfocused_row, dark; black and white set all three from their step, with one color for
+        // both selections, since hover's step would land on dark (see palettes.lua). Menus and the
+        // suggest list keep the fg band, since their icons are codicons, which take the row's icon color.
         "list.activeSelectionBackground": "{{selected_row}}",
         "list.activeSelectionForeground": "{{bright}}",
         "list.activeSelectionIconForeground": "{{bright}}",
-        "list.inactiveSelectionBackground": "{{dark}}",
+        "list.inactiveSelectionBackground": "{{unfocused_row}}",
         "list.inactiveSelectionForeground": "{{fg}}",
         "list.focusBackground": "{{dark}}",
         "list.focusOutline": "{{dim}}",
@@ -172,7 +173,7 @@
         "minimap.warningHighlight": "{{warning}}",
 
         // Messages
-        "notifications.background": "{{dark}}",
+        "notifications.background": "{{bg}}",
         "notifications.foreground": "{{fg}}",
         "notifications.border": "{{fg}}26",
         "notificationToast.border": "{{fg}}26",
@@ -193,7 +194,7 @@
         "editorOverviewRuler.errorForeground": "{{error}}",
         "editorOverviewRuler.warningForeground": "{{warning}}",
         "editorOverviewRuler.infoForeground": "{{bright}}",
-        "editorMarkerNavigation.background": "{{dark}}",
+        "editorMarkerNavigation.background": "{{bg}}",
         "editorMarkerNavigationError.background": "{{error}}",
         "editorMarkerNavigationWarning.background": "{{warning}}",
         "editorMarkerNavigationInfo.background": "{{bright}}",
@@ -376,7 +377,7 @@
         "debugView.exceptionLabelBackground": "{{error}}",
         "debugView.exceptionLabelForeground": "{{bg}}",
         "debugView.valueChangedHighlight": "{{bright}}",
-        "debugExceptionWidget.background": "{{dark}}",
+        "debugExceptionWidget.background": "{{bg}}",
         "debugExceptionWidget.border": "{{error}}",
         "editor.stackFrameHighlightBackground": "{{warning}}33",
         "editor.focusedStackFrameHighlightBackground": "{{bright}}33",
@@ -414,17 +415,19 @@
         "issues.closed": "{{selection}}",
         "github.issues.closed": "{{selection}}",
 
-        // Floats: nvim's NormalFloat, FloatBorder, Pmenu and PmenuSel
-        "editorWidget.background": "{{dark}}",
+        // Floats: popups sit on the editor's background, like Quick Open, set apart by nvim's faint
+        // FloatBorder outline; their title and status strips stay dark. The suggest list's
+        // selection is nvim's PmenuSel
+        "editorWidget.background": "{{bg}}",
         "editorWidget.foreground": "{{fg}}",
         "editorWidget.border": "{{fg}}26",
         "editorWidget.resizeBorder": "{{fg}}26",
-        "editorHoverWidget.background": "{{dark}}",
+        "editorHoverWidget.background": "{{bg}}",
         "editorHoverWidget.foreground": "{{fg}}",
         "editorHoverWidget.border": "{{fg}}26",
         "editorHoverWidget.highlightForeground": "{{bright}}",
         "editorHoverWidget.statusBarBackground": "{{dark}}",
-        "editorSuggestWidget.background": "{{dark}}",
+        "editorSuggestWidget.background": "{{bg}}",
         "editorSuggestWidget.foreground": "{{fg}}",
         "editorSuggestWidget.border": "{{fg}}26",
         "editorSuggestWidget.selectedBackground": "{{fg}}",
@@ -441,7 +444,7 @@
         "quickInputList.focusIconForeground": "{{bright}}",
         "pickerGroup.foreground": "{{bright}}",
         "pickerGroup.border": "{{fg}}26",
-        "menu.background": "{{dark}}",
+        "menu.background": "{{bg}}",
         "menu.foreground": "{{fg}}",
         "menu.border": "{{fg}}26",
         "menu.selectionBackground": "{{fg}}",
@@ -453,16 +456,16 @@
         "peekViewTitle.background": "{{dark}}",
         "peekViewTitleLabel.foreground": "{{bright}}",
         "peekViewTitleDescription.foreground": "{{dim}}",
-        "peekViewEditor.background": "{{dark}}",
-        "peekViewEditorGutter.background": "{{dark}}",
+        "peekViewEditor.background": "{{bg}}",
+        "peekViewEditorGutter.background": "{{bg}}",
         "peekViewEditor.matchHighlightBackground": "{{fg}}66",
-        "peekViewResult.background": "{{dark}}",
+        "peekViewResult.background": "{{bg}}",
         "peekViewResult.fileForeground": "{{bright}}",
         "peekViewResult.lineForeground": "{{fg}}",
         "peekViewResult.selectionBackground": "{{selected_row}}",
         "peekViewResult.selectionForeground": "{{bright}}",
         "peekViewResult.matchHighlightBackground": "{{fg}}66",
-        "debugToolBar.background": "{{dark}}",
+        "debugToolBar.background": "{{bg}}",
         "debugToolBar.border": "{{fg}}26",
         "input.background": "{{dark}}",
         "input.foreground": "{{fg}}",
@@ -478,7 +481,7 @@
         "inputValidation.infoBackground": "{{dark}}",
         "inputValidation.infoBorder": "{{bright}}",
         "dropdown.background": "{{dark}}",
-        "dropdown.listBackground": "{{dark}}",
+        "dropdown.listBackground": "{{bg}}",
         "dropdown.foreground": "{{fg}}",
         "dropdown.border": "{{fg}}26",
         "checkbox.background": "{{dark}}",

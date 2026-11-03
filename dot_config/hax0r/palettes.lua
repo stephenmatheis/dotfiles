@@ -46,15 +46,20 @@ end
 --                          the inline code it sits next to (also Claude Code's plan mode and skills)
 --   cursor_line            bright @ 30%: the theme's own color, where Gr33N's cyan cursor guide
 --                          read as gray over amber (nvim's cursor line, VS Code's selected rows)
---   hover                  bright @ 15%, half of cursor_line, so the row under the mouse stays
---                          apart from the selected one (VS Code's hovers)
---   change marks           VS Code's gutter, overview ruler and minimap bars: added, white and
---                          removed (mark_changed, mark_removed)
+--   hover                  bright @ 15%, half of cursor_line, so the selected row is the stronger
+--                          of the two (VS Code's hovers)
+--   unfocused_row          dark: VS Code's selected row while its list doesn't have focus
+--   change marks           VS Code's gutter, overview ruler and minimap bars, and nvim's signs:
+--                          added, white and removed (mark_changed, mark_removed)
+--   staged signs           nvim's signs for staged hunks: added_dim, faint and removed_dim
+--                          (staged_add, staged_change, staged_delete)
 --
--- Black and white have no hue to tell VS Code's grays apart, and their white is their bright, so
--- each sets step, a percentage, and those grays are bright @ a multiple of it: the selected row
--- (selected_row) 2 steps, hover and removed marks 3, changed marks 6. All picked by eye, and white
--- on black needed twice black's mix every time: step is 5 in black and 10 in white.
+-- Black and white have no hue to tell these grays apart, and their white is their bright, so each
+-- sets step, a percentage, and the grays are bright @ a multiple of it: hover 1 step, the selected
+-- row 2 whether its list has focus or not (so hover never lands on it), removed marks 3, changed
+-- marks 6. Staged signs are about half their unstaged one: added bright @ 50%, changed 3 steps,
+-- removed 2. All picked by eye, and white on black needed twice black's mix every time: step is 5
+-- in black and 10 in white.
 --
 -- A dual theme also sets accent, accent_bright and accent_dim: a second hue. It takes the jobs one
 -- hue can only do with brightness: removed is accent_dim and error accent_bright, links are accent,
@@ -97,14 +102,22 @@ local function theme(t)
     t.permission_shimmer = t.accent_bright
   end
   t.selected_row = t.cursor_line
+  t.unfocused_row = t.dark
   t.mark_changed = t.white
   t.mark_removed = t.removed
+  t.staged_add = t.added_dim
+  t.staged_change = t.faint
+  t.staged_delete = t.removed_dim
   if t.step then
     local function steps(n) return mix(t.bright, t.bg, n * t.step / 100) end
+    t.hover = steps(1)
     t.selected_row = steps(2)
-    t.hover = steps(3)
+    t.unfocused_row = steps(2)
     t.mark_removed = steps(3)
     t.mark_changed = steps(6)
+    t.staged_add = mix(t.bright, t.bg, 0.5)
+    t.staged_change = steps(3)
+    t.staged_delete = steps(2)
   end
   return t
 end

@@ -129,13 +129,20 @@ hl('RainbowDelimiterViolet', { fg = c.fg })
 hl('RainbowDelimiterCyan', { fg = c.bright })
 
 -- 2. Git Signs
--- added is the theme's bright and removed its dim, in every theme; see palettes.lua
+-- added is the theme's bright and removed its dim, in every theme; see palettes.lua. These also
+-- color diff text, so the signs get their own: VS Code's change marks, which in black and white
+-- are fainter grays, since there white is bright. The rest of gitsigns' groups fall back to these
 hl('Added', { fg = c.added })
 hl('Changed', { fg = c.white })
 hl('Removed', { fg = c.removed })
-hl('GitSignsStagedAdd', { fg = c.added_dim })
-hl('GitSignsStagedChange', { fg = c.faint }) -- not ghostty's ansi 8: it read at 2.01:1, so use Claude Code's faint text
-hl('GitSignsStagedDelete', { fg = c.removed_dim })
+hl('GitSignsAdd', { fg = c.added })
+hl('GitSignsChange', { fg = c.mark_changed })
+hl('GitSignsDelete', { fg = c.mark_removed })
+-- Staged signs sit a step dimmer: dim, faint and faint, or about half in black and white. Not
+-- ghostty's ansi 8 for changes: it read at 2.01:1, so faint, Claude Code's faint text
+hl('GitSignsStagedAdd', { fg = c.staged_add })
+hl('GitSignsStagedChange', { fg = c.staged_change })
+hl('GitSignsStagedDelete', { fg = c.staged_delete })
 hl('GitSignsStagedUntracked', { link = 'GitSignsStagedAdd' })
 hl('GitSignsStagedChangedelete', { link = 'GitSignsStagedChange' })
 hl('GitSignsStagedTopdelete', { link = 'GitSignsStagedDelete' })

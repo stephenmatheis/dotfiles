@@ -136,14 +136,14 @@ local GROUPS = {
   },
   {
     title = 'nvim sign column',
-    note = 'gitsigns, plus the +3 ~1 −2 counts in the statusline. VS Code’s gutter uses the same three unstaged colors, except in black and white, where changed and deleted are bright @ 6 and 3 of the theme’s steps over the background: 30% and 15% in black, 60% and 30% in white (mark_changed, mark_removed).',
+    note = 'gitsigns, plus the +3 ~1 −2 counts in the statusline. The signs use VS Code’s change marks: white and dim, except in black and white, where changed and deleted are bright @ 6 and 3 of the theme’s steps over the background (30% and 15% in black, 60% and 30% in white), and staged signs about half of those: added 50%, changed 3 steps, deleted 2 (2026-11-02).',
     rows = {
       { 'added', 'Added line', sign('┃', 'added', 12, "local a = 1"), cmp = 'bar' },
-      { 'white', 'Changed line', sign('┃', 'white', 13, "local b = 2"), cmp = 'bar' },
-      { 'removed', 'Deleted line', sign('▁', 'removed', 14, "local c = 3"), cmp = 'under' },
-      { 'added_dim', 'Staged add', sign('┃', 'added_dim', 15, "local d = 4"), cmp = 'bar' },
-      { 'faint', 'Staged change', sign('┃', 'faint', 16, "local e = 5"), cmp = 'bar' },
-      { 'removed_dim', 'Staged delete', sign('▁', 'removed_dim', 17, "local f = 6"), cmp = 'under' },
+      { 'mark_changed', 'Changed line', sign('┃', 'mark_changed', 13, "local b = 2"), cmp = 'bar' },
+      { 'mark_removed', 'Deleted line', sign('▁', 'mark_removed', 14, "local c = 3"), cmp = 'under' },
+      { 'staged_add', 'Staged add', sign('┃', 'staged_add', 15, "local d = 4"), cmp = 'bar' },
+      { 'staged_change', 'Staged change', sign('┃', 'staged_change', 16, "local e = 5"), cmp = 'bar' },
+      { 'staged_delete', 'Staged delete', sign('▁', 'staged_delete', 17, "local f = 6"), cmp = 'under' },
     },
   },
   {
@@ -375,7 +375,7 @@ end
 local function hover_mock(c, hover, now)
   return table.concat({
     line(c, { { '  › public', 'fg' } }),
-    line(c, { { '  › src', 'fg' } }, 'dark'),
+    line(c, { { '  › src', 'fg' } }, now and 'unfocused_row' or 'dark'),
     line(c, { { '  › test-results', 'ignored' } }),
     line(c, { { '    index.html', 'bright' } }, hover),
     line(c, { { '    package.json', now and 'bright' or 'bg' } }, now and 'selected_row' or 'fg'),
@@ -414,7 +414,9 @@ local function try_hover(pick, now)
     local v = pick(c)
     local last = now and { 'selected_row', 'vs the focused selection (selected_row)' }
       or { 'selection_tint', 'vs Visual (selection_tint)' }
-    return hover_mock(c, v, now), verdict(c, v, { { 'bg', 'on bg' }, { 'dark', 'vs the unfocused selection (dark)' }, last })
+    local unfocused = now and { 'unfocused_row', 'vs the unfocused selection (unfocused_row)' }
+      or { 'dark', 'vs the unfocused selection (dark)' }
+    return hover_mock(c, v, now), verdict(c, v, { { 'bg', 'on bg' }, unfocused, last })
   end
 end
 
@@ -430,9 +432,9 @@ end
 local CHOICES = {
   {
     title = 'Hover background',
-    note = 'hover: VS Code’s hover on list rows, status bar items, menus, sticky scroll and secondary buttons. Until 2026-11-02 it was cursor_line, which is still nvim’s CursorLine and CursorColumn, and is now VS Code’s selected row (selected_row; cursor_line also keeps its drop target and find range): the fg band the selection was before faded the file icons, which keep their own color. Black and white set both from their step, picked by eye the same day: the selected row 2 steps and hover 3, so hover is the stronger one there. The explorer shows every state a row can be in at once: a folder, the selection while the sidebar isn’t focused, an ignored folder, the row under the mouse, and the selection while it’s focused. Below it, nvim with the cursor on line 12 and \'Visual\' selected. The other options are drawn as things were before, with an fg selection and nvim sharing hover’s color.',
+    note = 'hover: VS Code’s hover on list rows, status bar items, menus, sticky scroll and secondary buttons. Until 2026-11-02 it was cursor_line, which is still nvim’s CursorLine and CursorColumn, and is now VS Code’s selected row (selected_row; cursor_line also keeps its drop target and find range): the fg band the selection was before faded the file icons, which keep their own color. Black and white set them from their step, picked by eye the same day: hover 1 step and the selected row 2, focused or not, since hover’s step would land on dark. Hover was 3 steps for an hour, the stronger of the two, which read as backwards. The explorer shows every state a row can be in at once: a folder, the selection while the sidebar isn’t focused, an ignored folder, the row under the mouse, and the selection while it’s focused. Below it, nvim with the cursor on line 12 and \'Visual\' selected. The other options are drawn as things were before, with an fg selection and nvim sharing hover’s color.',
     options = {
-      { 'Now', 'bright @ 15%, half of cursor_line, so hover stays apart from the selected row; black and white use 3 of their steps, 15% and 30%', try_hover(function(c) return c.hover end, true) },
+      { 'Now', 'bright @ 15%, half of cursor_line, so the selected row is the stronger; black and white use 1 of their steps, 5% and 10%', try_hover(function(c) return c.hover end, true) },
       { 'Bright @ 30%', 'before: cursor_line, the theme’s color itself, in every theme', try_hover(function(c) return c.cursor_line end) },
       { 'Cyan guide @ 25%', 'before: cursor guide #b3ecff @ 25%, Gr33N’s pale cyan over each background', try_hover(function(c) return mix('#b3ecff', c.bg, 0.25) end) },
       { 'Selection @ 25%', 'each theme’s own pale color in place of the cyan, at the same 25%', try_hover(function(c) return mix(c.selection, c.bg, 0.25) end) },
