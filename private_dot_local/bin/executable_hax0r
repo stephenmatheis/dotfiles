@@ -1,19 +1,13 @@
 #!/bin/zsh
-# hax0r: switch Ghostty, tmux, nvim, fzf, lazygit, Claude Code and VS Code between the hax0r themes.
+# hax0r: switch Ghostty, tmux, nvim, fzf, lazygit, Claude Code and VS Code between the hax0r themes,
+# along with the apps each machine opts into.
 #
-#   hax0r            list the themes, marking the current one
-#   hax0r <theme>    switch every app to <theme>
-#   hax0r preview    show every theme side by side
-#   hax0r build      rebuild each app's theme files after editing ~/.config/hax0r/palettes.lua
-#   hax0r clear      clear the terminal with neoclear in the current theme's color
-#   hax0r macos      show or set (on, off) whether themes also set macOS's Light/Dark and wallpaper
-#   hax0r shader     show or set (on, off) whether Ghostty draws the CRT shader
-#   hax0r xcode      show or set (on, off) whether themes also switch Xcode
-#   hax0r chrome     show or set (on, off) whether themes also rewrite a Chrome theme
-#   hax0r delta      show or set (on, off) whether git shows diffs through delta
-#   hax0r raycast    install every theme in Raycast, or one with raycast <theme>; off stops the reminder
+# `hax0r --help` lists the commands, `hax0r help <command>` explains one, and `hax0r status` shows
+# the settings. The manual, `man hax0r`, is ~/.local/share/man/man1/hax0r.1. When a command
+# changes, change its help below and the manual with it.
 #
-# The choice is per machine, kept in ~/.local/state/hax0r: dotfiles share the themes, not which one is on.
+# The theme and the settings are per machine, kept in ~/.local/state/hax0r: dotfiles share the
+# themes, not which one is on.
 
 emulate -L zsh
 
@@ -104,6 +98,7 @@ switch() {
     if [[ -z $title ]]; then
         print -u2 "hax0r: there's no theme called '$name'. These are:"
         cut -f1 $themes | sed 's/^/  /' >&2
+        print -u2 "For the commands, see hax0r --help"
         return 1
     fi
     # Everything starts together: the fade runs last, alongside the apps' own reloads, so it holds
@@ -283,7 +278,7 @@ macos_apply() {
 
 macos() {
     case $1 in
-        '') [[ -d $macos_state ]] && print on || print off ;;
+        '') on_off macos ;;
         on)
             if [[ ! -d $macos_state ]]; then
                 mkdir -p $macos_state
@@ -302,10 +297,7 @@ macos() {
             wallpaper_install $macos_state/wallpaper.plist
             rm -rf $macos_state
             ;;
-        *)
-            print -u2 "hax0r: use macos on or macos off"
-            return 1
-            ;;
+        *) bad_arg macos $1 ;;
     esac
 }
 
@@ -313,7 +305,7 @@ macos() {
 # Nothing in the shader animates, so Ghostty can run it only when the terminal redraws
 shader() {
     case $1 in
-        '') [[ -f $shader_state ]] && print on || print off ;;
+        '') on_off shader ;;
         on)
             mkdir -p $state
             print -rl -- "custom-shader = $config/ghostty/shaders/crt.glsl" 'custom-shader-animation = false' > $shader_state
@@ -323,10 +315,7 @@ shader() {
             rm -f $shader_state
             pkill -USR2 -a -x ghostty
             ;;
-        *)
-            print -u2 "hax0r: use shader on or shader off"
-            return 1
-            ;;
+        *) bad_arg shader $1 ;;
     esac
 }
 
@@ -351,7 +340,7 @@ xcode_apply() {
 
 xcode() {
     case $1 in
-        '') [[ -f $xcode_theme ]] && print on || print off ;;
+        '') on_off xcode ;;
         on)
             if [[ ! -d /Applications/Xcode.app ]]; then
                 print -u2 "hax0r: Xcode isn't in /Applications, so nothing changed"
@@ -362,10 +351,7 @@ xcode() {
             print "Now choose it once each in macOS's Light and Dark: Xcode ▸ Settings ▸ Appearance ▸ Choose… ▸ hax0r"
             ;;
         off) rm -f $xcode_theme ;;
-        *)
-            print -u2 "hax0r: use xcode on or xcode off"
-            return 1
-            ;;
+        *) bad_arg xcode $1 ;;
     esac
 }
 
@@ -383,7 +369,7 @@ chrome_apply() {
 
 chrome() {
     case $1 in
-        '') [[ -d $chrome_theme ]] && print on || print off ;;
+        '') on_off chrome ;;
         on)
             mkdir -p $chrome_theme
             cp $config/hax0r/chrome/$(current).json $chrome_theme/manifest.json
@@ -394,10 +380,7 @@ chrome() {
             rm -rf $chrome_theme
             print "Now use Reset to default in Chrome's Customize Chrome panel, since chrome://extensions doesn't list themes"
             ;;
-        *)
-            print -u2 "hax0r: use chrome on or chrome off"
-            return 1
-            ;;
+        *) bad_arg chrome $1 ;;
     esac
 }
 
@@ -406,7 +389,7 @@ chrome() {
 # git reads it each time it runs, so a switch reaches the next diff.
 delta_cmd() {
     case $1 in
-        '') [[ -f $delta_state ]] && print on || print off ;;
+        '') on_off delta ;;
         on)
             if (( ! $+commands[delta] )); then
                 print -u2 "hax0r: delta isn't installed. brew install git-delta"
@@ -416,36 +399,30 @@ delta_cmd() {
             cp $config/hax0r/delta/$(current).gitconfig $delta_state
             ;;
         off) rm -f $delta_state ;;
-        *)
-            print -u2 "hax0r: use delta on or delta off"
-            return 1
-            ;;
+        *) bad_arg delta $1 ;;
     esac
 }
 
 # Raycast has no official way for a script to switch themes, so a switch leaves Raycast alone: you
 # install the themes here once and use its Switch Theme command. Each link opens Theme Studio with a
 # confirm dialog, and a newer link replaces one still waiting, so they go one at a time. Installing
-# a theme again adds a duplicate, which you delete in Theme Studio. Installing also turns on a reminder
-# at each switch, kept in $raycast_state so a machine without the themes doesn't see it.
-raycast() {
+# a theme again adds a duplicate, which you delete in Theme Studio. The setting is only a reminder at
+# each switch, kept in $raycast_state so a machine without the themes doesn't see it. Installing
+# turns it on; `on` alone is for a machine that got the themes some other way, like Raycast's sync.
+raycast_install() {
     local name last
     local -a names
-    if [[ $1 == off ]]; then
-        rm -f $raycast_state
-        print "Switches won't mention Raycast now. Its themes stay installed: delete them in Theme Studio"
-        return
-    fi
     if [[ -n $1 ]]; then
         if [[ ! -f $config/hax0r/raycast/$1 ]]; then
-            print -u2 "hax0r: no Raycast theme called $1"
-            return 1
+            print -u2 -r -- "hax0r: there's no Raycast theme called '$1'"
+            help_topic raycast | head -n 1 >&2
+            return 2
         fi
         names=($1)
     else
         names=(${(f)"$(cut -f1 $themes)"})
         if [[ ! -t 0 ]]; then
-            print -u2 "hax0r: raycast waits for Enter between themes, so run it in a terminal, or use raycast <theme>"
+            print -u2 "hax0r: raycast install waits for Enter between themes, so run it in a terminal, or use raycast install <theme>"
             return 1
         fi
     fi
@@ -460,6 +437,31 @@ raycast() {
     print "Now use Switch Theme in Raycast to pick one"
 }
 
+raycast() {
+    case $1 in
+        '') on_off raycast ;;
+        on | install)
+            if [[ ! -d /Applications/Raycast.app ]]; then
+                print -u2 "hax0r: Raycast isn't in /Applications, so nothing changed"
+                return 1
+            fi
+            if [[ $1 == install ]]; then
+                shift
+                raycast_install "$@"
+                return
+            fi
+            mkdir -p $state
+            : > $raycast_state
+            print "Switches will remind you to pick the theme in Raycast. To install the themes here, use hax0r raycast install"
+            ;;
+        off)
+            rm -f $raycast_state
+            print "Switches won't mention Raycast now. Its themes stay installed: delete them in Theme Studio"
+            ;;
+        *) bad_arg raycast $1 ;;
+    esac
+}
+
 # neoclear isn't in the dotfiles (see the README), so a machine without it gets a plain clear
 clear_screen() {
     if (( ! $+commands[neoclear] )); then
@@ -470,9 +472,273 @@ clear_screen() {
     neoclear ${color:+--color=$color} "$@"
 }
 
+# The per-machine settings, in the order help and status show them, and what each one being on means
+settings=(macos shader xcode chrome delta raycast)
+typeset -A setting_about=(
+    macos   "themes also set macOS's Light/Dark and wallpaper"
+    shader  "Ghostty draws the CRT shader"
+    xcode   "themes also switch Xcode"
+    chrome  "themes also rewrite a Chrome theme"
+    delta   "git shows diffs through delta"
+    raycast "switches remind you to pick the theme in Raycast"
+)
+
+# A setting is on when its file in $state (or Xcode's folder) is there
+is_on() {
+    case $1 in
+        macos) [[ -d $macos_state ]] ;;
+        shader) [[ -f $shader_state ]] ;;
+        xcode) [[ -f $xcode_theme ]] ;;
+        chrome) [[ -d $chrome_theme ]] ;;
+        delta) [[ -f $delta_state ]] ;;
+        raycast) [[ -f $raycast_state ]] ;;
+    esac
+}
+
+on_off() {
+    is_on $1 && print on || print off
+}
+
+# What would stop `on` here, for the settings that check
+missing() {
+    case $1 in
+        xcode) [[ -d /Applications/Xcode.app ]] || print "needs Xcode in /Applications" ;;
+        delta) (( $+commands[delta] )) || print "needs delta: brew install git-delta" ;;
+        raycast) [[ -d /Applications/Raycast.app ]] || print "needs Raycast in /Applications" ;;
+    esac
+}
+
+# `hax0r status`: the theme, then each setting and whether it's on here. Bold and dim only on a terminal
+show_status() {
+    local cur=$(current) name title bg fg mode note on='' off='' reset=''
+    [[ -t 1 ]] && on=$'\e[1m' off=$'\e[2m' reset=$'\e[0m'
+    IFS=$'\t' read -r name title bg fg mode < <(awk -F'\t' -v name=$cur '$1 == name' $themes)
+    [[ -t 1 ]] && title=$(swatch " $title " $bg $fg)
+    print -r -- "Theme: $title ($cur)"
+    print -r -- "Every switch reaches Ghostty, tmux, nvim, fzf, lazygit, Claude Code and VS Code."
+    print; print -r -- "Settings on ${HOST%%.*}:"
+    for name in $settings; do
+        if is_on $name; then
+            printf '  %-8s %s%-3s%s  %s\n' $name "$on" on "$reset" "$setting_about[$name]"
+        else
+            note=$(missing $name)
+            printf '  %-8s %s%-3s%s  %s%s\n' $name "$off" off "$reset" "$setting_about[$name]" "${note:+ ($note)}"
+        fi
+    done
+    print; print -r -- "Change one with hax0r <setting> on or off. hax0r help <setting> says more."
+}
+
+help_row() {
+    printf '  %-31s  %s\n' "$1" "$2"
+}
+
+# `hax0r help` and `hax0r --help`
+help_all() {
+    local name
+    print -r -- "Usage: hax0r [<theme> | <command> [<argument>]]
+
+Switches Ghostty, tmux, nvim, fzf, lazygit, Claude Code and VS Code between the hax0r themes,
+along with the apps this machine opts into under Settings.
+
+Themes"
+    help_row 'hax0r' 'list the themes, marking the current one'
+    help_row 'hax0r <theme>' 'switch every app to <theme>'
+    help_row 'hax0r preview' 'show every theme side by side'
+    help_row 'hax0r build' "rebuild each app's theme files from palettes.lua"
+    help_row 'hax0r clear [<options>]' "clear the terminal in the current theme's color"
+    print; print -r -- "Settings, off until turned on, for this machine only"
+    help_row 'hax0r status' 'show them all, and whether each is on'
+    for name in $settings; do
+        help_row "hax0r $name [on | off]" "$setting_about[$name]"
+    done
+    help_row 'hax0r raycast install [<theme>]' 'install the themes in Raycast, all or one'
+    print -r -- "With no argument, each setting prints on or off."
+    print; print -r -- "Help"
+    help_row 'hax0r help <command>' 'more about one command, as does hax0r <command> --help'
+    help_row 'man hax0r' 'the manual'
+    print; print -r -- "The theme and the settings stay on this machine, in ${state/#$HOME/~}."
+}
+
+# `hax0r help <command>` and `hax0r <command> --help`. The first line is the usage, which bad_arg reuses
+help_topic() {
+    local st=${state/#$HOME/\~} cf=${config/#$HOME/\~}
+    case $1 in
+        theme | switch)
+            cat <<EOF
+Usage: hax0r <theme>
+
+Switches Ghostty, tmux, nvim, fzf, lazygit, Claude Code and VS Code to <theme>, along with each
+setting that's on here (see hax0r status). Run in Ghostty outside tmux, the terminal fades to the
+new colors over about a quarter of a second. hax0r with no argument lists the themes.
+
+Most apps change at once. fzf changes the next time it starts, lazygit when its terminal gets
+focus back, Xcode within a few seconds, Chrome after a restart, and Raycast through its own
+Switch Theme command.
+EOF
+            ;;
+        preview)
+            cat <<EOF
+Usage: hax0r preview
+
+Shows every theme side by side in the terminal, drawn by nvim from palettes.lua, as many across
+as the terminal fits. Nothing changes.
+EOF
+            ;;
+        build)
+            cat <<EOF
+Usage: hax0r build
+
+Rebuilds each app's theme files from $cf/hax0r/palettes.lua and the templates, writing only
+the files that changed, then switches to the current theme again so every app picks them up.
+nvim needs no build: its colorscheme reads palettes.lua directly. Afterwards, chezmoi re-add
+brings the generated files back into the dotfiles.
+EOF
+            ;;
+        clear)
+            cat <<EOF
+Usage: hax0r clear [<options>]
+
+Clears the terminal with neoclear in the current theme's text color, passing any options on to
+it. Without neoclear, it's a plain clear.
+EOF
+            ;;
+        status)
+            cat <<EOF
+Usage: hax0r status
+
+Shows the current theme and each setting: whether it's on here, what it does, and what would
+stop it from turning on.
+EOF
+            ;;
+        help)
+            cat <<EOF
+Usage: hax0r help [<command>]
+
+Lists the commands, or explains one. hax0r <command> --help does the same, and man hax0r has
+the full manual.
+EOF
+            ;;
+        macos)
+            cat <<EOF
+Usage: hax0r macos [on | off]
+
+Themes also set macOS's Light/Dark, and a wallpaper in the theme's background on every Space
+and display.
+
+  hax0r macos       print on or off
+  hax0r macos on    save the current Light/Dark and wallpaper, then apply the current theme
+  hax0r macos off   put back what on saved
+
+The wallpaper is an unofficial workaround. It rewrites macOS's wallpaper store, which Apple
+doesn't document, so a macOS update could break it without a warning. Light/Dark is official.
+A wallpaper chosen by hand while this is on gets replaced at the next switch. macOS may ask once
+to let the terminal control System Events. Saved in $st/macos.
+EOF
+            ;;
+        shader)
+            cat <<EOF
+Usage: hax0r shader [on | off]
+
+Ghostty draws scanlines and a glow from $cf/ghostty/shaders/crt.glsl, in every theme. Both
+on and off reach open terminals at once. The strengths are constants at the top of that file.
+
+  hax0r shader       print on or off
+  hax0r shader on    write $st/ghostty-shader, which config.ghostty includes
+  hax0r shader off   delete it
+EOF
+            ;;
+        xcode)
+            cat <<EOF
+Usage: hax0r xcode [on | off]
+
+Themes also switch Xcode, through one saved theme called hax0r that each switch overwrites. A
+running Xcode picks it up within a few seconds.
+
+  hax0r xcode       print on or off
+  hax0r xcode on    add the theme, then choose it in Xcode ▸ Settings ▸ Appearance ▸ Choose…,
+                    once while macOS is Light and once while it's Dark. Needs Xcode in /Applications
+  hax0r xcode off   delete it. Choose another theme in Xcode first
+
+An unofficial workaround: Apple doesn't document Xcode's theme folder or format, so an Xcode
+update could break it without a warning.
+EOF
+            ;;
+        chrome)
+            cat <<EOF
+Usage: hax0r chrome [on | off]
+
+Themes also rewrite a Chrome theme in $st/chrome-theme. Chrome can't reload a
+theme by itself, so it shows the new colors after a restart, or after Load unpacked again.
+
+  hax0r chrome       print on or off
+  hax0r chrome on    make the folder, then load it once at chrome://extensions: turn on
+                     Developer mode, click Load unpacked, press Cmd-Shift-G and paste its path
+  hax0r chrome off   delete the folder, then use Reset to default in Customize Chrome
+EOF
+            ;;
+        delta)
+            cat <<EOF
+Usage: hax0r delta [on | off]
+
+git diff, git show, git log -p and git add -p go through delta, in the theme's colors. A switch
+reaches the next diff.
+
+  hax0r delta       print on or off
+  hax0r delta on    copy the theme's config to $st/delta.gitconfig, which
+                    git's config includes. Needs delta: brew install git-delta
+  hax0r delta off   delete it, so git goes back to its own pager
+EOF
+            ;;
+        raycast)
+            cat <<EOF
+Usage: hax0r raycast [on | off | install [<theme>]]
+
+Raycast has no way for a script to switch its theme, so the themes are installed once and you
+pick one with Raycast's Switch Theme. The setting is a reminder to do that at each switch.
+Custom themes need Raycast Pro.
+
+  hax0r raycast                   print on or off
+  hax0r raycast on                turn the reminder on, say where Raycast's sync brought the
+                                  themes. Installs nothing
+  hax0r raycast off               turn it off. The themes stay installed
+  hax0r raycast install           open each theme's install link in turn: confirm each in
+                                  Raycast, then press Enter for the next. Turns the reminder on
+  hax0r raycast install <theme>   install just that one, say after changing its palette.
+                                  Raycast adds a duplicate, so delete the old copy in Theme Studio
+EOF
+            ;;
+        *)
+            if cut -f1 $themes | grep -qx -- "$1"; then
+                help_topic theme
+                return
+            fi
+            print -u2 -r -- "hax0r: there's no command called '$1'. hax0r --help lists them"
+            return 2
+            ;;
+    esac
+}
+
+# For a command given an argument it doesn't take: says so, with its usage line
+bad_arg() {
+    print -u2 -r -- "hax0r: $1 doesn't take '$2'"
+    help_topic $1 | head -n 1 >&2
+    print -u2 -r -- "More: hax0r help $1"
+    return 2
+}
+
+# `hax0r <command> --help` is `hax0r help <command>`
+if [[ -n $1 && $2 == (-h|--help) ]]; then
+    help_topic $1
+    exit
+fi
+
 case $1 in
     '') list ;;
-    -h | --help | help) sed -n '2,16s/^# \{0,1\}//p' $0 ;;
+    -h | --help | help) if [[ -n $2 ]]; then help_topic $2; else help_all; fi ;;
+    -*)
+        print -u2 -r -- "hax0r: there's no option $1. hax0r --help lists the commands"
+        exit 2
+        ;;
     build) nvim -l $config/hax0r/generate.lua && switch $(current) ;;
     chrome) shift; chrome "$@" ;;
     clear) shift; clear_screen "$@" ;;
@@ -481,6 +747,7 @@ case $1 in
     preview) HAX0R_COLUMNS=$COLUMNS nvim -l $config/hax0r/preview.lua ;;
     raycast) shift; raycast "$@" ;;
     shader) shift; shader "$@" ;;
+    status) show_status ;;
     xcode) shift; xcode "$@" ;;
     *) switch $1 ;;
 esac

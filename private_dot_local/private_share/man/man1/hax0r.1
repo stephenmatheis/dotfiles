@@ -1,0 +1,245 @@
+.\" The manual for ~/.local/bin/hax0r. Change it with the help text in that script.
+.Dd November 2, 2026
+.Dt HAX0R 1
+.Os
+.Sh NAME
+.Nm hax0r
+.Nd switch every app between the hax0r themes
+.Sh SYNOPSIS
+.Nm
+.Op Ar theme
+.Nm
+.Cm preview | build | status
+.Nm
+.Cm clear
+.Op Ar option ...
+.Nm
+.Brq Cm macos | shader | xcode | chrome | delta | raycast
+.Op Cm on | off
+.Nm
+.Cm raycast install
+.Op Ar theme
+.Nm
+.Cm help
+.Op Ar command
+.Sh DESCRIPTION
+.Nm
+switches Ghostty, tmux, nvim, fzf, lazygit, Claude Code and VS Code between the hax0r themes,
+which are all built from one file,
+.Pa ~/.config/hax0r/palettes.lua .
+Each machine can also opt into more: macOS's Light/Dark and wallpaper, Xcode, Chrome, delta,
+Raycast and Ghostty's CRT shader.
+See
+.Sx SETTINGS .
+.Pp
+The current theme and the settings are kept per machine in
+.Pa ~/.local/state/hax0r ,
+so the dotfiles share the themes but not the choices.
+.Pp
+With no argument,
+.Nm
+lists the themes and marks the current one.
+.Sh COMMANDS
+.Bl -tag -width Ds
+.It Nm Ar theme
+Switches every app to
+.Ar theme ,
+along with each setting that's on here.
+Run in Ghostty outside tmux, the terminal fades to the new colors over about a quarter of a
+second.
+Most apps change at once.
+fzf changes the next time it starts, lazygit when its terminal gets focus back, Xcode within a
+few seconds, Chrome after a restart, and Raycast through its own Switch Theme command.
+.It Nm Cm preview
+Shows every theme side by side in the terminal, drawn by nvim from
+.Pa palettes.lua .
+Nothing changes.
+.It Nm Cm build
+Rebuilds each app's theme files from
+.Pa palettes.lua
+and the templates, writing only the files that changed, then switches to the current theme again
+so every app picks them up.
+nvim needs no build: its colorscheme reads
+.Pa palettes.lua
+directly.
+Afterwards,
+.Ic chezmoi re-add
+brings the generated files back into the dotfiles.
+.It Nm Cm clear Op Ar option ...
+Clears the terminal with neoclear in the current theme's text color, passing any options on to
+it.
+Without neoclear, it's a plain
+.Xr clear 1 .
+.It Nm Cm status
+Shows the current theme and each setting: whether it's on here, what it does, and what would
+stop it from turning on.
+.It Nm Cm help Op Ar command
+Lists the commands, or explains one.
+.Nm Ar command Fl \-help
+does the same.
+.El
+.Sh SETTINGS
+Each setting is off until turned on, and on or off for this machine only.
+With no argument, each prints
+.Cm on
+or
+.Cm off .
+.Nm Cm status
+shows them all at once.
+.Bl -tag -width Ds
+.It Nm Cm macos Op Cm on | off
+Themes also set macOS's Light/Dark, and a wallpaper in the theme's background on every Space
+and display.
+.Cm on
+saves the current Light/Dark and wallpaper, then applies the current theme.
+.Cm off
+puts back what
+.Cm on
+saved, including a dynamic wallpaper.
+A wallpaper chosen by hand while this is on gets replaced at the next switch.
+macOS may ask once to let the terminal control System Events.
+The wallpaper is an unofficial workaround: see
+.Sx CAVEATS .
+.It Nm Cm shader Op Cm on | off
+Ghostty draws scanlines and a glow from
+.Pa ~/.config/ghostty/shaders/crt.glsl ,
+in every theme.
+.Cm on
+writes
+.Pa ~/.local/state/hax0r/ghostty-shader ,
+which Ghostty's config includes, and
+.Cm off
+deletes it.
+Both reach open terminals at once.
+The strengths are constants at the top of the shader.
+.It Nm Cm xcode Op Cm on | off
+Themes also switch Xcode, through one saved theme called hax0r that each switch overwrites.
+A running Xcode picks it up within a few seconds.
+After
+.Cm on ,
+choose it in Xcode \[u25B8] Settings \[u25B8] Appearance \[u25B8] Choose\[u2026], once while macOS is Light and
+once while it's Dark, since Xcode remembers a theme for each.
+.Cm off
+deletes it, so choose another theme in Xcode first.
+Needs Xcode in
+.Pa /Applications .
+This is an unofficial workaround: see
+.Sx CAVEATS .
+.It Nm Cm chrome Op Cm on | off
+Themes also rewrite a Chrome theme in
+.Pa ~/.local/state/hax0r/chrome-theme .
+After
+.Cm on ,
+load it once at chrome://extensions: turn on Developer mode, click Load unpacked, press
+Cmd-Shift-G and paste the path.
+Chrome can't reload a theme by itself, so it shows the new colors after a restart, or after Load
+unpacked again.
+.Cm off
+deletes the folder; then use Reset to default in Chrome's Customize Chrome panel.
+.It Nm Cm delta Op Cm on | off
+.Ic git diff ,
+.Ic git show ,
+.Ic git log -p
+and
+.Ic git add -p
+go through delta, in the theme's colors.
+.Cm on
+copies the theme's config to
+.Pa ~/.local/state/hax0r/delta.gitconfig ,
+which git's config includes, and each switch overwrites it, so a switch reaches the next diff.
+That file also makes delta git's pager, so
+.Cm off
+deletes it and git goes back to its own.
+Needs delta:
+.Ic brew install git-delta .
+.It Nm Cm raycast Op Cm on | off
+Switches remind you to pick the theme in Raycast.
+Raycast has no way for a script to switch its theme, so the themes are installed once and you
+pick one with Raycast's Switch Theme.
+.Cm on
+turns the reminder on without installing anything, say where Raycast's sync brought the themes.
+.Cm off
+turns it off, leaving the themes installed.
+Needs Raycast in
+.Pa /Applications ,
+and custom themes need Raycast Pro.
+.It Nm Cm raycast install Op Ar theme
+Opens each theme's install link in turn: confirm each in Raycast, then press Enter for the next.
+With
+.Ar theme ,
+installs just that one, say after changing its palette; Raycast adds a duplicate, so delete the
+old copy in Theme Studio.
+Installing turns the reminder on.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width Ds
+.It Ev XDG_CONFIG_HOME
+Where the themes are, in place of
+.Pa ~/.config .
+.It Ev XDG_STATE_HOME
+Where the per-machine state goes, in place of
+.Pa ~/.local/state .
+.It Ev CLAUDE_CONFIG_DIR
+Claude Code's folder, in place of
+.Pa ~/.claude .
+.El
+.Sh FILES
+.Bl -tag -width Ds
+.It Pa ~/.config/hax0r/palettes.lua
+Every theme's colors, and the rules that derive the rest.
+Edit this, then run
+.Nm Cm build .
+.It Pa ~/.config/hax0r/themes
+The theme list: name, title, background, text and Light or Dark.
+Built by
+.Nm Cm build .
+.It Pa ~/.local/state/hax0r/theme
+The current theme on this machine.
+.It Pa ~/.local/state/hax0r/
+Also the files Ghostty, tmux, fzf and lazygit read for the current theme, and each setting's
+file or folder.
+.It Pa ~/.claude/themes/hax0r.json
+Claude Code's copy of the current theme.
+.El
+.Sh EXIT STATUS
+.Nm
+exits 0 on success, 1 when something fails, and 2 when a command doesn't exist or gets an
+argument it doesn't take.
+.Sh EXAMPLES
+Switch every app to black on white:
+.Dl hax0r black
+.Pp
+See which settings are on here:
+.Dl hax0r status
+.Pp
+Turn on Ghostty's CRT shader:
+.Dl hax0r shader on
+.Pp
+After editing
+.Pa palettes.lua ,
+rebuild and bring the generated files back into the dotfiles:
+.Dl hax0r build && chezmoi re-add
+.Sh SEE ALSO
+.Xr ghostty 1 ,
+.Xr git 1 ,
+.Xr nvim 1 ,
+.Xr tmux 1
+.Sh CAVEATS
+Two settings depend on files Apple doesn't document, so a macOS or Xcode update could break
+them without a warning.
+.Cm macos
+rewrites macOS's wallpaper store,
+.Pa ~/Library/Application Support/com.apple.wallpaper/Store/Index.plist ,
+and restarts WallpaperAgent so macOS reads it, because no official route keeps one wallpaper on
+every Space.
+.Nm
+only checks that the file holds the new value, not that macOS used it.
+Light/Dark is official.
+.Cm xcode
+writes a theme in Xcode's own format to
+.Pa ~/Library/Developer/Xcode/UserData/FontAndColorThemes .
+The comments above
+.Fn wallpaper_set
+and
+.Fn xcode_apply
+in the script list the official routes tried.
