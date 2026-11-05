@@ -28,55 +28,105 @@ end
 -- Chrome
 hl('Normal', { fg = c.fg, bg = c.bg })
 hl('Cursor', { fg = c.cursor_text, bg = c.cursor })
-hl('LineNr', { fg = c.dim })
-hl('CursorLineNr', { fg = c.bright })
+hl('LineNr', { fg = c.line_nr })
+hl('CursorLineNr', { fg = c.line_nr_active })
 hl('CursorLine', { bg = c.cursor_line })
 hl('CursorColumn', { bg = c.cursor_line })
 hl('ColorColumn', { bg = c.dark })
 hl('SignColumn', { fg = c.dim })
-hl('EndOfBuffer', { fg = c.dim })
-hl('NonText', { fg = c.dim })
-hl('StatusLine', { fg = c.bright, bg = c.dark })
+hl('EndOfBuffer', { fg = c.nontext })
+hl('NonText', { fg = c.nontext })
+hl('StatusLine', { fg = c.statusline, bg = c.dark })
 hl('StatusLineNC', { fg = c.dim, bg = c.dark })
 hl('WinBar', { link = 'StatusLine' })
 hl('WinBarNC', { link = 'StatusLineNC' })
 hl('WinSeparator', { fg = c.border }) -- not dim: the faint outline VS Code draws around its panels, so splits don't shout
-hl('Directory', { fg = c.bright })
+hl('Directory', { fg = c.directory })
 
--- Code
-hl('Comment', { fg = c.comment, italic = true })
-hl('String', { fg = c.normal })
-hl('Function', { fg = c.normal })
-hl('Statement', { fg = c.bold, bold = true })
-hl('Constant', { fg = c.normal })
-hl('Identifier', { fg = c.fg }) -- not normal like the vim port: keeps fields plain
-hl('Type', { fg = c.bright })
-hl('Special', { fg = c.bright })
-hl('PreProc', { fg = c.bright })
-hl('Operator', { fg = c.fg }) -- not white like the vim port: too loud in a one-color theme
-hl('Delimiter', { fg = c.fg })
-hl('@variable', { fg = c.fg })
+-- Code: each kind in its color from the theme's syntax table, with its style (bold, italic) if
+-- the theme gives it one. A one-color theme's table comes from its shades (see palettes.lua)
+local function code(group, kind)
+  local opts = { fg = assert(c.syntax[kind], kind) }
+  for style in (c.styles[kind] or ''):gmatch('%a+') do
+    opts[style] = true
+  end
+  hl(group, opts)
+end
+code('Comment', 'comment')
+code('String', 'string')
+code('Function', 'func')
+code('Statement', 'keyword')
+code('Constant', 'constant')
+code('Identifier', 'variable') -- in one-color themes fg, not normal like the vim port: keeps fields plain
+code('Type', 'type')
+code('Special', 'special')
+code('PreProc', 'preproc')
+code('Operator', 'operator') -- in one-color themes fg, not white like the vim port: too loud
+code('Delimiter', 'delimiter')
+code('@variable', 'variable')
 hl('Error', { fg = c.error })
 hl('Todo', { fg = c.white, bold = true })
-hl('Title', { fg = c.bold, bold = true })
+code('Title', 'title')
 hl('Underlined', { fg = c.link, underline = true })
 hl('Conceal', { fg = c.dim })
 
+-- Code, finer: only for a full-color theme, whose syntax table tells these kinds apart. A
+-- one-color theme leaves these groups to nvim's links, back to the ones above
+if c.full_color then
+  for kind, groups in pairs({
+    keyword = { 'Keyword', '@keyword', '@keyword.function', '@keyword.operator', '@punctuation.special' },
+    control = { 'Conditional', 'Repeat', 'Exception', '@keyword.conditional', '@keyword.repeat',
+      '@keyword.return', '@keyword.exception', '@keyword.import', '@keyword.coroutine' },
+    storage = { 'StorageClass', 'Structure', 'Typedef', '@keyword.modifier', '@keyword.type' },
+    preproc = { 'Include', 'Define', 'PreCondit', '@keyword.directive', '@keyword.directive.define' },
+    macro = { 'Macro', '@function.macro', '@constant.macro' },
+    string = { 'Character', '@string', '@character', '@string.documentation' },
+    escape = { 'SpecialChar', '@string.escape', '@character.special', '@string.special' },
+    regex = { '@string.regexp' },
+    number = { 'Number', 'Float', '@number', '@number.float' },
+    constant = { '@constant' },
+    builtin = { 'Boolean', '@boolean', '@constant.builtin', '@variable.builtin', '@variable.parameter.builtin' },
+    func = { '@function', '@function.call', '@function.method', '@function.method.call',
+      '@function.builtin', '@attribute', '@attribute.builtin' },
+    type = { '@type', '@type.builtin', '@type.definition', '@module', '@module.builtin', '@constructor' },
+    variable = { '@variable.parameter', '@variable.member', '@property' },
+    operator = { '@operator', '@keyword.conditional.ternary' },
+    delimiter = { '@punctuation', '@punctuation.delimiter', '@punctuation.bracket', '@constructor.lua' },
+    tag = { 'Tag', '@tag', '@tag.builtin' },
+    tag_bracket = { '@tag.delimiter' },
+    attribute = { '@tag.attribute' },
+    label = { 'Label', '@label' },
+    heading = { '@markup.heading' },
+    raw = { '@markup.raw' },
+    quote = { '@markup.quote' },
+    list = { '@markup.list' },
+    strong = { '@markup.strong' },
+    emphasis = { '@markup.italic' },
+    inserted = { '@diff.plus' },
+    deleted = { '@diff.minus' },
+    modified = { '@diff.delta' },
+  }) do
+    for _, group in ipairs(groups) do
+      code(group, kind)
+    end
+  end
+end
+
 -- Interaction
 hl('Visual', { bg = c.selection_tint }) -- not solid selection: a big selection glared, so tint it and keep each character's own color
-hl('Search', { fg = c.bg, bg = c.fg })
-hl('CurSearch', { fg = c.bg, bg = c.bright })
-hl('IncSearch', { fg = c.bg, bg = c.bright })
+hl('Search', { fg = c.search_text, bg = c.search })
+hl('CurSearch', { fg = c.cur_search_text, bg = c.cur_search })
+hl('IncSearch', { fg = c.cur_search_text, bg = c.cur_search })
 hl('MatchParen', { fg = c.bold, bold = true, underline = true })
-hl('Pmenu', { fg = c.fg, bg = c.dark })
-hl('PmenuSel', { fg = c.bg, bg = c.fg })
+hl('Pmenu', { fg = c.fg, bg = c.float_bg })
+hl('PmenuSel', { fg = c.menu_sel_text, bg = c.menu_sel })
 hl('PmenuThumb', { bg = c.dim })
 hl('QuickFixLine', { fg = c.bold, bold = true })
 
 -- Messages
 hl('ErrorMsg', { fg = c.error })
 hl('WarningMsg', { fg = c.warning })
-hl('OkMsg', { fg = c.normal })
+hl('OkMsg', { fg = c.success })
 hl('ModeMsg', { fg = c.bright })
 hl('MoreMsg', { fg = c.bright })
 hl('Question', { fg = c.bright })
@@ -85,14 +135,14 @@ hl('NvimInternalError', { fg = c.bg, bg = c.error })
 -- Diagnostics
 hl('DiagnosticError', { fg = c.error })
 hl('DiagnosticWarn', { fg = c.warning })
-hl('DiagnosticInfo', { fg = c.bright })
-hl('DiagnosticHint', { fg = c.dim })
-hl('DiagnosticOk', { fg = c.normal })
+hl('DiagnosticInfo', { fg = c.info })
+hl('DiagnosticHint', { fg = c.hint })
+hl('DiagnosticOk', { fg = c.success })
 hl('DiagnosticUnderlineError', { undercurl = true, sp = c.error })
 hl('DiagnosticUnderlineWarn', { undercurl = true, sp = c.warning })
-hl('DiagnosticUnderlineInfo', { undercurl = true, sp = c.bright })
-hl('DiagnosticUnderlineHint', { undercurl = true, sp = c.dim })
-hl('DiagnosticUnderlineOk', { undercurl = true, sp = c.normal })
+hl('DiagnosticUnderlineInfo', { undercurl = true, sp = c.info })
+hl('DiagnosticUnderlineHint', { undercurl = true, sp = c.hint })
+hl('DiagnosticUnderlineOk', { undercurl = true, sp = c.success })
 hl('DiagnosticDeprecated', { strikethrough = true })
 
 -- Diff
@@ -110,32 +160,29 @@ hl('SpellRare', { undercurl = true, sp = c.bright })
 hl('SpellLocal', { undercurl = true, sp = c.dim })
 
 -- Floats and Folds
-hl('NormalFloat', { fg = c.fg, bg = c.dark })
-hl('FloatBorder', { fg = c.float_border, bg = c.dark }) -- not dim: VS Code's faint panel outline, as it looks over a float
-hl('FloatTitle', { fg = c.bold, bg = c.dark, bold = true })
+hl('NormalFloat', { fg = c.fg, bg = c.float_bg })
+hl('FloatBorder', { fg = c.float_border, bg = c.float_bg }) -- not dim: VS Code's faint panel outline, as it looks over a float
+hl('FloatTitle', { fg = c.bold, bg = c.float_bg, bold = true })
 hl('FloatShadow', { bg = c.black, blend = 80 })
 hl('FloatShadowThrough', { bg = c.black, blend = 100 })
 hl('Folded', { fg = c.dim, bg = c.dark })
 hl('FoldColumn', { fg = c.dim })
 
 -- Plugins
--- 1. Rainbow Delimiters
-hl('RainbowDelimiterRed', { fg = c.bright })
-hl('RainbowDelimiterYellow', { fg = c.fg })
-hl('RainbowDelimiterBlue', { fg = c.bright })
-hl('RainbowDelimiterOrange', { fg = c.fg })
-hl('RainbowDelimiterGreen', { fg = c.bright })
-hl('RainbowDelimiterViolet', { fg = c.fg })
-hl('RainbowDelimiterCyan', { fg = c.bright })
+-- 1. Rainbow Delimiters: the plugin's colors in its order, which is the order it nests them in,
+-- each given the theme's bracket colors in turn
+for i, name in ipairs({ 'Red', 'Yellow', 'Blue', 'Orange', 'Green', 'Violet', 'Cyan' }) do
+  hl('RainbowDelimiter' .. name, { fg = c.brackets[(i - 1) % #c.brackets + 1] })
+end
 
 -- 2. Git Signs
 -- added is the theme's bright and removed its dim, in every theme; see palettes.lua. These also
 -- color diff text, so the signs get their own: VS Code's change marks, which in black and white
 -- are fainter grays, since there white is bright. The rest of gitsigns' groups fall back to these
 hl('Added', { fg = c.added })
-hl('Changed', { fg = c.white })
+hl('Changed', { fg = c.changed })
 hl('Removed', { fg = c.removed })
-hl('GitSignsAdd', { fg = c.added })
+hl('GitSignsAdd', { fg = c.mark_added })
 hl('GitSignsChange', { fg = c.mark_changed })
 hl('GitSignsDelete', { fg = c.mark_removed })
 -- Staged signs sit a step dimmer: dim, faint and faint, or about half in black and white. Not
@@ -167,8 +214,8 @@ hl('GitSignsChangeInline', { bg = c.diff_add_word })
 hl('GitSignsDeleteInline', { fg = c.dim, bg = c.diff_del_word })
 
 -- 3. Indent
-hl('IblIndent', { fg = c.dim })
-hl('IblScope', { fg = c.fg })
+hl('IblIndent', { fg = c.indent })
+hl('IblScope', { fg = c.indent_active })
 
 -- 4. Mason
 hl('MasonHeader', { link = 'PmenuSel' })
@@ -184,16 +231,10 @@ hl('MasonMutedBlock', { fg = c.fg, bg = c.dim })
 hl('MasonMutedBlockBold', { fg = c.fg, bg = c.dim, bold = true })
 
 -- 5. Mini Icons
--- every hax0r theme sets ansi hues 1-6 to one color, so every icon hue is that color too
-hl('MiniIconsRed', { fg = c.normal })
-hl('MiniIconsOrange', { fg = c.normal })
-hl('MiniIconsYellow', { fg = c.normal })
-hl('MiniIconsGreen', { fg = c.normal })
-hl('MiniIconsCyan', { fg = c.normal })
-hl('MiniIconsAzure', { fg = c.normal })
-hl('MiniIconsBlue', { fg = c.normal })
-hl('MiniIconsPurple', { fg = c.normal })
-hl('MiniIconsGrey', { fg = c.fg })
+-- a one-color theme gives every icon hue its one color (see palettes.lua)
+for _, name in ipairs({ 'Red', 'Orange', 'Yellow', 'Green', 'Cyan', 'Azure', 'Blue', 'Purple', 'Grey' }) do
+  hl('MiniIcons' .. name, { fg = c.icons[name:lower()] })
+end
 
 -- 6. Fzf Lua
 -- fzf-lua draws its borders like Normal (fg) by default, so give them the faint border too

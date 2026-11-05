@@ -23,6 +23,7 @@ _hax0r_palette() {
         electric) printf '\e]4;22;#202f4b\a\e]4;28;#344868\a\e]4;52;#0b182f\a\e]4;88;#1a2c49\a\e]4;196;#fefefe\a' ;;
         cyan-pink) printf '\e]4;22;#043737\a\e]4;28;#065151\a\e]4;52;#380b2c\a\e]4;88;#5e0840\a\e]4;196;#feaaca\a' ;;
         pink-cyan) printf '\e]4;22;#482433\a\e]4;28;#65394b\a\e]4;52;#14222a\a\e]4;88;#0f383e\a\e]4;196;#11d9d9\a' ;;
+        dark-modern) printf '\e]4;22;#383e2a\a\e]4;28;#4c5a2a\a\e]4;52;#4c1919\a\e]4;88;#701414\a\e]4;196;#f14c4c\a' ;;
         *) printf '\e]4;22;#073904\a\e]4;28;#0a5505\a\e]4;52;#0c1d0b\a\e]4;88;#1c331a\a\e]4;196;#fefefe\a' ;;
     esac
 }

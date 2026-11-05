@@ -1,0 +1,20 @@
+# hax0r dark-modern for delta: Dark Modern.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+[core]
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	syntax-theme = ansi
+	true-color = always
+	dark = true
+	minus-style = "syntax #4c1919"
+	minus-emph-style = "syntax #701414"
+	plus-style = "syntax #383e2a"
+	plus-emph-style = "syntax #4c5a2a"
+	zero-style = "syntax"
+	file-style = "#cccccc bold"
+	file-decoration-style = "#2b2b2b ul"
+	hunk-header-style = "line-number #9d9d9d"
+	hunk-header-line-number-style = "#9d9d9d"
+	hunk-header-decoration-style = none

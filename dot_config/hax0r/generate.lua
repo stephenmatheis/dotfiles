@@ -33,12 +33,24 @@ local function write(path, text)
   print('wrote ' .. path:gsub('^' .. vim.pesc(home), '~'))
 end
 
--- Fills each {{role}} in a template with that role's color (ansiN is palette slot N)
+-- A role's color: a name in palettes.lua, a dotted path into one of its tables (syntax.keyword,
+-- brackets.1), or ansiN for palette slot N
+local function role_color(c, role)
+  local slot = role:match('^ansi(%d+)$')
+  if slot then
+    return c.ansi[tonumber(slot)]
+  end
+  local value = c
+  for key in role:gmatch('[^.]+') do
+    value = type(value) == 'table' and value[tonumber(key) or key] or nil
+  end
+  return value
+end
+
+-- Fills each {{role}} in a template with that role's color
 local function fill(template, c, extra)
-  return (template:gsub('{{([%w_]+)}}', function(role)
-    local slot = role:match('^ansi(%d+)$')
-    local value = extra[role] or (slot and c.ansi[tonumber(slot)]) or c[role]
-    return assert(value, 'unknown role {{' .. role .. '}}')
+  return (template:gsub('{{([%w_.]+)}}', function(role)
+    return assert(extra[role] or role_color(c, role), 'unknown role {{' .. role .. '}}')
   end))
 end
 
@@ -132,7 +144,7 @@ local function fzf(name, c)
     generated_by('#', 'palettes.lua'),
     "--highlight-line --gutter=' '",
     ('--color=%s,fg:-1,bg:-1,gutter:-1,query:-1:bold'):format(c.light and 'light' or 'dark'),
-    ('--color=hl:%s:bold,hl+:%s:bold,fg+:-1:regular,bg+:%s'):format(c.link, c.link, c.cursor_line),
+    ('--color=hl:%s:bold,hl+:%s:bold,fg+:-1:regular,bg+:%s'):format(c.match, c.match, c.list_row),
     ('--color=pointer:%s,marker:%s,prompt:%s'):format(c.bright, c.bright, c.bright),
     ('--color=info:%s,spinner:%s,header:%s,label:%s,ghost:%s'):format(c.dim, c.dim, c.dim, c.dim, c.dim),
     ('--color=separator:%s,border:%s,scrollbar:%s'):format(c.faint, c.faint, c.faint),
@@ -158,15 +170,15 @@ local function lazygit(name, c)
     generated_by('#', 'palettes.lua'),
     'gui:',
     '  theme:',
-    set('activeBorderColor', c.bright, 'bold'),
+    set('activeBorderColor', c.focus, 'bold'),
     set('inactiveBorderColor', c.dim),
     set('searchingActiveBorderColor', c.link, 'bold'),
     set('optionsTextColor', c.dim),
-    set('selectedLineBgColor', c.cursor_line),
-    set('inactiveViewSelectedLineBgColor', c.selection_tint),
+    set('selectedLineBgColor', c.list_row),
+    set('inactiveViewSelectedLineBgColor', c.list_row_inactive),
     set('cherryPickedCommitFgColor', c.link),
     set('cherryPickedCommitBgColor', c.prompt_band),
-    set('unstagedChangesColor', c.white),
+    set('unstagedChangesColor', c.changed),
     '    authorColors:',
     ("      '*': '%s'"):format(c.dim),
   }, '\n') .. '\n')
@@ -221,21 +233,27 @@ end
 
 -- delta: a git config per theme that `hax0r <theme>` copies to ~/.local/state/hax0r/delta.gitconfig on
 -- a machine with `hax0r delta on`, which ~/.config/git/config includes if it's there. The pager setting
--- lives here too, so git on a machine without delta never asks for it. Syntax highlighting is off:
--- every theme's ANSI colors are nearly one hue
+-- lives here too, so git on a machine without delta never asks for it. Syntax highlighting is off in
+-- a one-color theme, whose ANSI colors are nearly one hue. A full-color theme highlights every line,
+-- added and removed too, as VS Code's diffs do: with its delta_syntax theme if it names one of delta's
+-- (`delta --list-syntax-themes`), or else delta's ansi theme, which uses the terminal's 16 colors
 local function delta(name, c)
   local function style(...)
     return '"' .. table.concat({ ... }, ' ') .. '"'
   end
+  local plus, minus = c.fg, c.removed
+  if c.full_color then
+    plus, minus = 'syntax', 'syntax'
+  end
   local settings = {
-    { 'syntax-theme', 'none' },
+    { 'syntax-theme', c.full_color and (c.delta_syntax or 'ansi') or 'none' },
     { 'true-color', 'always' },
     { c.light and 'light' or 'dark', 'true' },
-    { 'minus-style', style(c.removed, c.diff_del) },
-    { 'minus-emph-style', style(c.removed, c.diff_del_word) },
-    { 'plus-style', style(c.fg, c.diff_add) },
-    { 'plus-emph-style', style(c.fg, c.diff_add_word) },
-    { 'zero-style', style(c.fg) },
+    { 'minus-style', style(minus, c.diff_del) },
+    { 'minus-emph-style', style(minus, c.diff_del_word) },
+    { 'plus-style', style(plus, c.diff_add) },
+    { 'plus-emph-style', style(plus, c.diff_add_word) },
+    { 'zero-style', c.full_color and style('syntax') or style(c.fg) },
     { 'file-style', style(c.fg, 'bold') },
     { 'file-decoration-style', style(c.border, 'ul') },
     { 'hunk-header-style', style('line-number', c.dim) },
@@ -261,13 +279,16 @@ end
 -- Raycast: a link per theme that `hax0r raycast` opens, and Raycast asks before installing it. The
 -- link holds 12 colors in this order, read from Raycast 2.10's code: background, backgroundSecondary,
 -- foreground, selection, loader, red, orange, yellow, green, blue, purple, magenta. It can't set the
--- accent color. Using link for the last three lets a dual theme's second hue show
+-- accent color. Using link for the last three lets a dual theme's second hue show. A full-color
+-- theme has a color for each, in its hues table
 local RAYCAST_ROLES = { 'bg', 'bg', 'fg', 'bright', 'bright', 'error', 'warning', 'warning', 'bright', 'link', 'link', 'link' }
+local RAYCAST_HUES = { 'bg', 'bg', 'fg', 'focus', 'focus', 'hues.red', 'hues.orange', 'hues.yellow', 'hues.green',
+  'hues.blue', 'hues.purple', 'hues.magenta' }
 
 local function raycast(name, c)
   local colors = {}
-  for _, role in ipairs(RAYCAST_ROLES) do
-    table.insert(colors, '%23' .. assert(c[role], role):sub(2))
+  for _, role in ipairs(c.full_color and RAYCAST_HUES or RAYCAST_ROLES) do
+    table.insert(colors, '%23' .. assert(role_color(c, role), role):sub(2))
   end
   write(('%s/hax0r/raycast/%s'):format(config, name), table.concat({
     ('# hax0r %s for Raycast: %s.'):format(name, c.title),
@@ -279,7 +300,9 @@ end
 
 -- Xcode: its own theme format, one file per theme, that `hax0r <theme>` copies over the theme Xcode
 -- has selected (see the comment above xcode_apply in the hax0r script). Colors are OKLCH. The syntax
--- roles match nvim's and VS Code's. Fonts aren't in here: Xcode keeps them separately
+-- roles match nvim's and VS Code's. Fonts aren't in here: Xcode keeps them separately.
+-- A one-color theme's syntax colors are its shades, as in XCODE_ROLES; a full-color theme's are the
+-- kinds in its syntax table, as in XCODE_KINDS, which fills in the rest from XCODE_ROLES
 local XCODE_ROLES = {
   plainText = 'fg',
   comment = 'comment',
@@ -318,17 +341,51 @@ local XCODE_ROLES = {
   selectedTextBackgroundColor = 'selection_tint',
 }
 
+-- Swift's kinds, as Dark+ colors them in VS Code
+local XCODE_KINDS = {
+  plainText = 'fg',
+  comment = 'syntax.comment',
+  commentEmphasized = 'syntax.comment',
+  markdown = 'syntax.comment',
+  keyword = 'syntax.keyword',
+  ['keyword.attribute'] = 'syntax.func',
+  preprocessor = 'syntax.preproc',
+  ['preprocessor.macro'] = 'syntax.func',
+  ['preprocessor.macroSystem'] = 'syntax.func',
+  string = 'syntax.string',
+  ['string.regex'] = 'syntax.regex',
+  number = 'syntax.number',
+  ['number.character'] = 'syntax.string',
+  typeDeclaration = 'syntax.type',
+  memberDeclaration = 'syntax.func',
+  otherType = 'syntax.type',
+  ['otherType.class'] = 'syntax.type',
+  ['otherType.type'] = 'syntax.type',
+  projectType = 'syntax.type',
+  ['projectType.class'] = 'syntax.type',
+  ['projectType.type'] = 'syntax.type',
+  otherMember = 'syntax.variable',
+  ['otherMember.constant'] = 'syntax.constant',
+  ['otherMember.function'] = 'syntax.func',
+  ['otherMember.variable'] = 'syntax.variable',
+  projectMember = 'syntax.variable',
+  ['projectMember.constant'] = 'syntax.constant',
+  ['projectMember.function'] = 'syntax.func',
+  ['projectMember.variable'] = 'syntax.variable',
+}
+
 local function xcode(name, c)
   local function color(hex)
     local L, C, h = P.derive.oklch(hex)
     return ('{"chroma":{"exact":%.12f},"gamut":"P3","hue":{"radians":%.12f},"lightness":{"exact":%.12f},"opacity":1}'):format(C, h, L)
   end
-  local keys = vim.tbl_keys(XCODE_ROLES)
+  local roles = c.full_color and vim.tbl_extend('force', XCODE_ROLES, XCODE_KINDS) or XCODE_ROLES
+  local keys = vim.tbl_keys(roles)
   table.sort(keys)
   local overrides = {}
   for _, key in ipairs(keys) do
     local kind = (key == 'currentLineHighlight' or key == 'selectedTextBackgroundColor') and 'colorWithOpacity' or 'color'
-    table.insert(overrides, ('      "%s":{"%s":%s}'):format(key, kind, color(c[XCODE_ROLES[key]])))
+    table.insert(overrides, ('      "%s":{"%s":%s}'):format(key, kind, color(assert(role_color(c, roles[key]), roles[key]))))
   end
   write(('%s/hax0r/xcode/%s.xcworkspacecolortheme'):format(config, name), table.concat({
     '{',
@@ -379,13 +436,13 @@ local claude_keys = {
     { 'selectionBg', 'selection_tint' },
   },
   {
-    { 'claude', 'bright' },
+    { 'claude', 'brand' },
     { 'claudeShimmer', 'claude_shimmer' },
     { 'claudeBlue_FOR_SYSTEM_SPINNER', 'normal' },
     { 'claudeBlueShimmer_FOR_SYSTEM_SPINNER', 'bright' },
-    { 'clawd_body', 'bright' },
+    { 'clawd_body', 'brand' },
     { 'clawd_background', 'bg' },
-    { 'briefLabelClaude', 'bright' },
+    { 'briefLabelClaude', 'brand' },
     { 'briefLabelYou', 'selection' },
   },
   {
@@ -409,7 +466,7 @@ local claude_keys = {
     { 'fastModeShimmer', 'bright_white' },
   },
   {
-    { 'success', 'normal' },
+    { 'success', 'success' },
     { 'error', 'error' },
     { 'warning', 'warning' },
     { 'warningShimmer', 'bright_white' },
@@ -477,15 +534,28 @@ local function claude_theme(name, c)
   write(('%s/hax0r/claude-code/%s.json'):format(config, name), text .. '\n')
 end
 
--- VS Code: a color theme and a file icon theme per theme, filled in from templates
-local color_template = read(vscode .. '/themes/color-theme.template.jsonc')
-local icon_template = read(vscode .. '/icons/icon-theme.template.json')
+-- VS Code: a color theme and a file icon theme per theme, filled in from templates. A theme with
+-- a template of its own, themes/<name>.template.jsonc or icons/<name>.template.json, uses that instead
+-- (Dark Modern's is VS Code's own theme, so it comes out as a copy). A full-color theme's icons are
+-- Seti's, in the colors of its icons table (icons/seti.template.json)
+local function template(dir, own, shared)
+  local path = ('%s/%s/%s'):format(vscode, dir, own)
+  local file = io.open(path)
+  if file then
+    file:close()
+    return read(path), ('%s/%s'):format(dir, own)
+  end
+  return read(('%s/%s/%s'):format(vscode, dir, shared)), ('%s/%s'):format(dir, shared)
+end
 
 local function vscode_themes(name, c)
   local label = 'hax0r ' .. name
+  local color_template, source = template('themes', name .. '.template.jsonc', 'color-theme.template.jsonc')
+  local icon_template = template('icons', name .. '.template.json',
+    c.full_color and 'seti.template.json' or 'icon-theme.template.json')
   local colors = strip_comments(fill(color_template, c, { label = label, type = c.light and 'light' or 'dark' }))
   colors = ('// %s for VS Code: %s.\n%s\n%s'):format(label, c.title,
-    generated_by('//', 'themes/color-theme.template.jsonc and palettes.lua'), colors)
+    generated_by('//', source .. ' and palettes.lua'), colors)
   write(('%s/themes/hax0r-%s-color-theme.json'):format(vscode, name), colors)
   write(('%s/icons/hax0r-%s-icon-theme.json'):format(vscode, name), fill(icon_template, c, {}))
 end

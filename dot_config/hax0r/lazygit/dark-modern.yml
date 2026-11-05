@@ -1,0 +1,15 @@
+# hax0r dark-modern for lazygit: Dark Modern.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+gui:
+  theme:
+    activeBorderColor: ['#0078d4', bold]
+    inactiveBorderColor: ['#9d9d9d']
+    searchingActiveBorderColor: ['#4daafc', bold]
+    optionsTextColor: ['#9d9d9d']
+    selectedLineBgColor: ['#04395e']
+    inactiveViewSelectedLineBgColor: ['#37373d']
+    cherryPickedCommitFgColor: ['#4daafc']
+    cherryPickedCommitBgColor: ['#212d3a']
+    unstagedChangesColor: ['#e2c08d']
+    authorColors:
+      '*': '#9d9d9d'

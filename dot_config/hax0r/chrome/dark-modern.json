@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "hax0r",
+  "version": "1.0",
+  "description": "hax0r dark-modern. Built by hax0r build from palettes.lua: edit that, not this file.",
+  "theme": {
+    "colors": {
+      "frame": [31, 31, 31],
+      "frame_inactive": [31, 31, 31],
+      "background_tab": [31, 31, 31],
+      "background_tab_inactive": [31, 31, 31],
+      "toolbar": [31, 31, 31],
+      "tab_text": [255, 255, 255],
+      "tab_background_text": [128, 128, 128],
+      "tab_background_text_inactive": [128, 128, 128],
+      "toolbar_button_icon": [204, 204, 204],
+      "toolbar_text": [204, 204, 204],
+      "bookmark_text": [204, 204, 204],
+      "omnibox_background": [31, 31, 31],
+      "omnibox_text": [204, 204, 204],
+      "ntp_background": [31, 31, 31],
+      "ntp_text": [204, 204, 204],
+      "ntp_link": [77, 170, 252]
+    }
+  }
+}
