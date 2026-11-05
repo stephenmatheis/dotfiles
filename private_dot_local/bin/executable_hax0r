@@ -356,6 +356,7 @@ vscode() {
                 return 1
             fi
             print "VS Code is back on its default theme and icons, and switches leave it alone now"
+            print "Claude Code keeps the hax0r theme in VS Code's terminals too, since it has one theme for the whole machine"
             ;;
         *) bad_arg vscode $1 ;;
     esac
@@ -711,7 +712,9 @@ Claude Code's diffs use at their next prompt.
                      Needs VS Code in /Applications and the extension: in VS Code, run
                      Developer: Install Extension from Location… and pick its folder
   hax0r vscode off   delete it, and take the hax0r theme and icons out of VS Code's
-                     settings, so it goes back to its defaults
+                     settings, so it goes back to its defaults. Claude Code keeps the
+                     hax0r theme in VS Code's terminals too, since it has one theme for
+                     the whole machine
 EOF
             ;;
         xcode)
