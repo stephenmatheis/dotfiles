@@ -421,7 +421,7 @@ chrome() {
             ;;
         off)
             rm -rf $chrome_theme
-            print "Now use Reset to default in Chrome's Customize Chrome panel, since chrome://extensions doesn't list themes"
+            print "Now open chrome://settings/appearance and click Reset to default next to Theme, since chrome://extensions doesn't list themes"
             ;;
         *) bad_arg chrome $1 ;;
     esac
@@ -743,7 +743,7 @@ theme by itself, so it shows the new colors after a restart, or after Load unpac
   hax0r chrome       print on or off
   hax0r chrome on    make the folder, then load it once at chrome://extensions: turn on
                      Developer mode, click Load unpacked, press Cmd-Shift-G and paste its path
-  hax0r chrome off   delete the folder, then use Reset to default in Customize Chrome
+  hax0r chrome off   delete the folder, then click Reset to default next to Theme at chrome://settings/appearance
 EOF
             ;;
         delta)
