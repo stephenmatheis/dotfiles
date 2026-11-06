@@ -1,0 +1,15 @@
+# hax0r merino-light for lazygit: Merino Light.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+gui:
+  theme:
+    activeBorderColor: ['#0969da', bold]
+    inactiveBorderColor: ['#656d76']
+    searchingActiveBorderColor: ['#0969da', bold]
+    optionsTextColor: ['#656d76']
+    selectedLineBgColor: ['#eff1f3']
+    inactiveViewSelectedLineBgColor: ['#eff1f3']
+    cherryPickedCommitFgColor: ['#0969da']
+    cherryPickedCommitBgColor: ['#e6f3ff']
+    unstagedChangesColor: ['#9a6700']
+    authorColors:
+      '*': '#656d76'

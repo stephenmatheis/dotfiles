@@ -1,0 +1,8 @@
+# hax0r merino-light for fzf: Merino Light.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+--highlight-line --gutter=' '
+--color=light,fg:-1,bg:-1,gutter:-1,query:-1:bold
+--color=hl:#0969da:bold,hl+:#0969da:bold,fg+:-1:regular,bg+:#eff1f3
+--color=pointer:#1f2328,marker:#1f2328,prompt:#1f2328
+--color=info:#656d76,spinner:#656d76,header:#656d76,label:#656d76,ghost:#656d76
+--color=separator:#afb8c1,border:#afb8c1,scrollbar:#afb8c1

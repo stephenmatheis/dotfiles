@@ -25,6 +25,7 @@ _hax0r_palette() {
         pink-cyan) printf '\e]4;22;#482433\a\e]4;28;#65394b\a\e]4;52;#14222a\a\e]4;88;#0f383e\a\e]4;196;#11d9d9\a' ;;
         dark-modern) printf '\e]4;22;#383e2a\a\e]4;28;#4c5a2a\a\e]4;52;#4c1919\a\e]4;88;#701414\a\e]4;196;#f14c4c\a' ;;
         light-modern) printf '\e]4;22;#ebf1dd\a\e]4;28;#d7e8b1\a\e]4;52;#ffcccc\a\e]4;88;#ffa3a3\a\e]4;196;#e51400\a' ;;
+        merino-light) printf '\e]4;22;#e6faea\a\e]4;28;#aaebba\a\e]4;52;#fff0ef\a\e]4;88;#ffc4c3\a\e]4;196;#cf222e\a' ;;
         *) printf '\e]4;22;#073904\a\e]4;28;#0a5505\a\e]4;52;#0c1d0b\a\e]4;88;#1c331a\a\e]4;196;#fefefe\a' ;;
     esac
 }

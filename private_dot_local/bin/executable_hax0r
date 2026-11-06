@@ -537,6 +537,9 @@ delta_cmd() {
 # by its background, and changing to it shows it, setting Rex's own Light/Dark to match. The name is
 # fuzzy-matched, but exact names win: hax0r-pink doesn't pick hax0r-pink-cyan. A Rex that isn't open
 # misses the switch.
+# A theme Rex has built in, like Merino, still gets hax0r's copy: Claude Code draws its diff bands in
+# terminal slots 22, 28, 52 and 88, and only hax0r's file sets those to the theme's diff colors (Rex's
+# own Merino fills them with muted ones of its own).
 # $rex_state holds what to put back: Rex's Light and Dark themes, and its Light/Dark (auto when it
 # follows macOS). No command reports those, so on reads them from Rex's preferences, the only part
 # Rex doesn't document. A wrong read only means off can't put them back.
