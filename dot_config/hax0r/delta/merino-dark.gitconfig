@@ -1,0 +1,20 @@
+# hax0r merino-dark for delta: Merino Dark.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+[core]
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	syntax-theme = ansi
+	true-color = always
+	dark = true
+	minus-style = "syntax #2c171b"
+	minus-emph-style = "syntax #6c3535"
+	plus-style = "syntax #10221c"
+	plus-emph-style = "syntax #1e502c"
+	zero-style = "syntax"
+	file-style = "#e6edf3 bold"
+	file-decoration-style = "#30363d ul"
+	hunk-header-style = "line-number #7d8590"
+	hunk-header-line-number-style = "#7d8590"
+	hunk-header-decoration-style = none

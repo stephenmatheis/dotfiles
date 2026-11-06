@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "hax0r",
+  "version": "1.0",
+  "description": "hax0r merino-dark. Built by hax0r build from palettes.lua: edit that, not this file.",
+  "theme": {
+    "colors": {
+      "frame": [13, 17, 23],
+      "frame_inactive": [13, 17, 23],
+      "background_tab": [13, 17, 23],
+      "background_tab_inactive": [13, 17, 23],
+      "toolbar": [13, 17, 23],
+      "tab_text": [230, 237, 243],
+      "tab_background_text": [112, 119, 130],
+      "tab_background_text_inactive": [112, 119, 130],
+      "toolbar_button_icon": [230, 237, 243],
+      "toolbar_text": [230, 237, 243],
+      "bookmark_text": [230, 237, 243],
+      "omnibox_background": [13, 17, 23],
+      "omnibox_text": [230, 237, 243],
+      "ntp_background": [13, 17, 23],
+      "ntp_text": [230, 237, 243],
+      "ntp_link": [47, 129, 247]
+    }
+  }
+}

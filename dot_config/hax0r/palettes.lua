@@ -19,7 +19,7 @@
 
 local M = {}
 
-M.order = { 'green', 'red', 'blue', 'amber', 'white', 'black', 'pink', 'purple', 'electric', 'cyan-pink', 'pink-cyan', 'dark-modern', 'light-modern', 'merino-light' }
+M.order = { 'green', 'red', 'blue', 'amber', 'white', 'black', 'pink', 'purple', 'electric', 'cyan-pink', 'pink-cyan', 'dark-modern', 'light-modern', 'merino-light', 'merino-dark' }
 
 -- top composited over base at p (0 to 1), as a hex color
 local function mix(top, base, p)
@@ -1135,6 +1135,171 @@ M['merino-light'] = (function()
     border_shimmer = '#0969da',   -- focusBorder: Claude Code's prompt border while it works
     brand = '#0969da',            -- focusBorder: Claude, in Claude Code, in the theme's own blue
     claude_shimmer = '#218bff',   -- Merino's bright blue
+  })
+end)()
+
+
+-- Merino Dark: Rex's default dark theme, Merino Light's twin, copied the same way. Its terminal colors
+-- are GitHub Dark Default's exactly. Code and editor colors come from GitHub Dark Default 6.3.5, and
+-- VS Code's own defaults for a dark theme where that doesn't set one
+M['merino-dark'] = (function()
+  local bg = '#0d1117'
+  -- GitHub Dark Default's syntax colors, shared by several kinds of code each
+  local red, sky, lilac, blue = '#ff7b72', '#a5d6ff', '#d2a8ff', '#79c0ff'
+  local orange, green, gray, text = '#ffa657', '#7ee787', '#8b949e', '#e6edf3'
+  -- Primer's problem colors, which GitHub uses for its own (errorForeground and the notifications)
+  local error, warning, info = '#f85149', '#d29922', '#2f81f7'
+  -- diffEditor's bands, as GitHub sets them: lines @ 15%, words @ 30% over their line's band
+  local add_tint, add_word_tint = '#238636', '#3fb950'
+  local del_tint, del_word_tint = '#da3633', '#ff7b72'
+  local diff_add, diff_del = mix(add_tint, bg, 0x26 / 255), mix(del_tint, bg, 0x26 / 255)
+  -- editorGutter's marks @ 40%
+  local mark_added = mix('#2ea043', bg, 0x66 / 255)
+  local mark_changed = mix('#bb8009', bg, 0x66 / 255)
+  local mark_removed = mix('#f85149', bg, 0x66 / 255)
+  -- Rex's Merino Dark, which is GitHub Dark Default's terminal
+  local merino_ansi = {
+    [0] = '#484f58',
+    '#ff7b72', '#3fb950', '#d29922', '#58a6ff', '#bc8cff', '#39c5cf',
+    '#b1bac4',
+    '#6e7681',
+    '#ffa198', '#56d364', '#e3b341', '#79c0ff', '#d2a8ff', '#56d4dd',
+    '#ffffff',
+  }
+  local list_row = mix('#6e7681', bg, 0x66 / 255) -- list.activeSelectionBackground #6e768166
+  local hover = mix('#6e7681', bg, 0x1a / 255)    -- list.hoverBackground #6e76811a
+  return theme({
+    title = 'Merino Dark',
+    light = false,
+    -- GitHub Dark Default's own
+    bg = bg,                      -- editor.background
+    fg = text,                    -- editor.foreground, and most text
+    dark = '#010409',             -- sideBar, panel, tabs: the frame around the editor (status and title bars are bg)
+    float_bg = '#161b22',         -- editorWidget.background
+    border = '#30363d',           -- panel.border, tab.border and the rest
+    float_border = '#30363d',     -- input.border
+    dim = '#7d8590',              -- descriptionForeground, tab.inactiveForeground
+    bright = text,                -- settings.headerForeground, tab.activeForeground
+    focus = '#1f6feb',            -- focusBorder
+    line_nr = '#6e7681',          -- editorLineNumber.foreground
+    line_nr_active = text,        -- editorLineNumber.activeForeground
+    statusline = '#7d8590',       -- statusBar.foreground
+    directory = text,             -- sideBar.foreground
+    indent = mix(text, bg, 0x1f / 255),        -- editorIndentGuide.background #e6edf31f
+    indent_active = mix(text, bg, 0x3d / 255), -- editorIndentGuide.activeBackground #e6edf33d
+    badge = '#1f6feb',            -- badge.background
+    link = '#2f81f7',             -- textLink.foreground
+    mark_added = mark_added,
+    mark_changed = mark_changed,
+    mark_removed = mark_removed,
+    selected_row = list_row,
+    menu_sel = list_row,
+    menu_sel_text = text,         -- list.activeSelectionForeground
+    hover = hover,
+    list_row = list_row,
+    unfocused_row = list_row,     -- list.inactiveSelectionBackground, the same #6e768166
+    list_row_inactive = list_row,
+    cur_search = '#9e6a03',       -- editor.findMatchBackground
+    cur_search_text = 'NONE',
+    search_tint = '#f2cc60',      -- editor.findMatchHighlightBackground is this @ 50%
+    search = mix('#f2cc60', bg, 0x80 / 255),
+    search_text = 'NONE',
+    cursor_line = hover,          -- editor.lineHighlightBackground #6e76811a: a band in VS Code too
+    cursor = '#2f81f7',           -- editorCursor.foreground, and Merino's terminal cursor
+    cursor_text = '#eff8ff',      -- Merino's cursor text
+    nontext_tint = '#484f58',     -- editorWhitespace.foreground
+    nontext = '#484f58',
+    match = '#2f81f7',            -- list.highlightForeground
+    brackets = { '#79c0ff', '#56d364', '#e3b341', '#ffa198', '#ff9bce', '#d2a8ff' }, -- editorBracketHighlight 1 to 6
+    added = '#3fb950',            -- gitDecoration.addedResourceForeground
+    untracked = '#3fb950',        -- gitDecoration.untrackedResourceForeground
+    changed = '#d29922',          -- gitDecoration.modifiedResourceForeground
+    removed = '#f85149',          -- gitDecoration.deletedResourceForeground
+    ignored = '#6e7681',          -- gitDecoration.ignoredResourceForeground
+    conflict = '#db6d28',         -- gitDecoration.conflictingResourceForeground
+    diff_add_tint = add_tint,
+    diff_add_word_tint = add_word_tint,
+    diff_del_tint = del_tint,
+    diff_add = diff_add,
+    diff_add_word = mix(add_word_tint, diff_add, 0x4d / 255),
+    diff_del = diff_del,
+    diff_del_word = mix(del_word_tint, diff_del, 0x4d / 255),
+    error = error,
+    warning = warning,
+    info = info,
+    -- VS Code's defaults for a dark theme, which GitHub leaves alone
+    selection_tint = '#264f78',   -- editor.selectionBackground
+    hint = mix('#eeeeee', bg, 0.7), -- editorHint.foreground
+    -- Primer's scale for Raycast's chart colors (GitHub sets no charts.*), as Merino Light
+    hues = {
+      red = error, orange = '#db6d28', yellow = warning, green = '#3fb950', blue = info, purple = '#a371f7',
+      magenta = '#db61a2',
+    },
+    icons = {                     -- the Seti icon theme's colors, as Dark Modern
+      blue = '#519aba', red = '#cc3e44', orange = '#e37933', purple = '#a074c4', green = '#8dc149',
+      yellow = '#cbcb41', white = '#d4d7d6', pink = '#f55385', grey = '#6d8086', steel = '#4d5a5e',
+      ignore = '#41535b', cyan = '#519aba', azure = '#519aba',
+    },
+    -- GitHub Dark Default's syntax colors, by kind
+    syntax = {
+      comment = gray,
+      keyword = red,              -- keyword
+      control = red,              -- keyword.control
+      storage = red,              -- storage, storage.type
+      preproc = red,
+      macro = lilac,              -- entity.name.function.preprocessor
+      string = sky,
+      escape = red,               -- constant.character
+      regex = sky,                -- string.regexp
+      selector = green,           -- entity.name.tag.css
+      number = blue,              -- constant
+      constant = blue,
+      builtin = blue,             -- constant.language, variable.language
+      func = lilac,               -- entity.name.function
+      type = orange,              -- entity.name
+      variable = text,            -- variable.other: GitHub leaves most variables the text color (parameters are orange)
+      attribute = blue,           -- entity.other.attribute-name, under entity
+      tag = green,                -- entity.name.tag
+      tag_bracket = text,
+      operator = red,             -- keyword.operator, under keyword
+      plain = text,               -- meta.embedded.expression
+      delimiter = text,
+      special = red,              -- punctuation.section.embedded: ${ }
+      label = orange,             -- entity.name
+      title = blue,
+      heading = blue,             -- markup.heading
+      strong = text,              -- markup.bold
+      emphasis = text,            -- markup.italic
+      raw = blue,                 -- markup.inline.raw
+      quote = green,              -- markup.quote
+      list = orange,              -- punctuation.definition.list.begin.markdown
+      inserted = green,           -- markup.inserted
+      deleted = '#ffa198',        -- markup.deleted
+      modified = orange,          -- markup.changed
+    },
+    styles = { title = 'bold', heading = 'bold', strong = 'bold', emphasis = 'italic' },
+    -- The terminal's colors: Merino's as Rex draws them, which are GitHub's own, so the VS Code theme
+    -- has them too. Slot 8, Claude Code's comments and Starship's branch, is 4.1:1, a little under the
+    -- 4.5 VS Code's terminal lifts it to; slot 0 is 2.3:1, as black usually is on a dark theme
+    ansi = merino_ansi,
+    -- Picked: jobs GitHub has no color for, chosen the way Merino Light's and Dark Modern's were
+    normal = text,                -- one-color themes' middle shade: Claude Code's rate-limit bar, Chrome's icons
+    bold = '#ffffff',             -- nvim's float titles and bracket match
+    white = '#ffffff',            -- Claude Code's auto-accept and ! border
+    bright_white = '#ffffff',
+    black = '#010409',            -- nvim's float shadows: GitHub's darkest
+    selection = '#85b6ff',        -- chat.slashCommandForeground, VS Code's default: Claude Code's permission and suggestions
+    gray = '#30363d',             -- Claude Code's empty rate-limit bar: input.border
+    prompt_band = mix('#264f78', bg, 0.3), -- chat.requestBubbleBackground: Claude Code's prompts
+    bash_band = '#161b22',        -- editorWidget.background: Claude Code's ! commands (input.background is bg here)
+    faint = '#484f58',            -- as editorWhitespace: fzf's borders, Xcode's invisibles
+    success = '#3fb950',          -- Primer's success color
+    staged_add = mix(mark_added, bg, 0.5),
+    staged_change = mix(mark_changed, bg, 0.5),
+    staged_delete = mix(mark_removed, bg, 0.5),
+    border_shimmer = '#1f6feb',   -- focusBorder: Claude Code's prompt border while it works
+    brand = '#1f6feb',            -- focusBorder: Claude, in Claude Code, in the theme's own blue
+    claude_shimmer = '#79c0ff',   -- Merino's bright blue, slot 12
   })
 end)()
 

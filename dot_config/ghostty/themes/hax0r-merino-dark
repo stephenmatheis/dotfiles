@@ -1,0 +1,33 @@
+# hax0r merino-dark for Ghostty: Merino Dark.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+background = #0d1117
+foreground = #e6edf3
+cursor-color = #2f81f7
+cursor-text = #eff8ff
+# Selections tint the background and let each character keep its own color
+selection-background = #264f78
+selection-foreground = cell-foreground
+# The 16 colors, with ansi 7, 8 and 12 changed for Claude Code (see palettes.lua)
+palette = 0=#484f58
+palette = 1=#ff7b72
+palette = 2=#3fb950
+palette = 3=#d29922
+palette = 4=#58a6ff
+palette = 5=#bc8cff
+palette = 6=#39c5cf
+palette = 7=#b1bac4
+palette = 8=#6e7681
+palette = 9=#ffa198
+palette = 10=#56d364
+palette = 11=#e3b341
+palette = 12=#79c0ff
+palette = 13=#d2a8ff
+palette = 14=#56d4dd
+palette = 15=#ffffff
+# Claude Code's diff backgrounds: its theme points at these slots
+palette = 22=#10221c
+palette = 28=#1e502c
+palette = 52=#2c171b
+palette = 88=#6c3535
+# Errors, for Starship's prompt after a failed command
+palette = 196=#f85149

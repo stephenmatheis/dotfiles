@@ -1,0 +1,8 @@
+# hax0r merino-dark for fzf: Merino Dark.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+--highlight-line --gutter=' '
+--color=dark,fg:-1,bg:-1,gutter:-1,query:-1:bold
+--color=hl:#2f81f7:bold,hl+:#2f81f7:bold,fg+:-1:regular,bg+:#343941
+--color=pointer:#e6edf3,marker:#e6edf3,prompt:#e6edf3
+--color=info:#7d8590,spinner:#7d8590,header:#7d8590,label:#7d8590,ghost:#7d8590
+--color=separator:#484f58,border:#484f58,scrollbar:#484f58
