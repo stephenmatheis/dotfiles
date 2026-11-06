@@ -1,5 +1,5 @@
 .\" The manual for ~/.local/bin/hax0r. Change it with the help text in that script.
-.Dd November 5, 2026
+.Dd November 6, 2026
 .Dt HAX0R 1
 .Os
 .Sh NAME
@@ -16,7 +16,7 @@
 .Cm clear
 .Op Ar option ...
 .Nm
-.Brq Cm macos | shader | vscode | xcode | chrome | delta | raycast
+.Brq Cm macos | shader | rex | vscode | xcode | chrome | delta | raycast
 .Op Cm on | off
 .Nm
 .Cm raycast install
@@ -29,8 +29,8 @@
 switches Ghostty, tmux, nvim, fzf, lazygit and Claude Code between the hax0r themes, which are
 all built from one file,
 .Pa ~/.config/hax0r/palettes.lua .
-Each machine can also opt into more: VS Code, macOS's Light/Dark and wallpaper, Xcode, Chrome,
-delta, Raycast and Ghostty's CRT shader.
+Each machine can also opt into more: VS Code, macOS's Light/Dark and wallpaper, Rex, Xcode,
+Chrome, delta, Raycast and Ghostty's CRT shader.
 See
 .Sx SETTINGS .
 .Pp
@@ -63,7 +63,7 @@ each setting that's on here, the way
 .Nm Ar setting Cm off
 does.
 Claude Code sessions that are already open keep the hax0r colors until they restart.
-Chrome, Raycast and Xcode need a step by hand, which
+Chrome, Raycast, Xcode and sometimes Rex need a step by hand, which
 .Cm off
 lists.
 .It Nm Cm on
@@ -141,6 +141,30 @@ which Ghostty's config includes, and
 deletes it.
 Both reach open terminals at once.
 The strengths are constants at the top of the shader.
+.It Nm Cm rex Op Cm on | off
+Themes also switch Rex, which imports the theme's Ghostty file from
+.Pa ~/.config/ghostty/themes
+and sets its own Light/Dark to match.
+An open Rex changes at once; one that isn't open keeps its theme until a switch while it is.
+The hax0r themes pile up in Rex's custom themes, one each, and a switch after
+.Nm Cm build
+updates the one it imports.
+.Cm on
+saves Rex's Light and Dark themes and its Light/Dark to
+.Pa ~/.local/state/hax0r/rex ,
+then switches Rex to the current theme.
+It reads them from Rex's preferences, which Rex doesn't document; if that goes wrong, only
+.Cm off
+is affected.
+.Cm off
+puts back what
+.Cm on
+saved and deletes the file.
+Rex has no command for Auto, so if it followed macOS's Light/Dark before,
+.Cm off
+says to set Settings \[u25B8] Interface \[u25B8] Appearance \[u25B8] Color scheme back to Auto by hand.
+The hax0r themes stay in Rex: delete them in its Settings \[u25B8] Themes.
+Needs Rex open, with Remote Control on in its Settings \[u25B8] Server \[u25B8] Client Info.
 .It Nm Cm vscode Op Cm on | off
 Themes also switch VS Code's color and file icon themes, which come from the hax0r extension in
 .Pa ~/.config/vscode/hax0r-theme .

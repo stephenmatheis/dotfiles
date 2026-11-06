@@ -25,8 +25,12 @@ xcode_theme="$HOME/Library/Developer/Xcode/UserData/FontAndColorThemes/hax0r.xcw
 chrome_theme=$state/chrome-theme
 raycast_state=$state/raycast
 delta_state=$state/delta.gitconfig
+rex_state=$state/rex
 off_state=$state/off
 wallpaper_store="$HOME/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
+# Rex puts its rex command on PATH only in its own terminals, so elsewhere, like Ghostty, use the
+# copy it keeps with its server
+rex_bin=${commands[rex]:-"$HOME/Library/Application Support/com.superlogical.rex/RexServer/Versions/Current/Rex Server.app/Contents/MacOS/rex"}
 
 current() {
     local theme=green
@@ -167,6 +171,7 @@ switch() {
     vscode_apply $name
     xcode_apply $name
     chrome_apply $name
+    rex_apply $name
     [[ -f $delta_state ]] && cp $config/hax0r/delta/$name.gitconfig $delta_state
     [[ -f $raycast_state ]] && print -r -- "hax0r: to update Raycast, use Switch Theme and pick hax0r $name"
 
@@ -193,11 +198,14 @@ all_off() {
         print "hax0r: it's already off. hax0r on brings it back"
         return 0
     fi
-    local name
+    local name rex_auto=0
     local -a was_on todo
     for name in $settings; do is_on $name && was_on+=($name); done
     mkdir -p $state
     if (( $#was_on )); then print -rl -- $was_on > $off_state; else : > $off_state; fi
+
+    # Rex's off deletes the file that says whether Rex followed macOS's Light/Dark, so read it first
+    [[ -f $rex_state && $(rex_saved appearance) == auto ]] && rex_auto=1
 
     # Each setting's own off, quietly, since what's left to do by hand is listed at the end
     for name in $was_on; do run_setting $name off > /dev/null; done
@@ -228,6 +236,7 @@ all_off() {
     (( ${was_on[(Ie)chrome]} )) && todo+=("Chrome: open chrome://settings/appearance and click Reset to default next to Theme")
     (( ${was_on[(Ie)raycast]} )) && todo+=("Raycast: use Switch Theme and pick one of Raycast's own")
     (( ${was_on[(Ie)xcode]} )) && todo+=("Xcode: choose another theme in Xcode ▸ Settings ▸ Appearance")
+    (( rex_auto )) && todo+=("Rex: set Settings ▸ Interface ▸ Appearance ▸ Color scheme back to Auto")
     print "hax0r: off. Ghostty, tmux, nvim, fzf, lazygit and Claude Code are on their own colors"
     (( $#was_on )) && print -r -- "hax0r: these settings are off too: ${(j:, :)was_on}"
     print "Claude Code sessions that are already open keep the hax0r colors until they restart"
@@ -522,6 +531,119 @@ delta_cmd() {
     esac
 }
 
+# Rex follows the theme only where `hax0r rex on` was run, through the rex command's official actions
+# for the Rex app. Importing a Ghostty theme file adds it to Rex's custom themes, or updates the one
+# with the same file name, so a build reaches Rex at the next switch. Rex files it under Light or Dark
+# by its background, and changing to it shows it, setting Rex's own Light/Dark to match. The name is
+# fuzzy-matched, but exact names win: hax0r-pink doesn't pick hax0r-pink-cyan. A Rex that isn't open
+# misses the switch.
+# $rex_state holds what to put back: Rex's Light and Dark themes, and its Light/Dark (auto when it
+# follows macOS). No command reports those, so on reads them from Rex's preferences, the only part
+# Rex doesn't document. A wrong read only means off can't put them back.
+rex_run() {
+    "$rex_bin" --autostart=false --timeout 5s "$@"
+}
+
+# The Rex apps open on this Mac, one client ID per line. --autostart=false keeps rex from starting a
+# server when Rex isn't open
+rex_apps() {
+    rex_run client ls --json 2> /dev/null | jq -r '.clients[]
+        | select(.info.kind == "app" and .principal.transport == "unix" and .connection_state == "connected")
+        | .client_id'
+}
+
+# Prints one value from $rex_state: light, dark or appearance
+rex_saved() {
+    sed -n "s/^$1=//p" $rex_state
+}
+
+rex_apply() {
+    [[ -f $rex_state ]] || return 0
+    local client
+    local -a clients=(${(f)"$(rex_apps)"})
+    if (( ! $#clients )); then
+        print -r -- "hax0r: Rex isn't open, so it keeps its theme until a switch while it is"
+        return 0
+    fi
+    for client in $clients; do
+        rex_run -C $client do client.theme.import path=$config/ghostty/themes/hax0r-$1 \
+            && rex_run -C $client do client.theme.change name=hax0r-$1 \
+            || print -u2 "hax0r: couldn't switch Rex. Its Remote Control has to be on, in Settings ▸ Server ▸ Client Info"
+    done
+}
+
+rex_cmd() {
+    local client light dark appearance last
+    local -a clients
+    case $1 in
+        '') on_off rex ;;
+        on)
+            if [[ ! -x $rex_bin ]]; then
+                print -u2 "hax0r: Rex isn't installed, so nothing changed"
+                return 1
+            fi
+            clients=(${(f)"$(rex_apps)"})
+            if (( ! $#clients )); then
+                print -u2 "hax0r: Rex isn't open, so nothing changed. Open it and run hax0r rex on again"
+                return 1
+            fi
+            if [[ ! -f $rex_state ]]; then
+                light=$(defaults read com.superlogical.rex Workspace.lightThemeID 2> /dev/null)
+                dark=$(defaults read com.superlogical.rex Workspace.darkThemeID 2> /dev/null)
+                appearance=$(defaults read com.superlogical.rex Workspace.appearance 2> /dev/null)
+                mkdir -p $state
+                print -rl -- "light=$light" "dark=$dark" "appearance=${appearance:-auto}" > $rex_state
+            fi
+            rex_apply $(current)
+            ;;
+        off)
+            [[ -f $rex_state ]] || return 0
+            clients=(${(f)"$(rex_apps)"})
+            if (( ! $#clients )); then
+                print -u2 "hax0r: Rex isn't open, so nothing changed. Open it and run hax0r rex off again"
+                return 1
+            fi
+            light=$(rex_saved light)
+            dark=$(rex_saved dark)
+            appearance=$(rex_saved appearance)
+            # Each change shows its theme, so the one to end on goes last: the saved Light/Dark, or
+            # macOS's for a Rex that followed it
+            last=$appearance
+            if [[ $last == auto ]]; then
+                [[ $(defaults read -g AppleInterfaceStyle 2> /dev/null) == Dark ]] && last=dark || last=light
+            fi
+            local -a order=(light dark)
+            [[ $last == dark ]] || order=(dark light)
+            local slot id
+            local -i failed=0
+            for client in $clients; do
+                for slot in $order; do
+                    id=${(P)slot}
+                    if [[ -n $id ]]; then
+                        rex_run -C $client do client.theme.change name=$id || failed=1
+                    fi
+                done
+                if [[ $appearance == (light|dark) ]]; then
+                    rex_run -C $client do client.appearance.switch_mode mode=$appearance || failed=1
+                fi
+            done
+            if (( failed )); then
+                print -u2 "hax0r: couldn't put Rex back, so this stays on. Its Remote Control has to be on, in Settings ▸ Server ▸ Client Info"
+                return 1
+            fi
+            rm -f $rex_state
+            if [[ -z $light || -z $dark ]]; then
+                print "Rex's old themes weren't saved, so pick them in Rex ▸ Settings ▸ Themes"
+            else
+                print "Rex is back on its own themes, and switches leave it alone now"
+            fi
+            [[ $appearance == auto ]] && print "Rex has no command for Auto, so set Settings ▸ Interface ▸ Appearance ▸ Color scheme back to Auto"
+            print "The hax0r themes stay in Rex: delete them in Settings ▸ Themes"
+            ;;
+        *) bad_arg rex $1 ;;
+    esac
+}
+
 # Raycast has no official way for a script to switch themes, so a switch leaves Raycast alone: you
 # install the themes here once and use its Switch Theme command. Each link opens Theme Studio with a
 # confirm dialog, and a newer link replaces one still waiting, so they go one at a time. Installing
@@ -599,6 +721,7 @@ run_setting() {
     shift
     case $name in
         delta) delta_cmd "$@" ;;
+        rex) rex_cmd "$@" ;;
         *) $name "$@" ;;
     esac
 }
@@ -626,10 +749,11 @@ setting() {
 }
 
 # The per-machine settings, in the order help and status show them, and what each one being on means
-settings=(macos shader vscode xcode chrome delta raycast)
+settings=(macos shader rex vscode xcode chrome delta raycast)
 typeset -A setting_about=(
     macos   "themes also set macOS's Light/Dark and wallpaper"
     shader  "Ghostty draws the CRT shader"
+    rex     "themes also switch Rex, and its Light/Dark"
     vscode  "themes also switch VS Code"
     xcode   "themes also switch Xcode"
     chrome  "themes also rewrite a Chrome theme"
@@ -646,6 +770,7 @@ is_on() {
         xcode) [[ -f $xcode_theme ]] ;;
         chrome) [[ -d $chrome_theme ]] ;;
         delta) [[ -f $delta_state ]] ;;
+        rex) [[ -f $rex_state ]] ;;
         raycast) [[ -f $raycast_state ]] ;;
     esac
 }
@@ -666,6 +791,13 @@ missing() {
             ;;
         xcode) [[ -d /Applications/Xcode.app ]] || print "needs Xcode in /Applications" ;;
         delta) (( $+commands[delta] )) || print "needs delta: brew install git-delta" ;;
+        rex)
+            if [[ ! -x $rex_bin ]]; then
+                print "needs Rex"
+            elif [[ -z $(rex_apps) ]]; then
+                print "needs Rex open"
+            fi
+            ;;
         raycast) [[ -d /Applications/Raycast.app ]] || print "needs Raycast in /Applications" ;;
     esac
 }
@@ -758,8 +890,8 @@ Usage: hax0r off | on
 
 off puts Ghostty, tmux, nvim, fzf, lazygit and Claude Code back on their own colors, and turns
 off each setting that's on here, the way hax0r <setting> off does. Claude Code sessions that are
-already open keep the hax0r colors until they restart. Chrome, Raycast and Xcode need a step by
-hand, which off lists.
+already open keep the hax0r colors until they restart. Chrome, Raycast, Xcode and sometimes Rex
+need a step by hand, which off lists.
 
 on brings back the theme and the settings that were on, and so does a switch to any theme.
 While hax0r is off, hax0r <setting> on changes nothing, and hax0r <setting> off keeps that
@@ -835,6 +967,26 @@ on and off reach open terminals at once. The strengths are constants at the top 
   hax0r shader       print on or off
   hax0r shader on    write $st/ghostty-shader, which config.ghostty includes
   hax0r shader off   delete it
+EOF
+            ;;
+        rex)
+            cat <<EOF
+Usage: hax0r rex [on | off]
+
+Themes also switch Rex, which imports the theme's Ghostty file from $cf/ghostty/themes
+and sets its own Light/Dark to match. An open Rex changes at once; one that isn't open keeps its
+theme until a switch while it is. The hax0r themes pile up in Rex's custom themes, one each.
+
+  hax0r rex       print on or off
+  hax0r rex on    save Rex's Light and Dark themes and its Light/Dark to
+                  $st/rex, then switch Rex to the current theme. Needs Rex
+                  open, with Remote Control on in its Settings ▸ Server ▸ Client Info
+  hax0r rex off   put back what on saved, and delete the file. Rex has no command for Auto, so
+                  if it followed macOS's Light/Dark before, off says to set that by hand. The
+                  hax0r themes stay in Rex: delete them in its Settings ▸ Themes
+
+on reads Rex's themes from its preferences, which Rex doesn't document. Everything else goes
+through the rex command.
 EOF
             ;;
         vscode)
@@ -955,7 +1107,7 @@ case $1 in
             switch $(current)
         fi
         ;;
-    chrome | delta | macos | raycast | shader | vscode | xcode) setting "$@" ;;
+    chrome | delta | macos | raycast | rex | shader | vscode | xcode) setting "$@" ;;
     clear) shift; clear_screen "$@" ;;
     off) all_off ;;
     on)
