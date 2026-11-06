@@ -568,7 +568,7 @@ rex_apply() {
     for client in $clients; do
         rex_run -C $client do client.theme.import path=$config/ghostty/themes/hax0r-$1 \
             && rex_run -C $client do client.theme.change name=hax0r-$1 \
-            || print -u2 "hax0r: couldn't switch Rex. Its Remote Control has to be on, in Settings ▸ Server ▸ Client Info"
+            || print -u2 "hax0r: couldn't switch Rex"
     done
 }
 
@@ -631,7 +631,7 @@ rex_cmd() {
                 fi
             done
             if (( failed )); then
-                print -u2 "hax0r: couldn't put Rex back, so this stays on. Its Remote Control has to be on, in Settings ▸ Server ▸ Client Info"
+                print -u2 "hax0r: couldn't put Rex back, so this stays on"
                 return 1
             fi
             rm -f $rex_state
