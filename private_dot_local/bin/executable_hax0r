@@ -591,8 +591,11 @@ rex_cmd() {
                 light=$(defaults read com.superlogical.rex Workspace.lightThemeID 2> /dev/null)
                 dark=$(defaults read com.superlogical.rex Workspace.darkThemeID 2> /dev/null)
                 appearance=$(defaults read com.superlogical.rex Workspace.appearance 2> /dev/null)
+                # Rex leaves this out while it follows macOS, and might write a word of its own
+                # for that, so anything but light or dark counts as auto
+                [[ $appearance == (light|dark) ]] || appearance=auto
                 mkdir -p $state
-                print -rl -- "light=$light" "dark=$dark" "appearance=${appearance:-auto}" > $rex_state
+                print -rl -- "light=$light" "dark=$dark" "appearance=$appearance" > $rex_state
             fi
             rex_apply $(current)
             ;;
