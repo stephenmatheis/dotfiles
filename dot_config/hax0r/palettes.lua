@@ -31,6 +31,61 @@ local function mix(top, base, p)
   return out
 end
 
+-- Terminal colors as VS Code's terminal draws them over bg. It doesn't draw a color under 4.5:1
+-- (terminal.integrated.minimumContrastRatio's default) as it is: it cuts the red, green and blue
+-- by 10% at a time, or raises them 10% toward white over a dark bg, until the color gets there, so
+-- the hue stays. This is xterm.js's ensureContrastRatio, as VS Code 1.145 runs it. Ghostty and nvim
+-- draw colors as they are, so a theme that copies VS Code's terminal colors gives them these.
+-- keep names slots to leave as they are, as { [0] = true }
+local function vscode_drawn(ansi, bg, keep)
+  local function rgb(hex)
+    return tonumber(hex:sub(2, 3), 16), tonumber(hex:sub(4, 5), 16), tonumber(hex:sub(6, 7), 16)
+  end
+  local function luminance(r, g, b)
+    local function channel(v)
+      v = v / 255
+      return v <= 0.03928 and v / 12.92 or ((v + 0.055) / 1.055) ^ 2.4
+    end
+    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+  end
+  local ratio, bg_lum = 4.5, luminance(rgb(bg))
+  local function contrast(r, g, b)
+    local l = luminance(r, g, b)
+    return (math.max(l, bg_lum) + 0.05) / (math.min(l, bg_lum) + 0.05)
+  end
+  local function darker(r, g, b)
+    while contrast(r, g, b) < ratio and (r > 0 or g > 0 or b > 0) do
+      r, g, b = r - math.ceil(r * 0.1), g - math.ceil(g * 0.1), b - math.ceil(b * 0.1)
+    end
+    return r, g, b
+  end
+  local function lighter(r, g, b)
+    while contrast(r, g, b) < ratio and (r < 255 or g < 255 or b < 255) do
+      r = math.min(255, r + math.ceil((255 - r) * 0.1))
+      g = math.min(255, g + math.ceil((255 - g) * 0.1))
+      b = math.min(255, b + math.ceil((255 - b) * 0.1))
+    end
+    return r, g, b
+  end
+  local out = {}
+  for i = 0, 15 do
+    local r, g, b = rgb(ansi[i])
+    if contrast(r, g, b) < ratio and not (keep and keep[i]) then
+      -- Away from bg first; the other way only if that falls short and does better
+      local first, second = darker, lighter
+      if luminance(r, g, b) >= bg_lum then first, second = lighter, darker end
+      local r1, g1, b1 = first(r, g, b)
+      if contrast(r1, g1, b1) < ratio then
+        local r2, g2, b2 = second(r, g, b)
+        if contrast(r2, g2, b2) > contrast(r1, g1, b1) then r1, g1, b1 = r2, g2, b2 end
+      end
+      r, g, b = r1, g1, b1
+    end
+    out[i] = ('#%02x%02x%02x'):format(r, g, b)
+  end
+  return out
+end
+
 -- Git, diff, problem, link and hover colors, from the colors each theme sets below:
 --   added (and untracked)  bright
 --   modified               white (set in the apps' templates, not here)
@@ -594,6 +649,15 @@ M['dark-modern'] = (function()
   local add_tint, add_word_tint, del_tint = '#9bb955', '#9ccc2c', '#ff0000'
   local diff_add, diff_del = mix(add_tint, bg, 0.2), mix(del_tint, bg, 0.2)
   local mark_added, mark_changed, mark_removed = '#2ea043', '#0078d4', '#f85149'
+  -- VS Code's terminal.ansi* defaults
+  local vscode_ansi = {
+    [0] = '#000000',
+    '#cd3131', '#0dbc79', '#e5e510', '#2472c8', '#bc3fbc', '#11a8cd',
+    '#e5e5e5',
+    '#666666',
+    '#f14c4c', '#23d18b', '#f5f543', '#3b8eea', '#d670d6', '#29b8db',
+    '#e5e5e5',
+  }
   return theme({
     title = 'Dark Modern',
     light = false,
@@ -703,16 +767,16 @@ M['dark-modern'] = (function()
       modified = blue,            -- markup.changed
     },
     styles = { title = 'bold', heading = 'bold', strong = 'bold', emphasis = 'italic' },
-    -- The terminal's colors: VS Code's terminal.ansi* defaults, as they are, so Claude Code's code
-    -- text is ansi 7, its comments ansi 8 and its inline code ansi 12, as in VS Code's terminal
-    ansi = {
-      [0] = '#000000',
-      '#cd3131', '#0dbc79', '#e5e510', '#2472c8', '#bc3fbc', '#11a8cd',
-      '#e5e5e5',
-      '#666666',
-      '#f14c4c', '#23d18b', '#f5f543', '#3b8eea', '#d670d6', '#29b8db',
-      '#e5e5e5',
-    },
+    -- The terminal's colors: VS Code's defaults, as its terminal draws them over the background.
+    -- Four are under 4.5:1 as they are, and VS Code lightens them as it draws: red, blue, magenta,
+    -- and gray, which is Claude Code's comments (2.9:1). Black stays black: programs mostly put it
+    -- behind text, or use it as text on another color, and VS Code leaves it black there. Over the
+    -- band behind Claude Code's added lines, as light-modern does, ten colors would move most of
+    -- the way to pastels, since that band is much lighter than this background. As in VS Code's
+    -- terminal, Claude Code's code text is ansi 7, its comments ansi 8 and its inline code ansi 12
+    ansi = vscode_drawn(vscode_ansi, bg, { [0] = true }),
+    -- The VS Code theme keeps the defaults as they are, since VS Code lightens them itself
+    vscode_ansi = vscode_ansi,
     -- Picked: jobs VS Code has no color for, left to settle on the preview page
     normal = '#cccccc',           -- one-color themes' middle shade: Claude Code's rate-limit bar, Chrome's icons
     bold = '#ffffff',             -- nvim's float titles and bracket match
@@ -749,6 +813,15 @@ M['light-modern'] = (function()
   local add_tint, add_word_tint, del_tint = '#9bb955', '#9ccc2c', '#ff0000'
   local diff_add, diff_del = mix(add_tint, bg, 0.2), mix(del_tint, bg, 0.2)
   local mark_added, mark_changed, mark_removed = '#2ea043', '#005fb8', '#f85149'
+  -- VS Code's terminal.ansi* defaults for a light theme
+  local vscode_ansi = {
+    [0] = '#000000',
+    '#cd3131', '#107c10', '#949800', '#0451a5', '#bc05bc', '#0598bc',
+    '#555555',
+    '#666666',
+    '#f14c4c', '#14ce14', '#b5ba00', '#3b8eea', '#d670d6', '#29b8db',
+    '#a5a5a5',
+  }
   return theme({
     title = 'Light Modern',
     light = true,
@@ -858,17 +931,15 @@ M['light-modern'] = (function()
       modified = json_blue,       -- markup.changed
     },
     styles = { title = 'bold', heading = 'bold', strong = 'bold', emphasis = 'italic' },
-    -- The terminal's colors: VS Code's terminal.ansi* defaults for a light theme, as they are, so
-    -- Claude Code's code text is ansi 0, its comments ansi 8 and its inline code ansi 4, as in VS
-    -- Code's terminal
-    ansi = {
-      [0] = '#000000',
-      '#cd3131', '#107c10', '#949800', '#0451a5', '#bc05bc', '#0598bc',
-      '#555555',
-      '#666666',
-      '#f14c4c', '#14ce14', '#b5ba00', '#3b8eea', '#d670d6', '#29b8db',
-      '#a5a5a5',
-    },
+    -- The terminal's colors: VS Code's defaults, as its terminal draws them over the band behind
+    -- Claude Code's added lines, so each reaches 4.5:1 there and on white. Several are faint on white
+    -- as they are (strings and function names at about 2:1), and VS Code darkens them as it draws.
+    -- Picked on a preview page over how VS Code draws them on white, which falls to about 4:1 on the
+    -- band. As in VS Code's terminal, Claude Code's code text is ansi 0, its comments ansi 8, its
+    -- inline code ansi 4 and its syntax colors ansi 10-14
+    ansi = vscode_drawn(vscode_ansi, diff_add),
+    -- The VS Code theme keeps the defaults as they are, since VS Code darkens them itself
+    vscode_ansi = vscode_ansi,
     -- Picked: jobs VS Code has no color for, chosen to match Dark Modern's picks
     normal = '#3b3b3b',           -- one-color themes' middle shade: Claude Code's rate-limit bar, Chrome's icons
     bold = '#1f1f1f',             -- nvim's float titles and bracket match, as bright

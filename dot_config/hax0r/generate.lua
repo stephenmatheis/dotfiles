@@ -34,11 +34,12 @@ local function write(path, text)
 end
 
 -- A role's color: a name in palettes.lua, a dotted path into one of its tables (syntax.keyword,
--- brackets.1), or ansiN for palette slot N
+-- brackets.1), or ansiN for palette slot N. Only VS Code's templates use ansiN, so a theme's
+-- vscode_ansi comes first: VS Code's own terminal colors, which VS Code darkens itself as it draws
 local function role_color(c, role)
   local slot = role:match('^ansi(%d+)$')
   if slot then
-    return c.ansi[tonumber(slot)]
+    return (c.vscode_ansi or c.ansi)[tonumber(slot)]
   end
   local value = c
   for key in role:gmatch('[^.]+') do
