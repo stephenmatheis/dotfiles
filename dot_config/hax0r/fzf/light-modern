@@ -1,0 +1,8 @@
+# hax0r light-modern for fzf: Light Modern.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+--highlight-line --gutter=' '
+--color=light,fg:-1,bg:-1,gutter:-1,query:-1:bold
+--color=hl:#0066bf:bold,hl+:#0066bf:bold,fg+:-1:regular,bg+:#e8e8e8
+--color=pointer:#1f1f1f,marker:#1f1f1f,prompt:#1f1f1f
+--color=info:#616161,spinner:#616161,header:#616161,label:#616161,ghost:#616161
+--color=separator:#d6d6d6,border:#d6d6d6,scrollbar:#d6d6d6

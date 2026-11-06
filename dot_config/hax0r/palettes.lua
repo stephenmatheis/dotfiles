@@ -19,7 +19,7 @@
 
 local M = {}
 
-M.order = { 'green', 'red', 'blue', 'amber', 'white', 'black', 'pink', 'purple', 'electric', 'cyan-pink', 'pink-cyan', 'dark-modern' }
+M.order = { 'green', 'red', 'blue', 'amber', 'white', 'black', 'pink', 'purple', 'electric', 'cyan-pink', 'pink-cyan', 'dark-modern', 'light-modern' }
 
 -- top composited over base at p (0 to 1), as a hex color
 local function mix(top, base, p)
@@ -731,6 +731,162 @@ M['dark-modern'] = (function()
     border_shimmer = '#0078d4',   -- focusBorder: Claude Code's prompt border while it works
     brand = '#0078d4',            -- focusBorder: Claude, in Claude Code, in the theme's own blue
     claude_shimmer = '#4daafc',   -- textLink.foreground: the shimmer across it
+  })
+end)()
+
+-- Light Modern: VS Code's Light Modern, Dark Modern's light twin, copied the same way. Colors come
+-- from VS Code 1.145's Light Modern and Light (Visual Studio) themes, its own defaults for a light
+-- theme where those don't set one, and Light+'s syntax colors
+M['light-modern'] = (function()
+  local bg = '#ffffff'
+  -- Light+'s syntax colors, shared by several kinds of code each
+  local blue, purple, maroon, string_red = '#0000ff', '#af00db', '#800000', '#a31515'
+  local green, number_green, brown, teal = '#008000', '#098658', '#795e26', '#267f99'
+  local navy, var_blue, json_blue = '#000080', '#001080', '#0451a5'
+  -- VS Code's problem colors for a light theme, also its chart colors
+  local error, warning, info = '#e51400', '#bf8803', '#0063d3' -- editorError, editorWarning, editorInfo
+  -- diffEditor's bands are these @ 20%, the added words' @ 25% over their line's band
+  local add_tint, add_word_tint, del_tint = '#9bb955', '#9ccc2c', '#ff0000'
+  local diff_add, diff_del = mix(add_tint, bg, 0.2), mix(del_tint, bg, 0.2)
+  local mark_added, mark_changed, mark_removed = '#2ea043', '#005fb8', '#f85149'
+  return theme({
+    title = 'Light Modern',
+    light = true,
+    -- Light Modern's own
+    bg = bg,                      -- editor.background
+    fg = '#3b3b3b',               -- editor.foreground, and most text
+    dark = '#f8f8f8',             -- sideBar, panel, statusBar, titleBar: the frame around the editor
+    float_bg = '#f8f8f8',         -- editorWidget.background: hovers, completions, find
+    border = '#e5e5e5',           -- panel.border, tab.border and the rest
+    float_border = '#cecece',     -- menu.border, input.border
+    dim = '#616161',              -- tab.inactiveForeground (descriptionForeground is the text color here)
+    bright = '#1f1f1f',           -- settings.headerForeground (tab.activeForeground is the text color here)
+    focus = '#005fb8',            -- focusBorder, button.background, the active tab's top line
+    line_nr = '#6e7681',          -- editorLineNumber.foreground
+    line_nr_active = '#171184',   -- editorLineNumber.activeForeground
+    statusline = '#3b3b3b',       -- statusBar.foreground
+    directory = '#3b3b3b',        -- sideBar.foreground: folders aren't set apart in the explorer
+    indent = '#d3d3d3',           -- editorIndentGuide.background1
+    indent_active = '#939393',    -- editorIndentGuide.activeBackground1
+    badge = '#cccccc',            -- badge.background
+    link = '#005fb8',             -- textLink.foreground
+    mark_added = mark_added,      -- editorGutter.addedBackground
+    mark_changed = mark_changed,  -- editorGutter.modifiedBackground
+    mark_removed = mark_removed,  -- editorGutter.deletedBackground
+    selected_row = '#e8e8e8',     -- list.activeSelectionBackground
+    menu_sel = '#e8e8e8',         -- the same, in the completion list
+    menu_sel_text = '#000000',    -- list.activeSelectionForeground
+    hover = '#f2f2f2',            -- list.hoverBackground
+    list_row = '#e8e8e8',         -- list.activeSelectionBackground, in fzf and lazygit
+    -- VS Code's defaults for a light theme, which Light Modern keeps
+    cur_search = '#a8ac94',       -- editor.findMatchBackground
+    cur_search_text = 'NONE',     -- VS Code keeps the code's own colors on a match
+    selection_tint = '#add6ff',   -- editor.selectionBackground
+    cursor_line = '#eeeeee',      -- editor.lineHighlightBorder: an outline in VS Code, a band elsewhere
+    cursor = '#000000',           -- editorCursor.foreground
+    cursor_text = bg,
+    search_tint = '#ea5c00',      -- editor.findMatchHighlightBackground is this @ 33%
+    search = mix('#ea5c00', bg, 0x55 / 255),
+    search_text = 'NONE',
+    nontext_tint = '#333333',     -- editorWhitespace.foreground is this @ 20%
+    nontext = mix('#333333', bg, 0x33 / 255),
+    unfocused_row = '#e4e6f1',    -- list.inactiveSelectionBackground
+    match = '#0066bf',            -- list.highlightForeground: the letters Quick Open matched
+    list_row_inactive = '#e4e6f1', -- list.inactiveSelectionBackground
+    error = error,
+    warning = warning,
+    info = info,
+    hint = '#6c6c6c',             -- editorHint.foreground
+    brackets = { '#0431fa', '#319331', '#7b3814' }, -- editorBracketHighlight.foreground1 to 3
+    added = '#587c0c',            -- gitDecoration.addedResourceForeground
+    untracked = '#007100',        -- gitDecoration.untrackedResourceForeground, and renamed
+    changed = '#895503',          -- gitDecoration.modifiedResourceForeground
+    removed = '#ad0707',          -- gitDecoration.deletedResourceForeground
+    ignored = '#8e8e90',          -- gitDecoration.ignoredResourceForeground
+    conflict = '#ad0707',         -- gitDecoration.conflictingResourceForeground
+    diff_add_tint = add_tint,     -- diffEditor.insertedLineBackground
+    diff_add_word_tint = add_word_tint, -- diffEditor.insertedTextBackground
+    diff_del_tint = del_tint,     -- diffEditor.removedLineBackground and removedTextBackground
+    diff_add = diff_add,
+    diff_add_word = mix(add_word_tint, diff_add, 0x40 / 255),
+    diff_del = diff_del,
+    diff_del_word = mix(del_tint, diff_del, 0.2),
+    hues = {                      -- charts.*, for Raycast; magenta is the terminal's ansi 13
+      red = error, orange = '#d18616', yellow = warning, green = '#388a34', blue = info, purple = '#652d90',
+      magenta = '#d670d6',
+    },
+    icons = {                     -- the Seti icon theme's colors for a light theme
+      blue = '#498ba7', red = '#b8383d', orange = '#cc6d2e', purple = '#9068b0', green = '#7fae42',
+      yellow = '#b7b73b', white = '#bfc2c1', pink = '#dd4b78', grey = '#627379', steel = '#455155',
+      ignore = '#3b4b52', cyan = '#498ba7', azure = '#498ba7', -- nvim's names for Seti's blue
+    },
+    -- Light+'s syntax colors, by kind
+    syntax = {
+      comment = green,
+      keyword = blue,             -- let, function, class, new, typeof, and ${ } in template strings
+      control = purple,           -- if, for, return, import, try
+      storage = blue,             -- const, static, struct
+      preproc = purple,           -- #include, #define
+      macro = blue,               -- a macro's name
+      string = string_red,
+      escape = '#ee0000',         -- \n, and other special characters in strings
+      regex = '#811f3f',
+      selector = maroon,          -- CSS's selectors
+      number = number_green,
+      constant = '#0070c1',       -- UPPER_CASE constants, enum members
+      builtin = blue,             -- true, false, null, this, self
+      func = brown,
+      type = teal,                -- classes, types, namespaces
+      variable = var_blue,        -- variables, parameters, properties
+      attribute = '#e50000',      -- HTML's attributes
+      tag = maroon,               -- HTML's tags
+      tag_bracket = maroon,       -- HTML's < >
+      operator = '#000000',       -- keyword.operator
+      plain = '#000000',          -- code inside other code, like ${ } in a template string
+      delimiter = '#3b3b3b',      -- punctuation: Light+ leaves it the editor's text color
+      special = blue,
+      label = '#000000',
+      title = maroon,             -- nvim's titles, like a markdown heading
+      heading = maroon,           -- markup.heading
+      strong = navy,              -- markup.bold
+      emphasis = '#800080',       -- markup.italic
+      raw = maroon,               -- markup.inline.raw: `code` in markdown
+      quote = json_blue,          -- a markdown quote's >
+      list = json_blue,           -- a markdown list's - or 1.
+      inserted = number_green,    -- markup.inserted: + lines in a .diff file
+      deleted = string_red,       -- markup.deleted
+      modified = json_blue,       -- markup.changed
+    },
+    styles = { title = 'bold', heading = 'bold', strong = 'bold', emphasis = 'italic' },
+    -- The terminal's colors: VS Code's terminal.ansi* defaults for a light theme, as they are, so
+    -- Claude Code's code text is ansi 0, its comments ansi 8 and its inline code ansi 4, as in VS
+    -- Code's terminal
+    ansi = {
+      [0] = '#000000',
+      '#cd3131', '#107c10', '#949800', '#0451a5', '#bc05bc', '#0598bc',
+      '#555555',
+      '#666666',
+      '#f14c4c', '#14ce14', '#b5ba00', '#3b8eea', '#d670d6', '#29b8db',
+      '#a5a5a5',
+    },
+    -- Picked: jobs VS Code has no color for, chosen to match Dark Modern's picks
+    normal = '#3b3b3b',           -- one-color themes' middle shade: Claude Code's rate-limit bar, Chrome's icons
+    bold = '#1f1f1f',             -- nvim's float titles and bracket match, as bright
+    white = '#000000',            -- the loud neutral, black on a light theme as in Black on white:
+    bright_white = '#000000',     -- Claude Code's auto-accept and ! border
+    black = '#000000',            -- nvim's float shadows
+    selection = '#26569e',        -- chat.slashCommandForeground: Claude Code's permission and suggestions
+    gray = '#cecece',             -- Claude Code's empty rate-limit bar: input.border
+    prompt_band = mix('#add6ff', bg, 0.3), -- chat.requestBubbleBackground: Claude Code's prompts
+    bash_band = '#f2f2f2',        -- list.hoverBackground: Claude Code's ! commands (input.background is white here)
+    faint = mix('#333333', bg, 0x33 / 255), -- as editorWhitespace: fzf's borders, Xcode's invisibles
+    success = '#388a34',          -- charts.green: testing.iconPassed's #73c991 is too faint on white
+    staged_add = mix(mark_added, bg, 0.5), -- nvim's staged signs: the change marks @ 50%
+    staged_change = mix(mark_changed, bg, 0.5),
+    staged_delete = mix(mark_removed, bg, 0.5),
+    border_shimmer = '#005fb8',   -- focusBorder: Claude Code's prompt border while it works
+    brand = '#005fb8',            -- focusBorder: Claude, in Claude Code, in the theme's own blue
+    claude_shimmer = '#68a3da',   -- tab.selectedBorderTop: a lighter blue, as Dark Modern's shimmer is
   })
 end)()
 

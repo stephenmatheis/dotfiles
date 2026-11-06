@@ -1,6 +1,6 @@
 #!/bin/zsh
 # hax0r: switch Ghostty, tmux, nvim, fzf, lazygit and Claude Code between the hax0r themes, along
-# with the apps each machine opts into.
+# with the apps each machine opts into, or turn it all off so every app is on its own colors.
 #
 # `hax0r --help` lists the commands, `hax0r help <command>` explains one, and `hax0r status` shows
 # the settings. The manual, `man hax0r`, is ~/.local/share/man/man1/hax0r.1. When a command
@@ -25,6 +25,7 @@ xcode_theme="$HOME/Library/Developer/Xcode/UserData/FontAndColorThemes/hax0r.xcw
 chrome_theme=$state/chrome-theme
 raycast_state=$state/raycast
 delta_state=$state/delta.gitconfig
+off_state=$state/off
 wallpaper_store="$HOME/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
 
 current() {
@@ -47,7 +48,11 @@ list() {
         [[ $name == $cur ]] && mark='>' || mark=' '
         printf '%s %s  %s\n' $mark "$(swatch " $(printf '%-6s' $name) " $bg $fg)" $title
     done < $themes
-    print "\nSwitch with: hax0r <theme>"
+    if [[ -f $off_state ]]; then
+        print "\nhax0r is off here. hax0r on brings back the marked theme, or switch to any of them"
+    else
+        print "\nSwitch with: hax0r <theme>"
+    fi
 }
 
 # Sets REPLY to the color step/total of the way from one #rrggbb to another
@@ -94,6 +99,23 @@ fade_run() {
     trap - INT TERM
 }
 
+# Sets Claude Code's theme setting, or with an empty argument takes it out, so Claude Code uses its
+# default. settings.json is only written when the setting changes
+claude_theme() {
+    [[ -f $claude_settings ]] || return 0
+    local want=$1 filter tmp=$claude_settings.hax0r-$$
+    [[ $(jq -r '.theme // empty' $claude_settings) == $want ]] && return 0
+    [[ -n $want ]] && filter=".theme = \"$want\"" || filter='del(.theme)'
+    if jq $filter $claude_settings > $tmp; then
+        cat $tmp > $claude_settings
+        rm -f $tmp
+    else
+        rm -f $tmp
+        print -u2 "hax0r: couldn't update $claude_settings"
+        return 1
+    fi
+}
+
 switch() {
     local name=$1 title
     title=$(awk -F'\t' -v name=$name '$1 == name { print $2 }' $themes)
@@ -104,9 +126,18 @@ switch() {
         return 1
     fi
     # Everything starts together: the fade runs last, alongside the apps' own reloads, so it holds
-    # nothing up. macOS is the slowest, so it gets its own process
+    # nothing up. macOS is the slowest, so it gets its own process.
+    # Switching while hax0r is off turns it back on, and the settings that were on come back after
+    # the apps. The terminal is on Ghostty's own colors then, so there's no fade
     local faded=0 from_bg from_fg to_bg to_fg
-    fade_hold $(current) $name && faded=1
+    local -a restore
+    if [[ -f $off_state ]]; then
+        restore=(${(f)"$(<$off_state)"})
+        restore=(${restore:#})
+        rm -f $off_state
+    else
+        fade_hold $(current) $name && faded=1
+    fi
 
     mkdir -p $state
     print -r -- $name > $state/theme
@@ -141,25 +172,70 @@ switch() {
 
     # Claude Code: a running session reads its theme setting only at startup, but reloads
     # ~/.claude/themes when a file there changes. So the setting stays custom:hax0r and the
-    # chosen theme is copied over hax0r.json. settings.json is only written when it's not set yet
+    # chosen theme is copied over hax0r.json
     mkdir -p $claude_dir/themes
     cp $config/hax0r/claude-code/$name.json $claude_dir/themes/hax0r.json
-    if [[ -f $claude_settings && $(jq -r .theme $claude_settings) != custom:hax0r ]]; then
-        local tmp=$claude_settings.hax0r-$$
-        if jq '.theme = "custom:hax0r"' $claude_settings > $tmp; then
-            cat $tmp > $claude_settings
-            rm -f $tmp
-        else
-            rm -f $tmp
-            print -u2 "hax0r: couldn't update $claude_settings"
-        fi
-    fi
+    claude_theme custom:hax0r
 
     macos_apply $name &
     (( faded )) && fade_run
     wait
 
     print "hax0r: switched to $(swatch " $title " $(awk -F'\t' -v name=$name '$1 == name { print $3, $4 }' $themes))"
+    local setting_name
+    for setting_name in $restore; do run_setting $setting_name on; done
+}
+
+# `hax0r off`: every app goes back to its own colors, and each setting that's on turns off.
+# $off_state lists those settings, so `hax0r on`, or a switch to any theme, brings them back
+all_off() {
+    if [[ -f $off_state ]]; then
+        print "hax0r: it's already off. hax0r on brings it back"
+        return 0
+    fi
+    local name
+    local -a was_on todo
+    for name in $settings; do is_on $name && was_on+=($name); done
+    mkdir -p $state
+    if (( $#was_on )); then print -rl -- $was_on > $off_state; else : > $off_state; fi
+
+    # Each setting's own off, quietly, since what's left to do by hand is listed at the end
+    for name in $was_on; do run_setting $name off > /dev/null; done
+
+    # Ghostty: an empty theme setting puts back Ghostty's own colors, over config.ghostty's Gr33N
+    print -r -- 'theme =' > $state/ghostty
+    pkill -USR2 -a -x ghostty
+
+    # tmux: its own colors, for a running server and new ones alike. tmux.conf's formats use the
+    # @hax0r_* colors, so those become default rather than going away
+    print -rl -- '# hax0r is off: tmux uses its own colors' \
+        'set -g @hax0r_fg default' 'set -g @hax0r_dim default' \
+        'set -g @hax0r_bright default' 'set -g @hax0r_white default' \
+        'set -gu status-style' 'set -gu pane-border-style' 'set -gu pane-active-border-style' \
+        > $state/tmux.conf
+    tmux source-file $state/tmux.conf 2>/dev/null
+
+    # nvim: init.lua uses nvim's own colorscheme while $off_state is there
+    pkill -USR1 -a -x nvim
+
+    # fzf and lazygit refuse to start if their file is missing, so they get files without colors
+    print -r -- '# hax0r is off: fzf uses its own colors' > $state/fzf
+    print -r -- '# hax0r is off: lazygit uses its own colors' > $state/lazygit.yml
+
+    # Claude Code: without a theme setting, new sessions use Claude Code's default
+    claude_theme ''
+
+    (( ${was_on[(Ie)chrome]} )) && todo+=("Chrome: open chrome://settings/appearance and click Reset to default next to Theme")
+    (( ${was_on[(Ie)raycast]} )) && todo+=("Raycast: use Switch Theme and pick one of Raycast's own")
+    (( ${was_on[(Ie)xcode]} )) && todo+=("Xcode: choose another theme in Xcode ▸ Settings ▸ Appearance")
+    print "hax0r: off. Ghostty, tmux, nvim, fzf, lazygit and Claude Code are on their own colors"
+    (( $#was_on )) && print -r -- "hax0r: these settings are off too: ${(j:, :)was_on}"
+    print "Claude Code sessions that are already open keep the hax0r colors until they restart"
+    if (( $#todo )); then
+        print "To do by hand:"
+        print -rl -- "  "$^todo
+    fi
+    print "hax0r on brings it all back"
 }
 
 # A one-pixel PNG in a color, for the wallpaper: a BMP is simple to write by hand, and every Mac has sips
@@ -505,14 +581,48 @@ raycast() {
     esac
 }
 
-# neoclear isn't in the dotfiles (see the README), so a machine without it gets a plain clear
+# neoclear isn't in the dotfiles (see the README), so a machine without it gets a plain clear.
+# While hax0r is off, neoclear uses its own color
 clear_screen() {
     if (( ! $+commands[neoclear] )); then
         command clear
         return
     fi
-    local color=$(awk -F'\t' -v name=$(current) '$1 == name { print $4 }' $themes)
+    local color
+    [[ -f $off_state ]] || color=$(awk -F'\t' -v name=$(current) '$1 == name { print $4 }' $themes)
     neoclear ${color:+--color=$color} "$@"
+}
+
+# Runs a setting's command by its name
+run_setting() {
+    local name=$1
+    shift
+    case $name in
+        delta) delta_cmd "$@" ;;
+        *) $name "$@" ;;
+    esac
+}
+
+# `hax0r <setting> ...`. While hax0r is off, the settings stay off: on and install wait for
+# `hax0r on`, and off keeps a setting from coming back with it
+setting() {
+    local name=$1
+    if [[ -f $off_state ]]; then
+        case $2 in
+            on | install)
+                print -u2 "hax0r: it's off here, so nothing changed. hax0r on brings it back, with the settings that were on"
+                return 1
+                ;;
+            off)
+                if grep -qx $name $off_state; then
+                    sed -i '' "/^$name\$/d" $off_state
+                    print -r -- "hax0r: $name won't come back with hax0r on"
+                fi
+                return 0
+                ;;
+        esac
+    fi
+    run_setting "$@"
 }
 
 # The per-machine settings, in the order help and status show them, and what each one being on means
@@ -563,21 +673,33 @@ missing() {
 # `hax0r status`: the theme, then each setting and whether it's on here. Bold and dim only on a terminal
 show_status() {
     local cur=$(current) name title bg fg mode note on='' off='' reset=''
+    local -a back
     [[ -t 1 ]] && on=$'\e[1m' off=$'\e[2m' reset=$'\e[0m'
     IFS=$'\t' read -r name title bg fg mode < <(awk -F'\t' -v name=$cur '$1 == name' $themes)
     [[ -t 1 ]] && title=$(swatch " $title " $bg $fg)
-    print -r -- "Theme: $title ($cur)"
-    print -r -- "Every switch reaches Ghostty, tmux, nvim, fzf, lazygit and Claude Code."
+    if [[ -f $off_state ]]; then
+        back=(${(f)"$(<$off_state)"})
+        print -r -- "hax0r is off here, so every app is on its own colors."
+        print -r -- "hax0r on brings back $title ($cur), and so does a switch to any theme."
+    else
+        print -r -- "Theme: $title ($cur)"
+        print -r -- "Every switch reaches Ghostty, tmux, nvim, fzf, lazygit and Claude Code."
+    fi
     print; print -r -- "Settings on ${HOST%%.*}:"
     for name in $settings; do
         if is_on $name; then
             printf '  %-8s %s%-3s%s  %s\n' $name "$on" on "$reset" "$setting_about[$name]"
         else
             note=$(missing $name)
+            (( ${back[(Ie)$name]} )) && note="comes back with hax0r on"
             printf '  %-8s %s%-3s%s  %s%s\n' $name "$off" off "$reset" "$setting_about[$name]" "${note:+ ($note)}"
         fi
     done
-    print; print -r -- "Change one with hax0r <setting> on or off. hax0r help <setting> says more."
+    if [[ -f $off_state ]]; then
+        print; print -r -- "hax0r <setting> off keeps one from coming back. hax0r help off says more."
+    else
+        print; print -r -- "Change one with hax0r <setting> on or off. hax0r help <setting> says more."
+    fi
 }
 
 help_row() {
@@ -595,6 +717,8 @@ the apps this machine opts into under Settings.
 Themes"
     help_row 'hax0r' 'list the themes, marking the current one'
     help_row 'hax0r <theme>' 'switch every app to <theme>'
+    help_row 'hax0r off' 'put every app on its own colors, and turn the settings off'
+    help_row 'hax0r on' 'bring back the theme and the settings that were on'
     help_row 'hax0r preview' 'show every theme side by side'
     help_row 'hax0r build' "rebuild each app's theme files from palettes.lua"
     help_row 'hax0r clear [<options>]' "clear the terminal in the current theme's color"
@@ -626,6 +750,20 @@ new colors over about a quarter of a second. hax0r with no argument lists the th
 Most apps change at once. fzf changes the next time it starts, lazygit when its terminal gets
 focus back, Xcode within a few seconds, Chrome after a restart, and Raycast through its own
 Switch Theme command.
+EOF
+            ;;
+        on | off)
+            cat <<EOF
+Usage: hax0r off | on
+
+off puts Ghostty, tmux, nvim, fzf, lazygit and Claude Code back on their own colors, and turns
+off each setting that's on here, the way hax0r <setting> off does. Claude Code sessions that are
+already open keep the hax0r colors until they restart. Chrome, Raycast and Xcode need a step by
+hand, which off lists.
+
+on brings back the theme and the settings that were on, and so does a switch to any theme.
+While hax0r is off, hax0r <setting> on changes nothing, and hax0r <setting> off keeps that
+setting from coming back. Saved in $st/off.
 EOF
             ;;
         preview)
@@ -809,16 +947,25 @@ case $1 in
         print -u2 -r -- "hax0r: there's no option $1. hax0r --help lists the commands"
         exit 2
         ;;
-    build) nvim -l $config/hax0r/generate.lua && switch $(current) ;;
-    chrome) shift; chrome "$@" ;;
+    build)
+        nvim -l $config/hax0r/generate.lua || exit
+        if [[ -f $off_state ]]; then
+            print "hax0r: it's off here, so the apps keep their own colors until hax0r on"
+        else
+            switch $(current)
+        fi
+        ;;
+    chrome | delta | macos | raycast | shader | vscode | xcode) setting "$@" ;;
     clear) shift; clear_screen "$@" ;;
-    delta) shift; delta_cmd "$@" ;;
-    macos) shift; macos "$@" ;;
+    off) all_off ;;
+    on)
+        if [[ -f $off_state ]]; then
+            switch $(current)
+        else
+            print "hax0r: it's already on. hax0r off turns it off"
+        fi
+        ;;
     preview) HAX0R_COLUMNS=$COLUMNS nvim -l $config/hax0r/preview.lua ;;
-    raycast) shift; raycast "$@" ;;
-    shader) shift; shader "$@" ;;
     status) show_status ;;
-    vscode) shift; vscode "$@" ;;
-    xcode) shift; xcode "$@" ;;
     *) switch $1 ;;
 esac

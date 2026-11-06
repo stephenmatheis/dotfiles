@@ -120,13 +120,28 @@ require('statuscol').setup {
     },
 }
 
-vim.cmd.colorscheme('hax0r')
+-- The hax0r colorscheme, or nvim's own while `hax0r off` has turned hax0r off, which it marks with
+-- ~/.local/state/hax0r/off
+local function hax0r_off()
+    local state = vim.env.XDG_STATE_HOME or vim.fs.normalize('~/.local/state')
+    return vim.uv.fs_stat(state .. '/hax0r/off') ~= nil
+end
+if not hax0r_off() then
+    vim.cmd.colorscheme('hax0r')
+end
 -- `hax0r <theme>` sends every running nvim SIGUSR1, so reload the colorscheme to pick up the new theme,
--- and repaint: a signal isn't a keypress, so nvim wouldn't redraw until the next one
+-- and repaint: a signal isn't a keypress, so nvim wouldn't redraw until the next one. When hax0r turns
+-- off, nvim goes back to its default colorscheme on a dark background, since that's what Ghostty's
+-- own colors are, and a light hax0r theme would have left it light
 vim.api.nvim_create_autocmd('Signal', {
     pattern = 'SIGUSR1',
     callback = function()
-        vim.cmd.colorscheme('hax0r')
+        if hax0r_off() then
+            vim.o.background = 'dark'
+            vim.cmd.colorscheme('default')
+        else
+            vim.cmd.colorscheme('hax0r')
+        end
         vim.cmd.redraw({ bang = true })
     end,
 })

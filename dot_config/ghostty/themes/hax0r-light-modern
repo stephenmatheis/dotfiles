@@ -1,0 +1,33 @@
+# hax0r light-modern for Ghostty: Light Modern.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+background = #ffffff
+foreground = #3b3b3b
+cursor-color = #000000
+cursor-text = #ffffff
+# Selections tint the background and let each character keep its own color
+selection-background = #add6ff
+selection-foreground = cell-foreground
+# The 16 colors, with ansi 7, 8 and 12 changed for Claude Code (see palettes.lua)
+palette = 0=#000000
+palette = 1=#cd3131
+palette = 2=#107c10
+palette = 3=#949800
+palette = 4=#0451a5
+palette = 5=#bc05bc
+palette = 6=#0598bc
+palette = 7=#555555
+palette = 8=#666666
+palette = 9=#f14c4c
+palette = 10=#14ce14
+palette = 11=#b5ba00
+palette = 12=#3b8eea
+palette = 13=#d670d6
+palette = 14=#29b8db
+palette = 15=#a5a5a5
+# Claude Code's diff backgrounds: its theme points at these slots
+palette = 22=#ebf1dd
+palette = 28=#d7e8b1
+palette = 52=#ffcccc
+palette = 88=#ffa3a3
+# Errors, for Starship's prompt after a failed command
+palette = 196=#e51400

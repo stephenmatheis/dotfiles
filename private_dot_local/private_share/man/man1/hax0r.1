@@ -1,5 +1,5 @@
 .\" The manual for ~/.local/bin/hax0r. Change it with the help text in that script.
-.Dd November 3, 2026
+.Dd November 5, 2026
 .Dt HAX0R 1
 .Os
 .Sh NAME
@@ -8,6 +8,8 @@
 .Sh SYNOPSIS
 .Nm
 .Op Ar theme
+.Nm
+.Cm off | on
 .Nm
 .Cm preview | build | status
 .Nm
@@ -32,6 +34,11 @@ delta, Raycast and Ghostty's CRT shader.
 See
 .Sx SETTINGS .
 .Pp
+.Nm Cm off
+puts every app back on its own colors for a while, and
+.Nm Cm on
+brings the theme back.
+.Pp
 The current theme and the settings are kept per machine in
 .Pa ~/.local/state/hax0r ,
 so the dotfiles share the themes but not the choices.
@@ -50,6 +57,20 @@ second.
 Most apps change at once.
 fzf changes the next time it starts, lazygit when its terminal gets focus back, Xcode within a
 few seconds, Chrome after a restart, and Raycast through its own Switch Theme command.
+.It Nm Cm off
+Puts Ghostty, tmux, nvim, fzf, lazygit and Claude Code back on their own colors, and turns off
+each setting that's on here, the way
+.Nm Ar setting Cm off
+does.
+Claude Code sessions that are already open keep the hax0r colors until they restart.
+Chrome, Raycast and Xcode need a step by hand, which
+.Cm off
+lists.
+.It Nm Cm on
+After
+.Cm off ,
+brings back the theme and the settings that were on.
+A switch to any theme does too.
 .It Nm Cm preview
 Shows every theme side by side in the terminal, drawn by nvim from
 .Pa palettes.lua .
@@ -86,6 +107,14 @@ or
 .Cm off .
 .Nm Cm status
 shows them all at once.
+While
+.Nm Cm off
+is in effect, a setting's
+.Cm on
+changes nothing, and its
+.Cm off
+keeps it from coming back with
+.Nm Cm on .
 .Bl -tag -width Ds
 .It Nm Cm macos Op Cm on | off
 Themes also set macOS's Light/Dark, and a wallpaper in the theme's background on every Space
@@ -153,7 +182,8 @@ Cmd-Shift-G and paste the path.
 Chrome can't reload a theme by itself, so it shows the new colors after a restart, or after Load
 unpacked again.
 .Cm off
-deletes the folder; then use Reset to default in Chrome's Customize Chrome panel.
+deletes the folder; then open chrome://settings/appearance and click Reset to default next to
+Theme.
 .It Nm Cm delta Op Cm on | off
 .Ic git diff ,
 .Ic git show ,
@@ -213,6 +243,12 @@ Built by
 .Nm Cm build .
 .It Pa ~/.local/state/hax0r/theme
 The current theme on this machine.
+.It Pa ~/.local/state/hax0r/off
+There while
+.Nm Cm off
+is in effect, listing the settings
+.Nm Cm on
+brings back.
 .It Pa ~/.local/state/hax0r/
 Also the files Ghostty, tmux, fzf and lazygit read for the current theme, and each setting's
 file or folder.
@@ -226,6 +262,10 @@ argument it doesn't take.
 .Sh EXAMPLES
 Switch every app to black on white:
 .Dl hax0r black
+.Pp
+Put every app back on its own colors for a while, then bring hax0r back:
+.Dl hax0r off
+.Dl hax0r on
 .Pp
 See which settings are on here:
 .Dl hax0r status

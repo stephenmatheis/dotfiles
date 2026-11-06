@@ -1,0 +1,15 @@
+# hax0r light-modern for lazygit: Light Modern.
+# Built by `hax0r build` from ~/.config/hax0r/palettes.lua: edit that, not this file.
+gui:
+  theme:
+    activeBorderColor: ['#005fb8', bold]
+    inactiveBorderColor: ['#616161']
+    searchingActiveBorderColor: ['#005fb8', bold]
+    optionsTextColor: ['#616161']
+    selectedLineBgColor: ['#e8e8e8']
+    inactiveViewSelectedLineBgColor: ['#e4e6f1']
+    cherryPickedCommitFgColor: ['#005fb8']
+    cherryPickedCommitBgColor: ['#e6f3ff']
+    unstagedChangesColor: ['#895503']
+    authorColors:
+      '*': '#616161'
