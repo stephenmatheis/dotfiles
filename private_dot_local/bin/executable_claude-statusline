@@ -4,6 +4,12 @@
 #   Now: Opus 5.5, xhigh effort · 21% context (83.5k/400k) · session $12.93
 #   Limits: 5h 2% used, resets in 2h 50m · week 2% used, resets in 4d 16h
 #
+# Once a limit is used up and Claude Code runs on usage credits, a third line shows the credit balance
+# and how fast it's going, across every session:
+#
+#   Limits: week 100% used, resets in 2d 19h
+#   Credits: $99.51 left · burning $6.20/h
+#
 # Session cost is Claude Code's estimate at API list prices, not what the plan charges. Claude Code pipes
 # the session as JSON on stdin; see https://code.claude.com/docs/en/statusline. Set it per machine in
 # ~/.claude/settings.json, rerun every minute so the countdowns keep counting while idle:
@@ -11,18 +17,62 @@
 #   "statusLine": { "type": "command", "command": "~/.local/bin/claude-statusline", "refreshInterval": 60 }
 #
 # No colors, only dim and bold, so it follows the hax0r theme: labels are dim, values plain, and a value
-# turns bold when it runs high. Parts Claude Code hasn't sent yet, like limits before the first reply, are
-# left out.
+# turns bold when it runs high, or for credits, low. Parts Claude Code hasn't sent yet, like limits before
+# the first reply, are left out.
 #
 # Context is measured against the auto-compact window, like the desktop app's "24% used 96.1k / 400k",
 # not the model's full window that the JSON reports. Claude Code takes the window from
 # CLAUDE_CODE_AUTO_COMPACT_WINDOW, then modelSettings.<model>.autoCompactWindow, then autoCompactWindow,
 # so this does the same, reading user settings only.
+#
+# Credits aren't in what Claude Code pipes in. While a limit is at 100%, this asks claude.ai for the
+# balance, from the same undocumented endpoint Claude Code's credit dialogs use, signing in with Claude
+# Code's token from the keychain. It asks at most once a minute, in the background so the line never
+# waits, and keeps each balance with its time in ~/.cache/claude-statusline/credits. The burn rate is
+# how much the balance dropped over the last hour, leaving out auto-reload top-ups, and shows once there
+# are 5 minutes of readings. The balance turns bold when less than an hour of it is left at that rate.
+# The line hides when the last reading is over 15 minutes old, like when the endpoint changes.
 
 settings="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
 [ -r "$settings" ] || settings=/dev/null
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/claude-statusline"
+readings="$cache/credits"
 
-exec jq -r --slurpfile settings "$settings" '
+# Started in the background below: append "epoch cents" for the current balance to the readings
+if [ "$1" = --fetch-credits ]; then
+  org=$(jq -r '.oauthAccount.organizationUuid // empty' "$HOME/.claude.json") || exit
+  token=$(security find-generic-password -s 'Claude Code-credentials' -w \
+    | jq -r '.claudeAiOauth.accessToken // empty') || exit
+  [ -n "$org" ] && [ -n "$token" ] || exit
+  # The token goes to curl on stdin, so it stays out of the process list
+  cents=$(printf 'Authorization: Bearer %s\n' "$token" \
+    | curl -fsS -m 10 -H @- -H 'anthropic-beta: oauth-2025-04-20' -H 'User-Agent: claude-statusline' \
+      "https://api.anthropic.com/api/oauth/organizations/$org/prepaid/credits" \
+    | jq -e '.amount | numbers') || exit
+  now=$(date +%s)
+  # Keep two hours of readings
+  { awk -v since=$((now - 7200)) '$1 >= since' "$readings" 2>/dev/null; echo "$now $cents"; } \
+    > "$readings.$$" && mv "$readings.$$" "$readings"
+  exit
+fi
+
+input=$(cat)
+
+credits=/dev/null
+if printf '%s' "$input" \
+  | jq -e '[.rate_limits.five_hour, .rate_limits.seven_day] | any(.used_percentage >= 100)' >/dev/null
+then
+  mkdir -p "$cache"
+  now=$(date +%s)
+  last=$(cat "$cache/credits-fetched" 2>/dev/null)
+  if [ $((now - ${last:-0})) -ge 60 ]; then
+    echo "$now" > "$cache/credits-fetched"
+    "$0" --fetch-credits </dev/null >/dev/null 2>&1 &
+  fi
+  [ -r "$readings" ] && credits=$readings
+fi
+
+printf '%s' "$input" | jq -r --slurpfile settings "$settings" --rawfile credits "$credits" '
   def dim: "\u001b[2m\(.)\u001b[22m";
   def bold: "\u001b[1m\(.)\u001b[22m";
   def pct: "\(round)%";
@@ -46,6 +96,20 @@ exec jq -r --slurpfile settings "$settings" '
     .used_percentage as $used
     | "\($name | dim) \($used | pct | if $used >= 90 then bold else . end) \("used" | dim)"
       + (if .resets_at then "\(", resets in" | dim) \(.resets_at | countdown)" else "" end);
+  # From the readings, "epoch cents" lines oldest first; nothing when there are none or they are stale
+  def credits_line:
+    [ $credits | split("\n")[] | select(. != "") | split(" ") | map(tonumber) ] as $all
+    | select($all != [] and now - $all[-1][0] < 900)
+    | $all[-1] as [$at, $balance]
+    | [ $all[] | select(.[0] >= $at - 3600) ] as $hour
+    | ($at - $hour[0][0]) as $span
+    # Auto-reload and purchases raise the balance, so add up only the drops
+    | ([ range(1; $hour | length) as $i | $hour[$i - 1][1] - $hour[$i][1] | select(. > 0) ] | add // 0)
+      as $burned
+    | (if $span >= 300 then $burned / $span * 3600 else null end) as $rate
+    | "\("Credits:" | dim) \($balance / 100 | usd | if $rate and $balance < $rate then bold else . end)"
+      + " \("left" | dim)"
+      + (if $rate then " \("·" | dim) \("burning" | dim) \($rate / 100 | usd)/h" else "" end);
 
   ($settings[0] // {}) as $s
   # Settings key models by canonical name, without a [1m] or date suffix
@@ -68,5 +132,6 @@ exec jq -r --slurpfile settings "$settings" '
       (.rate_limits.seven_day // empty | select(.used_percentage) | limit("week"))
     ] as $limits
   | "\("Now:" | dim) \($now | join(" · " | dim))",
-    if $limits == [] then empty else "\("Limits:" | dim) \($limits | join(" · " | dim))" end
+    if $limits == [] then empty else "\("Limits:" | dim) \($limits | join(" · " | dim))" end,
+    credits_line
 '
