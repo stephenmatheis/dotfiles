@@ -565,7 +565,7 @@ rex_apply() {
     local client
     local -a clients=(${(f)"$(rex_apps)"})
     if (( ! $#clients )); then
-        print -r -- "hax0r: Rex isn't open, so it keeps its theme until a switch while it is"
+        print -r -- "hax0r: Rex isn't open, so it keeps its theme. Once it is, run hax0r rex apply"
         return 0
     fi
     for client in $clients; do
@@ -645,6 +645,17 @@ rex_cmd() {
             fi
             [[ $appearance == auto ]] && print "Rex has no command for Auto, so set Settings ▸ Interface ▸ Appearance ▸ Color scheme back to Auto"
             print "The hax0r themes stay in Rex: delete them in Settings ▸ Themes"
+            ;;
+        apply)
+            if [[ ! -f $rex_state ]]; then
+                print -u2 "hax0r: Rex doesn't follow the theme here, so nothing changed. Turn it on with hax0r rex on"
+                return 1
+            fi
+            if [[ -z $(rex_apps) ]]; then
+                print -u2 "hax0r: Rex isn't open, so nothing changed. Open it and run hax0r rex apply again"
+                return 1
+            fi
+            rex_apply $(current)
             ;;
         *) bad_arg rex $1 ;;
     esac
@@ -865,6 +876,7 @@ Themes"
     for name in $settings; do
         help_row "hax0r $name [on | off]" "$setting_about[$name]"
     done
+    help_row 'hax0r rex apply' 'switch Rex to the current theme, after a switch while it was closed'
     help_row 'hax0r raycast install [<theme>]' 'install the themes in Raycast, all or one'
     print -r -- "With no argument, each setting prints on or off."
     print; print -r -- "Help"
@@ -977,11 +989,12 @@ EOF
             ;;
         rex)
             cat <<EOF
-Usage: hax0r rex [on | off]
+Usage: hax0r rex [on | off | apply]
 
 Themes also switch Rex, which imports the theme's Ghostty file from $cf/ghostty/themes
 and sets its own Light/Dark to match. An open Rex changes at once; one that isn't open keeps its
-theme until a switch while it is. The hax0r themes pile up in Rex's custom themes, one each.
+theme until a switch while it is, or hax0r rex apply. The hax0r themes pile up in Rex's custom
+themes, one each.
 
   hax0r rex       print on or off
   hax0r rex on    save Rex's Light and Dark themes and its Light/Dark to
@@ -990,6 +1003,8 @@ theme until a switch while it is. The hax0r themes pile up in Rex's custom theme
   hax0r rex off   put back what on saved, and delete the file. Rex has no command for Auto, so
                   if it followed macOS's Light/Dark before, off says to set that by hand. The
                   hax0r themes stay in Rex: delete them in its Settings ▸ Themes
+  hax0r rex apply switch an open Rex to the current theme, say after a switch while it was
+                  closed. Needs on
 
 on reads Rex's themes from its preferences, which Rex doesn't document. Everything else goes
 through the rex command.

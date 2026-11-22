@@ -19,6 +19,8 @@
 .Brq Cm macos | shader | rex | vscode | xcode | chrome | delta | raycast
 .Op Cm on | off
 .Nm
+.Cm rex apply
+.Nm
 .Cm raycast install
 .Op Ar theme
 .Nm
@@ -145,7 +147,8 @@ The strengths are constants at the top of the shader.
 Themes also switch Rex, which imports the theme's Ghostty file from
 .Pa ~/.config/ghostty/themes
 and sets its own Light/Dark to match.
-An open Rex changes at once; one that isn't open keeps its theme until a switch while it is.
+An open Rex changes at once; one that isn't open keeps its theme until a switch while it is, or
+.Nm Cm rex apply .
 The hax0r themes pile up in Rex's custom themes, one each, and a switch after
 .Nm Cm build
 updates the one it imports.
@@ -235,6 +238,10 @@ turns it off, leaving the themes installed.
 Needs Raycast in
 .Pa /Applications ,
 and custom themes need Raycast Pro.
+.It Nm Cm rex apply
+Switches an open Rex to the current theme, say after a switch while it was closed.
+Needs
+.Nm Cm rex on .
 .It Nm Cm raycast install Op Ar theme
 Opens each theme's install link in turn: confirm each in Raycast, then press Enter for the next.
 With
